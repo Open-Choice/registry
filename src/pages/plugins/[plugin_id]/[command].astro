@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import EndpointHelp from '@open-choice/web-ui/components/EndpointHelp.astro';
+import {
+  loadManifest,
+  loadEndpointHelp,
+  loadEndpointTemplates,
+  listEndpoints,
+} from '../../../lib/loadData';
+
+export async function getStaticPaths() {
+  const { plugins } = loadManifest();
+  const paths: Array<{ params: { plugin_id: string; command: string } }> = [];
+  for (const p of plugins) {
+    for (const command of listEndpoints(p.plugin_id, p.latest_version)) {
+      paths.push({ params: { plugin_id: p.plugin_id, command } });
+    }
+  }
+  return paths;
+}
+
+const { plugin_id, command } = Astro.params as { plugin_id: string; command: string };
+const { plugins } = loadManifest();
+const plugin = plugins.find((p) => p.plugin_id === plugin_id);
+
+if (!plugin) {
+  throw new Error(`Plugin not found in manifest: ${plugin_id}`);
+}
+
+const help = loadEndpointHelp(plugin_id, plugin.latest_version, command);
+if (!help) {
+  throw new Error(`Endpoint help not found: ${plugin_id}/${plugin.latest_version}/${command}`);
+}
+const templates = loadEndpointTemplates(plugin_id, plugin.latest_version, command);
+---
+
+<BaseLayout title={`${help.title ?? command} — ${plugin.display_name}`}>
+  <a slot="breadcrumb" href="/">Open Choice Registry</a>
+  <span slot="breadcrumb" class="sep">/</span>
+  <a slot="breadcrumb" href={`/plugins/${plugin.plugin_id}/`}>{plugin.display_name}</a>
+  <span slot="breadcrumb" class="sep">/</span>
+  <span slot="breadcrumb"><code>{command}</code></span>
+
+  <EndpointHelp
+    help={help}
+    templates={templates}
+    plugin={{ display_name: plugin.display_name, plugin_id: plugin.plugin_id, version: plugin.latest_version }}
+    endpointId={command}
+  />
+</BaseLayout>

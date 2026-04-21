@@ -1,0 +1,5 @@
+# Per-version endpoint help + examples are copied here by
+# open-choice-plugins/scripts/publish-plugin.ps1 at publish time.
+#
+# Layout:  endpoints/<plugin_id>/<version>/help/<command>.json
+#          endpoints/<plugin_id>/<version>/examples/<command>.json

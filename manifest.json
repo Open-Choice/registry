@@ -1,0 +1,31 @@
+{
+  "schema_version": "1",
+  "generated_at": "2026-04-19T01:32:11.242Z",
+  "signature": "FY4WeXQwrt+6ErRXoP1mn0hRvsU8hUHMlBUB36MIjswl+/QTHVxV1X36Ta4hr8H8sp4BLo/7zbXRtsAik8nFAA==",
+  "signer_key_id": "oc-registry-2026",
+  "plugins": [
+    {
+      "plugin_id": "com.open-choice.toy-calculator",
+      "display_name": "Toy Calculator",
+      "description": "A minimal app-aware calculator implementing ocp-json/1 for integration testing.",
+      "publisher": "Open Choice",
+      "categories": [
+        "demo"
+      ],
+      "latest_version": "0.1.1",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.toy-calculator/",
+      "versions": [
+        {
+          "version": "0.1.1",
+          "download_url": "https://github.com/Open-Choice/open-choice-plugins/releases/download/toy-calculator-v0.1.1/toy-calculator-0.1.1-windows-x86_64.ocplugin",
+          "artifact_sha256": "039b8f50466bc060420712138413e91e1cc7757a4460716141ebd91b2cc0b826",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-18T19:14:01Z",
+          "release_notes": "First public release via the Open Choice plugin registry.",
+          "release_url": "https://github.com/Open-Choice/open-choice-plugins/releases/tag/toy-calculator-v0.1.1"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { loadManifest, formatDate } from '../lib/loadData';
+
+const manifest = loadManifest();
+const plugins  = manifest.plugins ?? [];
+---
+
+<BaseLayout title="Open Choice Registry">
+  <a slot="breadcrumb" href="/">Open Choice Registry</a>
+
+  <h1>Open Choice Plugin Registry</h1>
+  <p class="meta">
+    {plugins.length} plugin{plugins.length === 1 ? '' : 's'} &mdash; last updated {formatDate(manifest.generated_at)}
+  </p>
+
+  {plugins.length === 0 && <p>No plugins published yet.</p>}
+
+  {plugins.map((p) => (
+    <article class="plugin-card">
+      <h2><a href={`/plugins/${p.plugin_id}/`}>{p.display_name}</a></h2>
+      <p class="description">{p.description}</p>
+      <div class="badges">
+        <span class="badge">v{p.latest_version}</span>
+        <span class="badge">{p.publisher}</span>
+        {(p.categories ?? []).map((c) => <span class="badge">{c}</span>)}
+      </div>
+    </article>
+  ))}
+</BaseLayout>
+
+<style>
+  .meta { color: var(--oc-ink-soft); font-size: 0.9rem; margin-bottom: 1.5rem; }
+  .plugin-card {
+    background: var(--oc-surface);
+    border: 1px solid var(--oc-hairline);
+    border-radius: var(--oc-radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .plugin-card h2 {
+    margin-top: 0;
+    border: none;
+    padding: 0;
+    font-size: 1.1rem;
+  }
+  .plugin-card a { color: var(--oc-accent); text-decoration: none; }
+  .plugin-card a:hover { text-decoration: underline; }
+  .plugin-card .description { margin: 0.25rem 0 0.75rem; }
+  .plugin-card .badges { display: flex; gap: 0.5rem; flex-wrap: wrap; font-size: 0.8rem; }
+  .badge {
+    background: var(--oc-brand-soft);
+    color: var(--oc-brand-ink);
+    border-radius: var(--oc-radius-sm);
+    padding: 0.1rem 0.5rem;
+  }
+</style>

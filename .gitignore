@@ -1,0 +1,5 @@
+*.key
+node_modules/
+context.md
+site/
+.astro/

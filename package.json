@@ -1,0 +1,18 @@
+{
+  "name": "@open-choice/registry",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Open Choice plugin registry — hosted manifest, signing pipeline, and Astro-built plugin pages.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "sign": "node scripts/sign-manifest.js",
+    "add": "node scripts/add-plugin.js"
+  },
+  "dependencies": {
+    "@open-choice/web-ui": "github:open-choice/web-ui#main",
+    "astro": "^5.0.0"
+  }
+}

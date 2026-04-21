@@ -1,0 +1,61 @@
+{
+  "command": "calculate",
+  "title": "Perform a left-to-right arithmetic reduction on a list of numbers",
+  "summary": "Perform a left-to-right arithmetic reduction across a list of numbers. The first operand is the seed; each subsequent operand is applied via the chosen operation against the running total. Writes result.json and run.log to output_dir.",
+  "description": "Reduces an array of numbers using a single arithmetic operation applied left-to-right. The first element of `operands` acts as the initial accumulator; each subsequent element is applied via the chosen `operation` against the running total. For example, `subtract` on `[10, 3, 2]` produces `10 - 3 - 2 = 5`.\n\nThis command is a minimal reference implementation demonstrating the plugin protocol — it is intentionally simple to serve as a testable baseline.",
+  "usage": "[[\"toy-calculator::calculate\"]]\noperation = \"<add|subtract|multiply|divide>\"\noperands = [<n1>, <n2>, ...]\noutput_dir = \"<dir>\"",
+  "arguments": [
+    {
+      "name": "operation",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "The arithmetic operation to apply: add (+), subtract (−), multiply (×), or divide (÷). Applied uniformly to all operands in a left-to-right reduction."
+    },
+    {
+      "name": "operands",
+      "type": "array",
+      "required": true,
+      "default": null,
+      "description": "Array of numbers to reduce. Must contain at least one element. For divide, no non-first operand may be zero."
+    },
+    {
+      "name": "output_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Directory where result.json and run.log are written. Created if it does not exist."
+    }
+  ],
+  "details": "`calculate` applies one arithmetic operation left-to-right across `operands`:\n\n- **add**: `a + b + c + ...`\n- **subtract**: `a - b - c - ...`\n- **multiply**: `a × b × c × ...`\n- **divide**: `a ÷ b ÷ c + ...` (errors if any non-first operand is zero)\n\nThe result is written to `result.json` as `{ \"result\": <value> }`. A run.log is also written summarising the operation.\n\nThis plugin exists to test the plugin protocol end-to-end without requiring any model or estimation logic.",
+  "value": "On success, `output_dir` contains:\n\n- `result.json` — `{ \"result\": <computed_value> }`.\n- `run.log` — a log of the operation performed.\n\nThe plugin emits `event.run.started` then `event.run.finished` (or `event.run.failed` on divide-by-zero).",
+  "notes": [
+    "Divide-by-zero on any non-first operand produces event.run.failed.",
+    "A single-element operands array returns that element unchanged.",
+    "This plugin is a protocol reference implementation — it is not intended for production analytical use."
+  ],
+  "see_also": [],
+  "examples": [
+    {
+      "title": "Add a list of numbers",
+      "body": "[[\"toy-calculator::calculate\"]]\noperation = \"add\"\noperands = [10, 20, 30, 40]\noutput_dir = \"./runs/calc-add\""
+    },
+    {
+      "title": "Subtract sequentially (10 - 3 - 2 = 5)",
+      "body": "[[\"toy-calculator::calculate\"]]\noperation = \"subtract\"\noperands = [10, 3, 2]\noutput_dir = \"./runs/calc-subtract\""
+    },
+    {
+      "title": "Multiply a list",
+      "body": "[[\"toy-calculator::calculate\"]]\noperation = \"multiply\"\noperands = [2, 3, 4, 5]\noutput_dir = \"./runs/calc-multiply\""
+    },
+    {
+      "title": "Divide sequentially (120 ÷ 4 ÷ 3 = 10)",
+      "body": "[[\"toy-calculator::calculate\"]]\noperation = \"divide\"\noperands = [120, 4, 3]\noutput_dir = \"./runs/calc-divide\""
+    }
+  ],
+  "fields": [
+    { "name": "operation",  "description": "Arithmetic operation: add, subtract, multiply, or divide.",              "required": true,  "accepted_values": ["add", "subtract", "multiply", "divide"] },
+    { "name": "operands",   "description": "Array of numbers to reduce left-to-right. At least one element required.", "required": true,  "accepted_values": [] },
+    { "name": "output_dir", "description": "Directory for result.json and run.log.",                                  "required": true,  "accepted_values": [] }
+  ]
+}

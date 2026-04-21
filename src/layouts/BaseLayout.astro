@@ -1,0 +1,48 @@
+---
+import '@open-choice/web-ui/styles/tokens.css';
+import '@open-choice/web-ui/styles/endpoint.css';
+import SiteHeader from '@open-choice/web-ui/components/SiteHeader.astro';
+import SiteFooter from '@open-choice/web-ui/components/SiteFooter.astro';
+
+const { title } = Astro.props as { title: string };
+const generatedAt = new Date().toUTCString();
+---
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.png" type="image/png" />
+    <title>{title} — Open Choice Registry</title>
+  </head>
+  <body>
+    <SiteHeader>
+      <slot name="breadcrumb" />
+    </SiteHeader>
+    <main>
+      <slot />
+    </main>
+    <SiteFooter text={`Open Choice Registry — generated ${generatedAt}`} />
+  </body>
+</html>
+
+<style is:global>
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    font-family: var(--oc-font-sans);
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--oc-ink);
+    background: var(--oc-bg);
+    margin: 0;
+  }
+  main {
+    max-width: 54rem;
+    margin: 2.5rem auto;
+    padding: 0 1.5rem;
+  }
+  main a { color: var(--oc-accent); }
+  h1 { font-size: 1.7rem; margin: 0 0 0.25rem; }
+  h2 { font-size: 1.15rem; margin: 2rem 0 0.5rem; border-bottom: 1px solid var(--oc-hairline); padding-bottom: 0.3rem; }
+</style>

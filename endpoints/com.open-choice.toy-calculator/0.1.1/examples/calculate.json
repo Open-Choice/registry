@@ -1,0 +1,42 @@
+[
+  {
+    "template_id": "calculate-add",
+    "title": "Add Numbers",
+    "summary": "Add a list of numbers left-to-right.",
+    "category": "starter",
+    "oce_text": "[[\"toy-calculator::calculate\"]]\noperation = \"add\"\noperands = [1.0, 2.0, 3.0]\noutput_dir = \"./outputs/add\"\n",
+    "operation": "add",
+    "operands": [1.0, 2.0, 3.0],
+    "output_dir": "./outputs/add"
+  },
+  {
+    "template_id": "calculate-subtract",
+    "title": "Subtract Numbers",
+    "summary": "Subtract a list of numbers left-to-right.",
+    "category": "starter",
+    "oce_text": "[[\"toy-calculator::calculate\"]]\noperation = \"subtract\"\noperands = [100.0, 25.0, 10.0]\noutput_dir = \"./outputs/subtract\"\n",
+    "operation": "subtract",
+    "operands": [100.0, 25.0, 10.0],
+    "output_dir": "./outputs/subtract"
+  },
+  {
+    "template_id": "calculate-multiply",
+    "title": "Multiply Numbers",
+    "summary": "Multiply a list of numbers left-to-right.",
+    "category": "starter",
+    "oce_text": "[[\"toy-calculator::calculate\"]]\noperation = \"multiply\"\noperands = [2.0, 3.0, 4.0]\noutput_dir = \"./outputs/multiply\"\n",
+    "operation": "multiply",
+    "operands": [2.0, 3.0, 4.0],
+    "output_dir": "./outputs/multiply"
+  },
+  {
+    "template_id": "calculate-divide",
+    "title": "Divide Numbers",
+    "summary": "Divide a list of numbers left-to-right.",
+    "category": "starter",
+    "oce_text": "[[\"toy-calculator::calculate\"]]\noperation = \"divide\"\noperands = [120.0, 4.0, 5.0]\noutput_dir = \"./outputs/divide\"\n",
+    "operation": "divide",
+    "operands": [120.0, 4.0, 5.0],
+    "output_dir": "./outputs/divide"
+  }
+]
