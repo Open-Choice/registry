@@ -9,11 +9,11 @@
     "correlation"
   ],
   "version": "0.5.0",
-  "download_url": "https://github.com/Open-Choice/open-choice-plugins/releases/download/factor-analysis-v0.5.0/factor-analysis-0.5.0-windows-x86_64.ocplugin",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/factor-analysis-v0.5.0/factor-analysis-0.5.0-windows-x86_64.ocplugin",
   "artifact_sha256": "49592fba78fd16df6e35bca18db350a7a845a3cbe2f30174cb09749171bc3bb4",
   "signer_key_id": "open-choice-2026",
   "min_app_version": "0.1.0",
   "released_at": "2026-04-21T22:00:00Z",
   "release_notes": "Documentation rewritten for marketing researchers, new R-style layout.\n\n- **R-doc layout.** Each command's help page now follows the structure R users expect: Title, Description, Usage, Arguments, Details, Artifacts, See Also, Examples. The old `Value` section is renamed `Artifacts` and lists every file the command writes with per-sheet / per-column interpretation guidance.\n- **Per-field artifact tables.** For every output file (xlsx sheet or CSV), the help now spells out what each column or cell means in plain language — not format notes, but how to read the number. E.g. for `fa`: what `communality`, `uniqueness`, and `strongest_factor` actually tell you; for `famd`: what `coord_dim<k>`, `contrib_dim<k>`, and `cos2_dim<k>` say about a variable or level.\n- **Marketing-researcher voice.** Descriptions and details sections are written for a researcher reading the output, not a software developer configuring the tool. Method jargon is defined on first use; common gotchas (listwise dropping, single-level categoricals, low-cosÂ² variables) are called out inline.\n- **Cross-references.** Each command's `See Also` entry links to related commands in the same plugin (fa â†” famd â†” correlation), so users discover the right tool for their data.\n- **Registry + app render parity.** The same help JSONs power both the in-app help panel and the registry website, so the layout a user sees before installing matches what they see after.",
-  "release_url": "https://github.com/Open-Choice/open-choice-plugins/releases/tag/factor-analysis-v0.5.0"
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/factor-analysis-v0.5.0"
 }
