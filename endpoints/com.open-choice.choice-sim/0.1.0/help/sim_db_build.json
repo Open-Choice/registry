@@ -1,0 +1,120 @@
+{
+  "command": "sim_db_build",
+  "title": "Build Sim DB",
+  "summary": "Build a sim_db Excel workbook from choice-wrangling cookbook output and HB, LC, or LG model betas.",
+  "description": "sim_db_build converts raw model output into the Excel sim_db format consumed by all sim_run-family commands. It reads a cookbook.json (from choice-wrangling::build-estimation-long) for attribute/level metadata, reads per-respondent (or per-segment) beta draws, and writes a two-sheet workbook: a tables sheet with metadata (attributes, levels, scenarios, xmatrix_logic, subgroups, weights) and a data sheet with respondent betas.",
+  "usage": "choice-sim build-db <task.toml> [--output-dir <dir>] [--output-format protocol|human|quiet]",
+  "arguments": [
+    {
+      "name": "betas_csv",
+      "type": "string",
+      "required": true,
+      "description": "Path to the model output CSV. Format varies by model_type — see model_type for details."
+    },
+    {
+      "name": "cookbook_json",
+      "type": "string",
+      "required": true,
+      "description": "Path to cookbook.json from choice-wrangling::build-estimation-long. Provides the mapping from estimation column names to human-readable attribute/level labels."
+    },
+    {
+      "name": "output",
+      "type": "string",
+      "required": true,
+      "description": "Output filename for the generated .xlsx workbook. Relative paths are resolved against --output-dir."
+    },
+    {
+      "name": "model_type",
+      "type": "enum",
+      "required": true,
+      "accepted_values": ["hb", "hb_stan", "lc", "lg"],
+      "description": "Type of model that produced betas_csv. One of: hb (model-mnl-hb-mh: has header row, first column is resp_id), hb_stan (model-mnl-hb-stan: no header, no resp_id, columns in cookbook order), lc (model-mnl-lc: coefficient_name × segment matrix), lg (model-mnl-lg: single row of aggregate coefficients)."
+    },
+    {
+      "name": "resp_id_col",
+      "type": "string",
+      "required": false,
+      "default": "resp_id",
+      "description": "Column name for the respondent identifier in betas_csv. Used only for model_type=hb."
+    },
+    {
+      "name": "subgroup_cols",
+      "type": "array<string>",
+      "required": false,
+      "default": "[]",
+      "description": "Column names in betas_csv to include as 0/1 subgroup flag columns in the data sheet. Used only for model_type=hb."
+    },
+    {
+      "name": "weight_col",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Column in betas_csv to use as respondent weight. If absent, all respondents receive equal weight (1.0). Used only for model_type=hb."
+    },
+    {
+      "name": "scenarios_csv",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Path to a scenarios CSV. Required columns: name, product_name, product_label; optional: product_net, product_none, product_availability; then one column per estimation_column from the cookbook. If absent, the scenarios table is empty and a {output}_scenarios_template.csv skeleton is written."
+    },
+    {
+      "name": "table_sheet",
+      "type": "string",
+      "required": false,
+      "default": "tables",
+      "description": "Sheet name for the tables sheet in the output workbook."
+    },
+    {
+      "name": "data_sheet",
+      "type": "string",
+      "required": false,
+      "default": "data",
+      "description": "Sheet name for the data sheet in the output workbook."
+    }
+  ],
+  "details": [
+    "The tables sheet uses a horizontal layout: row 0 contains table name markers, row 1 contains column headers, rows 2+ contain data. All sim_run-family commands can read the output directly.",
+    "The data sheet uses a vertical layout: row 0 is the header (resp_id, then beta columns, then subgroup columns, then weight). Numeric values are written as Excel numbers for correct arithmetic.",
+    "For model_type=hb: betas_csv must have a header row. The resp_id column is identified by resp_id_col. Beta columns are matched against cookbook.estimation_terms by name; extra columns (subgroups, weight) are picked up by subgroup_cols / weight_col.",
+    "For model_type=hb_stan: betas_csv has no header row and no resp_id column. Columns must be in the same order as cookbook.estimation_terms. Respondent IDs are assigned sequentially (1, 2, …). Subgroup and weight columns are not supported (part_worths.csv contains only betas).",
+    "For model_type=lc: betas_csv is the coefficients.csv from model-mnl-lc, with rows = coefficient names and columns = segments. Each segment becomes one pseudo-respondent. Subgroup membership is not preserved (all segments are assigned equal weight and subgroup flag 1).",
+    "For model_type=lg: betas_csv is the coef_table.csv from model-mnl-lg. A single pseudo-respondent row is created from the aggregate estimates. The estimate column is detected automatically by name.",
+    "The xmatrix_logic table is auto-populated from the cookbook estimation columns. Logic, interpolation, and cost columns are left blank — fill them in Excel after building if needed.",
+    "The attributes table is auto-populated: attributes with level entries become type=discrete; those without become type=continuous.",
+    "A {output}_scenarios_template.csv skeleton is always written alongside the .xlsx so users know the exact column format expected for a scenarios_csv input."
+  ],
+  "value": "Automates the most tedious part of the sim workflow — mapping model output into the structured Excel format required by choice-sim. Run once per model, then iterate scenarios freely.",
+  "notes": [
+    "The resulting workbook can be opened in Excel or supplied directly as the excel= input to any sim_run-family command.",
+    "After building, fill in the scenarios table (or use the template CSV as a guide) and add the sim_db path to a task.toml to run simulations.",
+    "For LC models, consider setting the weight column in the data sheet manually to segment size proportions after building, if you want market-share-weighted averages."
+  ],
+  "see_also": [
+    { "command": "cs::sim_run",           "description": "Run a competitive-share simulation using the generated workbook." },
+    { "command": "cs::sim_sensitivities", "description": "Sensitivity sweep driven by the generated workbook." },
+    { "command": "cs::sim_combinations",  "description": "Grid or zip search using the generated workbook." }
+  ],
+  "examples": [
+    {
+      "title": "Build from HB model",
+      "body": "[sim_db_build]\nbetas_csv     = \"point_estimates.csv\"\ncookbook_json = \"cookbook.json\"\noutput        = \"model.xlsx\"\nmodel_type    = \"hb\"\nresp_id_col   = \"resp_id\"\nsubgroup_cols = [\"total\", \"male\", \"female\"]\nweight_col    = \"weight\""
+    },
+    {
+      "title": "Build from LC model with scenarios",
+      "body": "[sim_db_build]\nbetas_csv     = \"coefficients.csv\"\ncookbook_json = \"cookbook.json\"\noutput        = \"model_lc.xlsx\"\nmodel_type    = \"lc\"\nscenarios_csv = \"scenarios.csv\""
+    }
+  ],
+  "fields": [
+    { "name": "betas_csv",     "type": "string",        "required": true },
+    { "name": "cookbook_json", "type": "string",        "required": true },
+    { "name": "output",        "type": "string",        "required": true },
+    { "name": "model_type",    "type": "enum",          "required": true, "accepted_values": ["hb", "hb_stan", "lc", "lg"] },
+    { "name": "resp_id_col",   "type": "string",        "required": false, "default": "resp_id" },
+    { "name": "subgroup_cols", "type": "array<string>", "required": false, "default": "[]" },
+    { "name": "weight_col",    "type": "string",        "required": false },
+    { "name": "scenarios_csv", "type": "string",        "required": false },
+    { "name": "table_sheet",   "type": "string",        "required": false, "default": "tables" },
+    { "name": "data_sheet",    "type": "string",        "required": false, "default": "data" }
+  ]
+}

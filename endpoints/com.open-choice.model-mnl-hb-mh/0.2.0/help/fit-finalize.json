@@ -1,0 +1,253 @@
+{
+  "command": "fit-finalize",
+  "title": "Fit a Hierarchical Bayes mixture model and write exports in one call",
+  "summary": "Combines `fit` and `finalize` into a single command: runs Metropolis-Hastings MCMC to estimate the HB model, then immediately writes the user-facing summary and CSV exports. Emits a single started / finished event pair.",
+  "description": "Reads a coded long-format choice CSV and fits a Hierarchical Bayes mixture model by Metropolis-Hastings MCMC, then immediately finalises the run and writes the user-facing artifacts — segment means, mixture probabilities, per-respondent point estimates — all in one protocol invocation. Equivalent to calling `fit` then `finalize` back-to-back, but with a single started / finished event pair instead of two. The raw chain is persisted exactly as it would be from a standalone `fit` call, so you can still run `finalize` or `fit-extend` later if needed.",
+  "usage": "[[\"model-mnl-hb-mh::fit-finalize\"]]\ninput = \"<coded_long.csv>\"\nrun_dir = \"<dir>\"\nrun_name = \"hbmh_run\"\n# optional:\nsegments = 2\niterations = 10000\nburnin = 0.2\nthreads = 4\nrandom_seed = 0\nattribute_signs = [{ name = \"price\", rule = \"non_pos\" }]",
+  "arguments": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the coded long-format CSV file. Expected layout: one row per (respondent, task, alternative), with a `resp_id` column, a `task` column, a response column, and one numeric column per coded covariate."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory for results. Created if it does not exist. Receives the persisted chain, `spec.json`, bookkeeping postcards, and the `exports/` subdirectory."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "test_input",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Optional holdout CSV for out-of-sample evaluation."
+    },
+    {
+      "name": "covariate_input",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Optional respondent-level covariate CSV: a `resp_id` column plus one numeric column per covariate."
+    },
+    {
+      "name": "export_dir",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Where to write the CSV exports. Defaults to `{run_dir}/exports`."
+    },
+    {
+      "name": "segments",
+      "type": "integer",
+      "required": false,
+      "default": 2,
+      "description": "Number of mixture components in the population-level normal mixture. Default `2`. Use `segments = 1` for standard single-population HB."
+    },
+    {
+      "name": "iterations",
+      "type": "integer",
+      "required": false,
+      "default": 10000,
+      "description": "Total MCMC iterations to run. Default `10000`."
+    },
+    {
+      "name": "save_every",
+      "type": "integer",
+      "required": false,
+      "default": 10,
+      "description": "Save draws every N iterations. Default `10`."
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 4,
+      "description": "Number of threads for per-respondent likelihood evaluations. Default `4`."
+    },
+    {
+      "name": "random_seed",
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "description": "Random seed. `0` (default) means non-deterministic."
+    },
+    {
+      "name": "chains",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Number of independent MCMC chains to run in parallel. Default `1`. Each chain uses a seed derived from `random_seed` and its chain index. Draws are pooled at finalize time."
+    },
+    {
+      "name": "report_thin",
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "description": "Convergence-report snapshot interval in saved draws. Default `0` (same as `checkpoint_every`). Controls how many data points appear in the convergence chart."
+    },
+    {
+      "name": "burnin",
+      "type": "number",
+      "required": false,
+      "default": 0.2,
+      "description": "Burnin fraction discarded from the saved draws when computing the summary. Default `0.2` (discard the first 20% of saved draws)."
+    },
+    {
+      "name": "attribute_signs",
+      "type": "array<object>",
+      "required": false,
+      "default": null,
+      "description": "Sign constraints on individual attributes, formatted as `{ name, rule }` objects where `rule` is `\"non_neg\"` or `\"non_pos\"`."
+    }
+  ],
+  "details": "`fit-finalize` is the single-call entry point for HB estimation. It runs the MH MCMC sampler as `fit` would, then immediately calls the same finalization logic as `finalize` — all within a single protocol event pair. The raw chain is persisted to `run_dir`, so you can still run `fit-extend` to add more iterations or `finalize` to change the burnin without re-running the chain.\n\nSee `fit` for the full list of advanced sampler parameters (`amu`, `nu_inc`, `step_size`, `init_ridge`, etc.).",
+  "value": "On success, `run_dir` contains the full chain state plus `exports/` with:\n\n- `summary.json` — segment means, mixture probabilities, log-likelihood.\n- `{run_id}_point_estimates.csv` — per-respondent posterior-mean attribute coefficients.\n\nIn protocol mode the plugin emits a single `event.run.started`, then `event.run.finished` (or `event.run.failed`) carrying the final fit summary.",
+  "notes": [
+    "Equivalent to calling `fit` then `finalize` back-to-back with the same `run_dir`.",
+    "The chain is fully persisted — you can still `fit-extend` or re-`finalize` with a different burnin afterward.",
+    "Use `cv-fit-finalize` for cross-validated runs."
+  ],
+  "see_also": [
+    {
+      "command": "model-mnl-hb-mh::fit",
+      "description": "Fit only — call `finalize` separately when needed."
+    },
+    {
+      "command": "model-mnl-hb-mh::finalize",
+      "description": "Re-summarise a completed run with a different burnin."
+    },
+    {
+      "command": "model-mnl-hb-mh::fit-extend",
+      "description": "Add more iterations to an existing chain before finalizing."
+    },
+    {
+      "command": "model-mnl-hb-mh::cv-fit-finalize",
+      "description": "Cross-validated fit and finalize in one call."
+    },
+    {
+      "command": "model-mnl-lc::fit-finalize",
+      "description": "Latent class counterpart — assigns respondents to a single class."
+    },
+    {
+      "command": "choice-wrangling::build-estimation-long",
+      "description": "Produces the coded long-format CSV that this command consumes."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic 1-segment HB fit-finalize",
+      "body": "[[\"model-mnl-hb-mh::fit-finalize\"]]\ninput = \"./estimation/coded_long.csv\"\nrun_dir = \"./runs/hb\"\nrun_name = \"hbmh_run1\"\nsegments = 1\niterations = 10000\nburnin = 0.2"
+    },
+    {
+      "title": "2-segment HB fit-finalize with holdout",
+      "body": "[[\"model-mnl-hb-mh::fit-finalize\"]]\ninput = \"./estimation/coded_long.csv\"\ntest_input = \"./estimation/coded_long_holdout.csv\"\nrun_dir = \"./runs/hb-k2\"\nrun_name = \"hbmh_run2\"\nsegments = 2\niterations = 20000\nthreads = 4\nburnin = 0.2"
+    },
+    {
+      "title": "HB fit-finalize with price sign constraint",
+      "body": "[[\"model-mnl-hb-mh::fit-finalize\"]]\ninput = \"./estimation/coded_long.csv\"\nrun_dir = \"./runs/hb-constrained\"\nrun_name = \"hbmh_run3\"\nsegments = 1\niterations = 10000\nburnin = 0.2\nattribute_signs = [{ name = \"price\", rule = \"non_pos\" }]"
+    }
+  ],
+  "fields": [
+    {
+      "name": "input",
+      "description": "Path to the coded-long-format CSV file.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Output directory for results. Created if it does not exist.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "test_input",
+      "description": "Optional holdout CSV for out-of-sample evaluation.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "covariate_input",
+      "description": "Optional covariate CSV (resp_id + numeric columns).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "export_dir",
+      "description": "Where to write CSV exports. Defaults to {run_dir}/exports.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "segments",
+      "description": "Number of mixture segments. Default: 2.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "iterations",
+      "description": "Total MCMC iterations. Default: 10000.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "save_every",
+      "description": "Save draws every N iterations. Default: 10.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "threads",
+      "description": "Number of threads. Default: 4.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "random_seed",
+      "description": "Random seed (0 = non-deterministic). Default: 0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "chains",
+      "description": "Number of independent MCMC chains. Default: 1.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "report_thin",
+      "description": "Snapshot every N saved draws (0 = checkpoint_every). Default: 0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "burnin",
+      "description": "Burnin fraction discarded when computing summaries. Default: 0.2.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "attribute_signs",
+      "description": "Sign constraints: [{name, rule}] where rule is non_neg or non_pos.",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

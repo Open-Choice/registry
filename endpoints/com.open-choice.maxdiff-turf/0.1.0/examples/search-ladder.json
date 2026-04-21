@@ -1,0 +1,31 @@
+[
+  {
+    "template_id": "maxdiff-turf-search-ladder-basic",
+    "title": "TURF: anchored ladder",
+    "summary": "Build the anchored ladder from anchor size 5 in both directions.",
+    "category": "starter",
+    "oce_text": "[[\"maxdiff-turf::search-ladder\"]]\nutilities = \"./utilities.csv\"\nout_dir = \"./runs/search-ladder\"\nanchor_k = 5\nreach_method = \"first-choice\"\nladder_mode = \"repair\"\ndirection = \"both\"\nnon_utility_cols = \"1,2\"\n",
+    "utilities": "./utilities.csv",
+    "out_dir": "./runs/search-ladder",
+    "anchor_k": 5,
+    "reach_method": "first-choice",
+    "ladder_mode": "repair",
+    "direction": "both",
+    "non_utility_cols": "1,2"
+  },
+  {
+    "template_id": "maxdiff-turf-search-ladder-refine",
+    "title": "TURF: ladder with refinement",
+    "summary": "Anchor at 6, then refine sizes 4 and 5 with sampled search.",
+    "category": "advanced",
+    "oce_text": "[[\"maxdiff-turf::search-ladder\"]]\nutilities = \"./utilities.csv\"\nout_dir = \"./runs/search-ladder-refine\"\nanchor_k = 6\nreach_method = \"first-choice\"\nladder_mode = \"repair\"\nrefine_sizes = [4, 5]\nrefine_method = \"sampled\"\nnon_utility_cols = \"1,2\"\n",
+    "utilities": "./utilities.csv",
+    "out_dir": "./runs/search-ladder-refine",
+    "anchor_k": 6,
+    "reach_method": "first-choice",
+    "ladder_mode": "repair",
+    "refine_sizes": [4, 5],
+    "refine_method": "sampled",
+    "non_utility_cols": "1,2"
+  }
+]

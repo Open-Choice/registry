@@ -1,0 +1,21 @@
+[
+  {
+    "template_id": "sim-take-rate-basic",
+    "title": "Sim: basic take-rate run",
+    "summary": "Run a take-rate simulation and return volume and revenue projections.",
+    "category": "starter",
+    "oce_text": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_take_rate\"]]\nscenarios = [\"base\"]\nmeasures = \"share|volume|revenue\"\n",
+    "scenarios": ["base"],
+    "measures": "share|volume|revenue"
+  },
+  {
+    "template_id": "sim-take-rate-all-scenarios",
+    "title": "Sim: take-rate, all scenarios with nets",
+    "summary": "Run all scenarios and return volume and revenue with brand-level net rows.",
+    "category": "advanced",
+    "oce_text": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_take_rate\"]]\nscenarios = [\"__all__\"]\nmeasures = \"volume|revenue\"\ninclude_nets = true\n",
+    "scenarios": ["__all__"],
+    "measures": "volume|revenue",
+    "include_nets": true
+  }
+]

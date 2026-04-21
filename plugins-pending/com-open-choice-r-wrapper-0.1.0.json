@@ -1,0 +1,17 @@
+{
+  "plugin_id": "com.open-choice.r-wrapper",
+  "display_name": "R Wrapper",
+  "description": "Runs R scripts (via file or inline code) using Rscript or R, streaming stdout/stderr as ocp-json/1 events. Requires R to be installed and on PATH.",
+  "publisher": "Open Choice",
+  "categories": [
+    "scripting"
+  ],
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/r-wrapper-v0.1.0/r-wrapper-0.1.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "ba41193bdce32465844661386517486fdcd1680b8d8b12e1c31808281d1fbd79",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:29:13Z",
+  "release_notes": "Initial release.",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/r-wrapper-v0.1.0"
+}

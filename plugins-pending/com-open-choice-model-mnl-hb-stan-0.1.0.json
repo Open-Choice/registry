@@ -1,0 +1,18 @@
+{
+  "plugin_id": "com.open-choice.model-mnl-hb-stan",
+  "display_name": "HB Stan (MNL)",
+  "description": "Hierarchical Bayes MNL conjoint model estimated via CmdStan (NUTS sampler). Accepts coded-long-format design matrices and respondent covariates; produces per-respondent part-worth utilities with full posterior diagnostics.",
+  "publisher": "Open Choice",
+  "categories": [
+    "estimation",
+    "hierarchical-bayes"
+  ],
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/model-mnl-hb-stan-v0.1.0/model-mnl-hb-stan-0.1.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "68c43dd2a056d1553f08722881d4eb2cf0eea67f0088fc91bc2b7e6323d603e5",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:28:56Z",
+  "release_notes": "Initial release.",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-mnl-hb-stan-v0.1.0"
+}

@@ -1,0 +1,20 @@
+{
+  "command": "write-sav",
+  "title": "Build an SPSS .sav file from CSV/Excel input",
+  "summary": "Reads CSV, TSV, or Excel input and writes it as .sav. Optional data-dictionary workbook hydrates variable labels, measure, and missing-value codes; alternatively an export-excel workbook can be reconstructed directly via from_export_excel=true.",
+  "description": "Three modes are supported. (1) Plain CSV/Excel input with no metadata: column types are detected heuristically (numeric vs string) and the .sav is written without value labels or missing codes. (2) CSV/Excel input plus `data_dictionary_path`: the workbook produced by `data-dictionary` is parsed and its variable labels, value labels, measure levels, and missing-code ranges are applied on top of the detected types. (3) `from_export_excel = true`: the input workbook is assumed to be an export-excel round-trip workbook whose variable-metadata sheet carries enough information to reconstruct the .sav without a separate dictionary.",
+  "usage": "[[\"spss-reader::write-sav\"]]\ninput_path = \"./data/survey.csv\"\noutput_dir = \"./output\"\ndata_dictionary_path = \"./output/survey_data_dict.xlsx\"",
+  "arguments": [
+    { "name": "input_path",           "type": "string",  "required": true,  "description": "Input data file (.csv/.tsv or .xlsx)." },
+    { "name": "output_dir",           "type": "string",  "required": true,  "description": "Directory for the output .sav; created if missing." },
+    { "name": "data_dictionary_path", "type": "string",  "required": false, "description": "Optional data-dictionary .xlsx to hydrate labels, measure, and missing codes. Ignored when from_export_excel=true." },
+    { "name": "from_export_excel",    "type": "boolean", "required": false, "default": false, "description": "When true, input_path is an export-excel workbook reconstructed directly via its embedded metadata." },
+    { "name": "prefix",               "type": "string",  "required": false, "description": "Optional filename prefix." },
+    { "name": "suffix",               "type": "string",  "required": false, "description": "Optional filename suffix (before the extension)." }
+  ],
+  "notes": [
+    "Pass exactly one metadata source: either `data_dictionary_path`, or `from_export_excel = true`, or neither (no metadata).",
+    "Numeric columns whose values are all small integers within the dictionary's value-label set are stored as SPSS numeric with F format; string columns are stored as A with the minimum width needed.",
+    "Missing-code ranges declared in the dictionary are applied verbatim — if the dictionary marks 97/98/99 as missing, the written .sav carries the same declared-missing ranges."
+  ]
+}

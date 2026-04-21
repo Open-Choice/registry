@@ -1,0 +1,18 @@
+{
+  "plugin_id": "com.open-choice.seg-profile",
+  "display_name": "Segment Profiler",
+  "description": "Profile segment membership against numeric variables with per-segment means, Welch t-scores, standardised differences, indices, and counts; cross-tabulate segment migration across solutions.",
+  "publisher": "Open Choice",
+  "categories": [
+    "segmentation",
+    "profiling"
+  ],
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/seg-profile-v0.1.0/seg-profile-0.1.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "b21b1aa7545c7cdd9a7c665b9564dffab67850fb9072584eee720ed43cce839d",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:29:19Z",
+  "release_notes": "Initial release. Ports the R `profile_fast` and `migration_table` pipelines:\n\n- `profile`: per-segment weighted means, Welch t-scores, standardised differences, indices, and counts, with xlsx output matching the R reference layout (threshold cells, per-segment header block, conditional formatting, freeze panes) plus CSV sidecars.\n- `migration`: stacked cross-tabulation of multi-solution memberships, with xlsx merged-header layout, 3-colour scale, freeze panes, and a CSV sidecar.",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/seg-profile-v0.1.0"
+}

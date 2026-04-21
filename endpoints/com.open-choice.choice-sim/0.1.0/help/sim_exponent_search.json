@@ -1,0 +1,165 @@
+{
+  "command": "sim_exponent_search",
+  "title": "Exponent (IIA scale) calibration",
+  "summary": "Search for the IIA exponent that best reproduces a set of stated market-share proportions, then return simulated shares at that exponent.",
+  "description": "Performs a bisection search over the exponents parameter to find the value that minimises the sum of squared errors between simulated shares and a user-supplied stated_proportions map. This is used to calibrate the IIA scale parameter so that the model's base scenario shares match independently observed market shares (e.g., from syndicated data, a stated-importance study, or actual sales data). The output reports simulated shares at the optimal exponent.",
+  "usage": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_exponent_search\"]]\nscenarios = [\"base\"]\nexponent_range = [0.1, 5.0, 0.001]\n\n[\"cs::sim_exponent_search\".stated_proportions]\nProductA = 0.40\nProductB = 0.35\nProductC = 0.25",
+  "arguments": [
+    {
+      "name": "stated_proportions",
+      "type": "object",
+      "required": true,
+      "default": null,
+      "description": "Target market-share proportions for the calibration. Object mapping product_name to a number in [0, 1]. The exponent search minimises the sum of squared errors between the simulated shares (at the candidate exponent) and these stated proportions. Products not listed are excluded from the SSE objective but are still present in the output."
+    },
+    {
+      "name": "exponent_range",
+      "type": "array<number>",
+      "required": false,
+      "default": [0.1, 5.0, 0.001],
+      "description": "Search range and tolerance for the bisection: [min, max, tolerance]. The search is over the interval [min, max] and stops when the interval width falls below tolerance. Array of exactly 3 numbers. Defaults to [0.1, 5.0, 0.001]."
+    },
+    {
+      "name": "measures",
+      "type": "string",
+      "required": false,
+      "default": "share|revenue",
+      "description": "Pipe-separated output measures for the final results run at the optimal exponent."
+    },
+    {
+      "name": "scenarios",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Names of scenarios to calibrate against. Use [\"__all__\"] for every scenario in the sim_db."
+    },
+    {
+      "name": "subgroups",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Subgroup column names for the final results run. The bisection itself uses only the first subgroup for speed."
+    },
+    {
+      "name": "weights",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Weight column names for the final results run."
+    },
+    {
+      "name": "throttles",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Throttle-set name(s). Omit to use the sim_db default."
+    },
+    {
+      "name": "considerations",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Consideration-set name(s). Omit to use the sim_db default."
+    },
+    {
+      "name": "include_nets",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "When true, append net rows summed by product_net group in the final output."
+    },
+    {
+      "name": "prob_methods",
+      "type": "string",
+      "required": false,
+      "default": "sop",
+      "description": "Probability computation method(s) used during the search and the final run. Methods: \"sop\" — standard share-of-preference (multinomial logit); \"topN\" where N ≥ 1 — top-N restricted MNL, only the N highest-utility products receive non-zero probability (\"top1\" is equivalent to first choice); \"<top_spec>:<bot_spec>-<att>\" — two-level nested logit grouped by scenario attribute <att>; \"<bot_spec>-<att>\" shorthand sets top_spec=sop. Pipe-separate to blend (e.g. \"sop|top2\")."
+    },
+    {
+      "name": "prob_methods_wgts",
+      "type": "array<number>",
+      "required": false,
+      "default": [1.0],
+      "description": "Blend weights for prob_methods."
+    },
+    {
+      "name": "trips",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Monte Carlo shopping trips per respondent. Must be >= 1."
+    },
+    {
+      "name": "trip_seeds",
+      "type": "integer",
+      "required": false,
+      "default": 100,
+      "description": "Random seed for trip simulation."
+    },
+    {
+      "name": "price_formulas",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Eval-lang expressions for derived prices."
+    },
+    {
+      "name": "return_debug",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Include per-respondent debug output in the final run."
+    },
+    {
+      "name": "scenario_chgs",
+      "type": "object",
+      "required": false,
+      "default": null,
+      "description": "Attribute overrides applied to all candidate exponent runs. Use this to calibrate against a specific attribute configuration that differs from the scenario baseline."
+    }
+  ],
+  "details": "The bisection runs up to 60 iterations over the interval [min, max]. At each candidate exponent, the simulator runs a full sim_run (using the first subgroup only for speed) and computes SSE over the products listed in stated_proportions. The algorithm evaluates both endpoints and the midpoint, then retains the half of the interval closer to the minimum, narrowing until the interval width falls below tolerance.\n\nstated_proportions does not need to sum to 1.0 — the SSE is computed against raw proportions. However, proportions that sum to approximately 1.0 produce the most interpretable calibration.\n\nProducts listed in stated_proportions but absent from the sim_db scenario are ignored in the SSE but contribute no error signal. Products in the sim_db but not in stated_proportions are free to find their natural level at the optimal exponent; they appear in the output CSV at that exponent.\n\nThe optimal exponent value is encoded in the scenario column of the output: e.g., \"base|exp=1.234567\". To apply this exponent in subsequent analyses, copy the value into the exponents parameter of sim_run, sim_sensitivities, etc.",
+  "value": "Writes sim_exponent_search_0.csv. The scenario column is tagged with the optimal exponent, e.g., \"base|exp=1.234567\". In protocol mode emits event.run.started, event.artifact.created, event.run.finished.",
+  "notes": [
+    "The bisection uses only the first subgroup during the search for speed; the final output CSV is produced with the full subgroup list.",
+    "Bisection converges reliably when the objective is unimodal over the search range. Inspect shares at a few nearby exponent values if the result looks unexpected.",
+    "The default range [0.1, 5.0] covers the vast majority of practical calibrations. Tighten to [0.5, 3.0] if you have a prior estimate.",
+    "The calibrated exponent can then be used in sim_run / sim_sensitivities / etc. via the exponents parameter."
+  ],
+  "see_also": [
+    { "command": "cs::sim_run",           "description": "Run the calibrated simulation with exponents = <found value>." },
+    { "command": "cs::sim_sensitivities", "description": "Sensitivity analysis after calibration." }
+  ],
+  "examples": [
+    {
+      "title": "Basic exponent search",
+      "body": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_exponent_search\"]]\nscenarios = [\"base\"]\nexponent_range = [0.1, 5.0, 0.001]\n\n[\"cs::sim_exponent_search\".stated_proportions]\nProductA = 0.40\nProductB = 0.35\nProductC = 0.25"
+    },
+    {
+      "title": "Narrow range, high precision",
+      "body": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_exponent_search\"]]\nscenarios = [\"base\"]\nexponent_range = [0.8, 2.0, 0.0001]\n\n[\"cs::sim_exponent_search\".stated_proportions]\nProductA = 0.45\nProductB = 0.30\nProductC = 0.25"
+    },
+    {
+      "title": "Calibrate with attribute override",
+      "body": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_exponent_search\"]]\nscenarios = [\"base\"]\nexponent_range = [0.1, 5.0, 0.001]\n\n[\"cs::sim_exponent_search\".stated_proportions]\nProductA = 0.40\nProductB = 0.35\nProductC = 0.25\n\n[\"cs::sim_exponent_search\".scenario_chgs.ProductA]\nprice = 9.99"
+    }
+  ],
+  "fields": [
+    { "name": "stated_proportions", "description": "Target share proportions: {product: 0-1}. Required.",                  "required": true,  "accepted_values": [] },
+    { "name": "exponent_range",     "description": "Bisection range and tolerance: [min, max, tol]. Default: [0.1, 5.0, 0.001].", "required": false, "accepted_values": [] },
+    { "name": "measures",           "description": "Pipe-separated measures for the final output. Default: share|revenue.",  "required": false, "accepted_values": ["share", "revenue", "volume", "cost", "profit", "standard_error", "__all__"] },
+    { "name": "scenarios",          "description": "Scenario name(s) to calibrate. Use [\"__all__\"] for every scenario.",   "required": false, "accepted_values": [] },
+    { "name": "subgroups",          "description": "Subgroup column name(s) for final output.",                              "required": false, "accepted_values": [] },
+    { "name": "weights",            "description": "Weight column name(s).",                                                  "required": false, "accepted_values": [] },
+    { "name": "throttles",          "description": "Throttle set name(s). Omit to use sim_db default.",                      "required": false, "accepted_values": [] },
+    { "name": "considerations",     "description": "Consideration set name(s). Omit to use sim_db default.",                 "required": false, "accepted_values": [] },
+    { "name": "include_nets",       "description": "Add net rows in final output. Default: false.",                          "required": false, "accepted_values": [] },
+    { "name": "prob_methods",       "description": "Probability method: sop, topN (N≥1), nested <top>:<bot>-<att>, or pipe-blended. Default: sop.",  "required": false, "accepted_values": ["sop", "top1", "top2", "top3"] },
+    { "name": "prob_methods_wgts",  "description": "Blend weights for prob_methods. Default: [1.0].",                        "required": false, "accepted_values": [] },
+    { "name": "trips",              "description": "Monte Carlo trips per respondent. Default: 1.",                          "required": false, "accepted_values": [] },
+    { "name": "trip_seeds",         "description": "Random seed for trips. Default: 100.",                                   "required": false, "accepted_values": [] },
+    { "name": "price_formulas",     "description": "Eval-lang expressions for derived prices.",                              "required": false, "accepted_values": [] },
+    { "name": "return_debug",       "description": "Include per-respondent debug output. Default: false.",                   "required": false, "accepted_values": [] },
+    { "name": "scenario_chgs",      "description": "Attribute overrides applied during the search.",                        "required": false, "accepted_values": [] }
+  ]
+}

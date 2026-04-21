@@ -1,0 +1,30 @@
+[
+  {
+    "template_id": "hb-mh-fit-finalize-basic",
+    "title": "HB MH: fit and finalize in one call",
+    "summary": "Run Hierarchical Bayes MCMC and write all exports in a single command.",
+    "category": "starter",
+    "oce_text": "[[\"model-mnl-hb-mh::fit-finalize\"]]\ninput = \"coded_long.csv\"\nrun_dir = \"./runs/hb\"\nrun_name = \"pilot\"\nsegments = 1\niterations = 10000\nburnin = 0.2\n",
+    "input": "coded_long.csv",
+    "run_dir": "./runs/hb",
+    "run_name": "pilot",
+    "segments": 1,
+    "iterations": 10000,
+    "burnin": 0.2
+  },
+  {
+    "template_id": "hb-mh-fit-finalize-2seg",
+    "title": "HB MH: 2-segment fit-finalize with holdout",
+    "summary": "Fit a 2-segment HB mixture model with holdout evaluation and write all exports in one call.",
+    "category": "advanced",
+    "oce_text": "[[\"model-mnl-hb-mh::fit-finalize\"]]\ninput = \"coded_long.csv\"\ntest_input = \"coded_long_test.csv\"\nrun_dir = \"./runs/hb\"\nrun_name = \"pilot_k2\"\nsegments = 2\niterations = 20000\nthreads = 4\nburnin = 0.2\n",
+    "input": "coded_long.csv",
+    "test_input": "coded_long_test.csv",
+    "run_dir": "./runs/hb",
+    "run_name": "pilot_k2",
+    "segments": 2,
+    "iterations": 20000,
+    "threads": 4,
+    "burnin": 0.2
+  }
+]

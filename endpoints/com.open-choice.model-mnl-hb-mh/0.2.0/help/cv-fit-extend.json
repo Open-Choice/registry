@@ -1,0 +1,120 @@
+{
+  "command": "cv-fit-extend",
+  "title": "Extend every fold of an existing cv-fit run by additional iterations",
+  "summary": "Extend every existing fold under `run_dir` by `additional_iterations` more MCMC iterations on top of its persisted chain. Useful when an initial `cv-fit` run did not converge: instead of re-running from scratch, picks up where each fold left off and samples additional iterations. Hyperparameters are not accepted because every fold uses the spec persisted on disk; only the per-fold test CSV is reloaded from `folds_dir` so the holdout evaluation can be recomputed against the larger draw pool. After every fold has been extended, `cv_summary.csv` is rewritten to reflect the new state.",
+  "description": "The cross-validation counterpart of `fit-extend`. Walks every per-fold subdirectory under an existing `cv-fit` `run_dir` and extends each one's chain by `additional_iterations` more MCMC iterations, using the per-fold spec already on disk. After every fold finishes, the aggregate `cv_summary.csv` and `cv_summary.json` are rewritten against the larger draw pool. The per-fold test CSVs are reloaded from `folds_dir` so the recomputed holdout log-likelihood is correct.",
+  "usage": "[[\"model-mnl-hb-mh::cv-fit-extend\"]]\nfolds_dir = \"<cv-folds dir>\"\nrun_dir = \"<existing cv run dir>\"\nrun_name = \"hbmh_run\"\nadditional_iterations = <int>\n# optional:\nheaders = true\nburnin = 0.2",
+  "arguments": [
+    {
+      "name": "folds_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Directory containing per-fold subdirectories (each with `train.csv` and `test.csv`). Required so the holdout data can be reloaded for each fold and the recomputed holdout LL is correct after extension. The same directory you originally passed to `cv-fit` should be used here."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Existing top-level CV run directory. Each per-fold subdirectory under this path is extended in place; the top-level `cv_summary.csv` and `cv_summary.json` are rewritten when the extension finishes."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "additional_iterations",
+      "type": "integer",
+      "required": true,
+      "default": null,
+      "description": "Number of additional MCMC iterations to run on top of each fold's existing chain. Applied uniformly across folds. The full process is mathematically equivalent to having run `cv-fit` for `(original iterations + additional_iterations)` total."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether the per-fold CSVs have a header row. Default `true`."
+    },
+    {
+      "name": "burnin",
+      "type": "number",
+      "required": false,
+      "default": 0.2,
+      "description": "Burnin fraction for per-fold holdout evaluation after the extension finishes. Default `0.2`. Applied to the *full* extended chain, not to the new iterations alone."
+    }
+  ],
+  "details": "`cv-fit-extend` is to `cv-fit` what `fit-extend` is to `fit`: a way to add more iterations to an existing chain without throwing away the warm-up work. The use case is the common one — you ran a CV with a default iteration budget, looked at the holdout LL or trace plots, decided the chains hadn't converged, and want to give them more time without restarting from scratch.\n\nNo hyperparameters are accepted on purpose. Each fold reuses the `spec.json` it was originally fit with, so the extension is mathematically a continuation of the same chain rather than a stitched-together hybrid. To explore different hyperparameters, run a fresh `cv-fit` against a new `run_dir`.\n\nWhen the extension completes, the aggregate summary is rewritten in place. If you want to re-evaluate with a different burnin without further extending, call `cv-finalize`.",
+  "value": "On success, every per-fold subdirectory under `run_dir` is updated in place (new chain chunks appended, status / manifest files refreshed, per-fold exports regenerated), and the top-level `cv_summary.csv` / `cv_summary.json` are rewritten to reflect the larger draw pool.\n\nIn protocol mode the plugin emits `event.run.started`, then per-fold start / progress / finish events, then a final `event.run.finished` (or `event.run.failed`) carrying the updated aggregate summary.",
+  "notes": [
+    "Hyperparameter overrides are not supported — each fold uses the spec persisted on disk. Run a fresh `cv-fit` against a new `run_dir` to change them.",
+    "`folds_dir` must point to the same directory you originally passed to `cv-fit`; the per-fold test CSVs are reloaded from there.",
+    "If you only want to re-summarise with a different burnin and don't need more iterations, use `cv-finalize` instead."
+  ],
+  "see_also": [
+    {
+      "command": "model-mnl-hb-mh::cv-fit",
+      "description": "Initial CV run — extend with this command if it undershoots."
+    },
+    {
+      "command": "model-mnl-hb-mh::fit-extend",
+      "description": "Single-run counterpart."
+    },
+    {
+      "command": "model-mnl-hb-mh::cv-finalize",
+      "description": "Re-summarise an existing CV run with a different burnin."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Extend every fold of a CV run by 5 000 iterations",
+      "body": "[[\"model-mnl-hb-mh::cv-fit-extend\"]]\nfolds_dir = \"./cv-folds\"\nrun_dir = \"./runs/hb-cv\"\nrun_name = \"hbmh_run1\"\nadditional_iterations = 5000"
+    },
+    {
+      "title": "Extend and re-evaluate with a higher burnin",
+      "body": "[[\"model-mnl-hb-mh::cv-fit-extend\"]]\nfolds_dir = \"./cv-folds\"\nrun_dir = \"./runs/hb-cv\"\nrun_name = \"hbmh_run2\"\nadditional_iterations = 10000\nburnin = 0.3"
+    }
+  ],
+  "fields": [
+    {
+      "name": "folds_dir",
+      "description": "Directory containing per-fold subdirs (each with train.csv + test.csv). Required so that holdout data can be reloaded for each fold.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Existing top-level CV run directory. Per-fold subdirs and cv_summary.csv live here.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "additional_iterations",
+      "description": "Number of additional MCMC iterations to run on top of each fold's existing chain. The full process is equivalent to having run `cv-fit` for (original iterations + additional_iterations) total.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "headers",
+      "description": "Whether CSVs have a header row. Default: true.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "burnin",
+      "description": "Burnin fraction for per-fold holdout eval. Default: 0.2.",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

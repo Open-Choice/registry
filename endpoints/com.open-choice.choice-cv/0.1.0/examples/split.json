@@ -1,0 +1,23 @@
+[
+  {
+    "template_id": "cv-split-5fold",
+    "title": "CV: 5-fold split",
+    "summary": "Split data into 5 balanced cross-validation folds.",
+    "category": "starter",
+    "oce_text": "[[\"choice-cv::split\"]]\ninput = \"coded_long.csv\"\noutput_dir = \"./cv-folds\"\nfolds = 5\n",
+    "input": "coded_long.csv",
+    "output_dir": "./cv-folds",
+    "folds": 5
+  },
+  {
+    "template_id": "cv-split-10fold-seeded",
+    "title": "CV: 10-fold split (seeded)",
+    "summary": "Split into 10 folds with a fixed seed for reproducibility.",
+    "category": "advanced",
+    "oce_text": "[[\"choice-cv::split\"]]\ninput = \"coded_long.csv\"\noutput_dir = \"./cv-folds-10\"\nfolds = 10\nrandom_seed = 42\n",
+    "input": "coded_long.csv",
+    "output_dir": "./cv-folds-10",
+    "folds": 10,
+    "random_seed": 42
+  }
+]

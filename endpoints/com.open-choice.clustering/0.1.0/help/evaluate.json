@@ -1,0 +1,42 @@
+{
+  "command": "evaluate",
+  "title": "Score previously-produced clustering solutions against the original features",
+  "summary": "Loads the input CSV and the memberships.csv from a prior segment run, then computes per-solution cluster statistics (size, within-cluster dissimilarity, silhouette, pearson γ) and writes a summary CSV.",
+  "description": "`evaluate` is the companion of `segment`. It re-reads the original input CSV, loads `memberships.csv` from the matching `run_dir` / `run_name`, computes pairwise dissimilarities under the chosen `metric`, and scores each solution named in `solutions`.\n\nUse this to compare solutions across k or across methods after a `segment` call.",
+  "usage": "[[\"clustering::evaluate\"]]\ninput = \"<csv-path>\"\nvars = [\"<feature1>\", ...]\nsolutions = [\"<run_name>_<method>_k<k>\", ...]\nrun_dir = \"<output-root>\"\nrun_name = \"<run-id>\"\nmetric = \"euclidean\"",
+  "arguments": [
+    { "name": "input",     "type": "string",  "required": true,  "default": null, "description": "Path to the same CSV that was passed to segment." },
+    { "name": "vars",      "type": "array",   "required": true,  "default": null, "description": "Feature column names used to build the dissimilarity matrix." },
+    { "name": "solutions", "type": "array",   "required": true,  "default": null, "description": "Solution column names to score; must exist in `memberships.csv`." },
+    { "name": "run_dir",   "type": "string",  "required": true,  "default": null, "description": "Root directory of the prior segment run." },
+    { "name": "run_name",  "type": "string",  "required": true,  "default": null, "description": "Run name used by the prior segment run." },
+    { "name": "metric",    "type": "string",  "required": false, "default": "euclidean", "description": "Dissimilarity metric." },
+    { "name": "na_action", "type": "string",  "required": false, "default": "complete_cases", "description": "Missing-value policy (must match segment)." },
+    { "name": "headers",   "type": "boolean", "required": false, "default": true, "description": "Whether the input CSV has a header row." }
+  ],
+  "details": "## Output scores\nFor each named solution, `evaluate` reports:\n- `n` / `n_clusters` — retained-row count and cluster count (excluding any noise label).\n- `avg_within` / `avg_between` — average within- vs between-cluster dissimilarity.\n- `silhouette` — average silhouette width.\n- `pearson_gamma` — Pearson's γ between pairwise distance and same-cluster indicator. Stronger separation → closer to 1.\n\n## Metric\n- `euclidean` (default) and `manhattan` operate directly on the feature matrix.\n- `gower` handles mixed numeric / categorical columns via per-column normalisation.",
+  "value": "Writes `<run_dir>/ocinfo/<run_name>_clustering/evaluate.csv` with one row per solution and the score columns listed above. Emits `event.run.started`, optional `event.warning` per-solution errors, and `event.run.finished`.",
+  "notes": [
+    "Solution names must match the ones produced by the preceding segment run exactly — they are `<run_name>_<method>_k<k>`.",
+    "A per-solution error (e.g. unknown name) is captured as a warning; other solutions continue to be scored."
+  ],
+  "see_also": [
+    { "command": "clustering::segment", "description": "Produces the memberships.csv that evaluate scores." }
+  ],
+  "examples": [
+    {
+      "title": "Evaluate two k-means solutions",
+      "body": "[[\"clustering::evaluate\"]]\ninput = \"./data/respondents.csv\"\nvars = [\"q1\", \"q2\", \"q3\", \"q4\"]\nsolutions = [\"kmeans_demo_kmeans_k3\", \"kmeans_demo_kmeans_k4\"]\nrun_dir = \"./runs\"\nrun_name = \"kmeans_demo\"\nmetric = \"euclidean\""
+    }
+  ],
+  "fields": [
+    { "name": "input",     "description": "Input CSV path (must match segment).",   "required": true,  "accepted_values": [] },
+    { "name": "vars",      "description": "Feature column names.",                  "required": true,  "accepted_values": [] },
+    { "name": "solutions", "description": "Solution column names to score.",        "required": true,  "accepted_values": [] },
+    { "name": "run_dir",   "description": "Root directory of the prior run.",       "required": true,  "accepted_values": [] },
+    { "name": "run_name",  "description": "Prior run identifier.",                  "required": true,  "accepted_values": [] },
+    { "name": "metric",    "description": "Dissimilarity metric.",                  "required": false, "accepted_values": ["euclidean", "manhattan", "gower"] },
+    { "name": "na_action", "description": "Missing-value policy.",                  "required": false, "accepted_values": ["complete_cases", "fail"] },
+    { "name": "headers",   "description": "Whether the CSV has a header row.",      "required": false, "accepted_values": [] }
+  ]
+}

@@ -1,0 +1,10 @@
+[
+  {
+    "template_id": "lg-cv-finalize",
+    "title": "Logit: finalize a CV run",
+    "summary": "Aggregate per-fold metrics and write cv_summary.json/csv from a completed cv-fit run.",
+    "category": "starter",
+    "oce_text": "[[\"model-mnl-lg::cv-finalize\"]]\nrun_dir = \"./runs/lg-cv\"\n",
+    "run_dir": "./runs/lg-cv"
+  }
+]

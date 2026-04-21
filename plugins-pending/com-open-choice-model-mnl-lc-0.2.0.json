@@ -1,0 +1,18 @@
+{
+  "plugin_id": "com.open-choice.model-mnl-lc",
+  "display_name": "Latent Class (LC)",
+  "description": "Latent class logit model estimation via EM algorithm from coded-long-format choice data.",
+  "publisher": "Open Choice",
+  "categories": [
+    "estimation",
+    "latent-class"
+  ],
+  "version": "0.2.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/model-mnl-lc-v0.2.0/model-mnl-lc-0.2.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "38e70fa9fa26e0bd11707d30796a3f4a0c150465e42ec49328159edb173f6fc4",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:28:59Z",
+  "release_notes": "Initial release.",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-mnl-lc-v0.2.0"
+}

@@ -1,0 +1,19 @@
+{
+  "plugin_id": "com.open-choice.clustering",
+  "display_name": "Clustering",
+  "description": "Native segmentation toolkit: fourteen clustering methods (kmeans, hier, kmedoids, diana, pca_to_hier, hier_to_kmeans, fuzzy, spectral, hdbscan, archetypes, affinity, latent_class, gmm, ensemble) plus a cluster-quality evaluator.",
+  "publisher": "Open Choice",
+  "categories": [
+    "segmentation",
+    "clustering",
+    "unsupervised"
+  ],
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/clustering-v0.1.0/clustering-0.1.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "54bd5aaf4913b0d1c547aa50881826d6c3e2e043d0332cf64b72c09672625403",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:28:14Z",
+  "release_notes": "Initial release. Fourteen clustering methods ported from the R reference:\n\n- Partitional: `kmeans`, `kmedoids`.\n- Hierarchical: `hier`, `diana`, `pca_to_hier`, `hier_to_kmeans`.\n- Soft / density / kernel: `fuzzy`, `spectral`, `hdbscan`.\n- Model-based / latent: `archetypes`, `affinity`, `latent_class`, `gmm` (diagonal or full covariance via EM).\n- Ensemble: `ensemble` (consensus via co-association matrix with hier or pam engine).\n\n`segment` dispatches every method block and writes a unified `memberships.csv`.\n`evaluate` scores solutions via within/between dissimilarity, silhouette, and pearson Î³.",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/clustering-v0.1.0"
+}

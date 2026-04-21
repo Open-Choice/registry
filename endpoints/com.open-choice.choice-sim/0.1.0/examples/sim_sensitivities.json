@@ -1,0 +1,29 @@
+[
+  {
+    "template_id": "sim-sensitivities-price",
+    "title": "Sim: price sensitivity sweep",
+    "summary": "Sweep five price points for one product and return share and revenue per point.",
+    "category": "starter",
+    "oce_text": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_sensitivities\"]]\nscenarios = [\"base\"]\nmeasures = \"share|revenue\"\n\n[\"cs::sim_sensitivities\".scenario_chgs.ProductA]\nprice = [8.0, 9.0, 10.0, 11.0, 12.0]\n",
+    "scenarios": ["base"],
+    "measures": "share|revenue"
+  },
+  {
+    "template_id": "sim-sensitivities-multi-product",
+    "title": "Sim: price sensitivity for two products",
+    "summary": "Sweep price for two products independently.",
+    "category": "advanced",
+    "oce_text": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_sensitivities\"]]\nscenarios = [\"base\"]\nmeasures = \"share|revenue\"\n\n[\"cs::sim_sensitivities\".scenario_chgs.ProductA]\nprice = [8.0, 9.0, 10.0, 11.0, 12.0]\n\n[\"cs::sim_sensitivities\".scenario_chgs.ProductB]\nprice = [13.0, 14.0, 15.0]\n",
+    "scenarios": ["base"],
+    "measures": "share|revenue"
+  },
+  {
+    "template_id": "sim-sensitivities-feature",
+    "title": "Sim: feature toggle sweep",
+    "summary": "Evaluate the share impact of turning a binary feature on or off.",
+    "category": "advanced",
+    "oce_text": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_sensitivities\"]]\nscenarios = [\"base\"]\nmeasures = \"share\"\n\n[\"cs::sim_sensitivities\".scenario_chgs.ProductA]\nfeature_x = [0, 1]\n",
+    "scenarios": ["base"],
+    "measures": "share"
+  }
+]

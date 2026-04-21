@@ -1,0 +1,29 @@
+[
+  {
+    "template_id": "lc-fit-finalize-basic",
+    "title": "Latent class: fit and finalize in one call",
+    "summary": "Fit a latent class model and write all exports in a single command.",
+    "category": "starter",
+    "oce_text": "[[\"model-mnl-lc::fit-finalize\"]]\ninput = \"coded_long.csv\"\nrun_dir = \"./runs\"\nrun_name = \"pilot\"\nsegments = 2\n",
+    "input": "coded_long.csv",
+    "run_dir": "./runs",
+    "run_name": "pilot",
+    "segments": 2
+  },
+  {
+    "template_id": "lc-fit-finalize-3seg",
+    "title": "Latent class: 3-segment fit-finalize with soft start",
+    "summary": "Fit a 3-class model with soft-start annealing and write exports in one call.",
+    "category": "advanced",
+    "oce_text": "[[\"model-mnl-lc::fit-finalize\"]]\ninput = \"coded_long.csv\"\nrun_dir = \"./runs\"\nrun_name = \"pilot_k3\"\nsegments = 3\nuse_soft_start = true\nsoftness_start = 5.0\nsoftness_end = 1.0\nsoft_start_iterations = 30\nrandom_seed = 42\n",
+    "input": "coded_long.csv",
+    "run_dir": "./runs",
+    "run_name": "pilot_k3",
+    "segments": 3,
+    "use_soft_start": true,
+    "softness_start": 5.0,
+    "softness_end": 1.0,
+    "soft_start_iterations": 30,
+    "random_seed": 42
+  }
+]

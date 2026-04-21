@@ -1,0 +1,13 @@
+[
+  {
+    "template_id": "pipeline-maxdiff-basic",
+    "title": "Pipeline: full MaxDiff wrangling",
+    "summary": "Run the full prepare + build + code pipeline in one step.",
+    "category": "starter",
+    "oce_text": "[[\"choice-wrangling::pipeline-maxdiff\"]]\ndesign_csv = \"design.csv\"\nrespondent_csv = \"respondents.csv\"\nrun_dir = \"./workspace\"\nrun_name = \"pilot\"\n",
+    "design_csv": "design.csv",
+    "respondent_csv": "respondents.csv",
+    "run_dir": "./workspace",
+    "run_name": "pilot"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "template_id": "lc-fit-2class",
+    "title": "LC: 2-class fit",
+    "summary": "Fit a 2-class latent class logit model.",
+    "category": "starter",
+    "oce_text": "[[\"model-mnl-lc::fit\"]]\ninput = \"coded_long.csv\"\nrun_dir = \"./runs/lc-k2\"\nsegments = 2\n",
+    "input": "coded_long.csv",
+    "run_dir": "./runs/lc-k2",
+    "segments": 2
+  },
+  {
+    "template_id": "lc-fit-3class",
+    "title": "LC: 3-class fit",
+    "summary": "Fit a 3-class latent class logit model.",
+    "category": "advanced",
+    "oce_text": "[[\"model-mnl-lc::fit\"]]\ninput = \"coded_long.csv\"\nrun_dir = \"./runs/lc-k3\"\nsegments = 3\n",
+    "input": "coded_long.csv",
+    "run_dir": "./runs/lc-k3",
+    "segments": 3
+  }
+]

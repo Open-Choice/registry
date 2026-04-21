@@ -1,0 +1,344 @@
+{
+  "command": "cv-fit",
+  "title": "Run K-fold cross-validated HB fits against a `choice-cv split` directory",
+  "summary": "Run Hierarchical Bayes fits across a directory of cross-validation folds. Each fold subdirectory must contain train.csv and test.csv (the layout produced by `choice-cv split`). Writes per-fold runs under run_dir/<fold_id>/ and an aggregate cv_summary.csv summarising train/holdout fit across folds.",
+  "description": "Walks a `choice-cv split` directory (one subdirectory per fold, each containing `train.csv` and `test.csv`) and runs an HB fit on every fold. The hyperparameters supplied apply to all folds — the fold structure itself is determined entirely by the input directory layout. After all folds complete, an aggregate `cv_summary.csv` is written to the top of `run_dir` with mean and standard deviation of train and holdout log-likelihood across folds.",
+  "usage": "[[\"model-mnl-hb-mh::cv-fit\"]]\nfolds_dir = \"<cv-folds dir>\"\nrun_dir = \"<output dir>\"\nrun_name = \"hbmh_run\"\n# optional:\nsegments = 2\niterations = 10000\nthreads = 4\nrandom_seed = 0\nburnin = 0.2\ncovariate_input = \"<covariates.csv>\"",
+  "arguments": [
+    {
+      "name": "folds_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Directory containing per-fold subdirectories. Each subdirectory must contain `train.csv` and `test.csv` files in coded long format. This is exactly the layout `choice-cv::split` produces."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory. Created if it does not exist. Each fold gets its own subdirectory under `run_dir/` (named after the input fold), and `cv_summary.csv` plus `cv_summary.json` are written at the top level after all folds complete."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether the per-fold CSVs have a header row. Default `true`."
+    },
+    {
+      "name": "segments",
+      "type": "integer",
+      "required": false,
+      "default": 2,
+      "description": "Number of mixture segments. Default `2`. Applied to every fold."
+    },
+    {
+      "name": "iterations",
+      "type": "integer",
+      "required": false,
+      "default": 10000,
+      "description": "Total MCMC iterations per fold. Default `10000`. The same iteration budget is used for every fold; if a single fold needs more, use `cv-fit-extend` after the run."
+    },
+    {
+      "name": "save_every",
+      "type": "integer",
+      "required": false,
+      "default": 10,
+      "description": "Save draws every N iterations. Default `10`."
+    },
+    {
+      "name": "checkpoint_every",
+      "type": "integer",
+      "required": false,
+      "default": 100,
+      "description": "Write checkpoint every N saved draws. Default `100`."
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 4,
+      "description": "Number of threads per fold. Default `4`. Folds are processed sequentially, so the overall thread count never exceeds this value."
+    },
+    {
+      "name": "random_seed",
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "description": "Random seed (`0` = non-deterministic). Default `0`. Each fold derives its own seed from the base seed; with the same base seed and the same input directory the entire CV run is reproducible."
+    },
+    {
+      "name": "chains",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Number of independent MCMC chains per fold. Default `1`. Each chain uses a seed derived from `random_seed` and its chain index. Draws are pooled at finalize time within each fold."
+    },
+    {
+      "name": "report_thin",
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "description": "Convergence-report snapshot interval in saved draws per fold. Default `0` (same as `checkpoint_every`). Controls chart data-point density."
+    },
+    {
+      "name": "burnin",
+      "type": "number",
+      "required": false,
+      "default": 0.2,
+      "description": "Burnin fraction for per-fold holdout evaluation. Default `0.2`. Applied uniformly to every fold's chain when computing holdout LL."
+    },
+    {
+      "name": "amu",
+      "type": "number",
+      "required": false,
+      "default": 0.01,
+      "description": "Precision of normal prior on segment means. Default `0.01`."
+    },
+    {
+      "name": "nu_inc",
+      "type": "integer",
+      "required": false,
+      "default": 3,
+      "description": "Degrees-of-freedom increment for covariance prior. Default `3`."
+    },
+    {
+      "name": "a",
+      "type": "array<number>",
+      "required": false,
+      "default": null,
+      "description": "Dirichlet concentration per segment. Length must equal `segments`."
+    },
+    {
+      "name": "covariate_prior_scale",
+      "type": "number",
+      "required": false,
+      "default": 0.01,
+      "description": "Prior scale for covariate regression coefficients. Default `0.01`."
+    },
+    {
+      "name": "step_size",
+      "type": "number",
+      "required": false,
+      "default": null,
+      "description": "MH proposal step size. Omit for automatic tuning per fold."
+    },
+    {
+      "name": "init_ridge",
+      "type": "number",
+      "required": false,
+      "default": 1e-8,
+      "description": "Numerical ridge for Hessian during MAP init. Default `1e-8`."
+    },
+    {
+      "name": "init_iterations",
+      "type": "integer",
+      "required": false,
+      "default": 250,
+      "description": "Max iterations for MAP initialisation. Default `250`."
+    },
+    {
+      "name": "attribute_signs",
+      "type": "array<object>",
+      "required": false,
+      "default": null,
+      "description": "Sign constraints applied to every fold. Format: `[{ name = \"price\", rule = \"non_pos\" }, ...]` with `rule` ∈ `{non_neg, non_pos}`."
+    },
+    {
+      "name": "covariate_input",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Optional respondent-level covariate CSV (`resp_id` + numeric columns). Same file used by every fold; the per-fold train/test split is at the *response* level, not the covariate level, so the covariate matrix carries through unchanged."
+    }
+  ],
+  "details": "`cv-fit` is the standard way to get cross-validated holdout log-likelihood from an HB model. It assumes you have already run `choice-cv::split` to produce a directory of per-fold train / test pairs; this command then runs `fit` against each of them with a shared hyperparameter set.\n\nFolds are processed sequentially. Within each fold, `threads` worker threads parallelise the per-respondent likelihood evaluation, but no two folds run at the same time — this keeps memory usage bounded. The whole run can take a while; budget for at least `K * single-fit-time` where `K` is the fold count.\n\nOnce every fold has finished, `cv-fit` writes an aggregate summary (`cv_summary.csv` and `cv_summary.json`) at the top of `run_dir` with mean and standard deviation of the per-fold train and holdout log-likelihood. This is the headline cross-validation metric for downstream model comparison.\n\nIf the run finishes but some folds undershoot, use `cv-fit-extend` to add more iterations to every fold without redoing the warm-up work. To explore a different hyperparameter set, run a fresh `cv-fit` against a new `run_dir`.",
+  "value": "On success, `run_dir` contains:\n\n- One subdirectory per fold (named to match the input fold), each containing the same layout as a single `fit` run (chain chunks, `spec.json`, `exports/`, etc.).\n- `cv_summary.csv` and `cv_summary.json` at the top level: per-fold and aggregate train / holdout log-likelihood and acceptance statistics.\n\nIn protocol mode the plugin emits `event.run.started`, then per-fold start / progress / finish events, then a final `event.run.finished` carrying the aggregate summary.",
+  "notes": [
+    "Folds are processed sequentially — total wall-clock time scales linearly with fold count.",
+    "Use `cv-fit-extend` to add more iterations to every fold if the initial run undershoots; don't re-run from scratch.",
+    "The `covariate_input` file is shared across folds; respondents that belong to a fold's test set still get their covariates from this file."
+  ],
+  "see_also": [
+    {
+      "command": "choice-cv::split",
+      "description": "Produces the per-fold directory layout this command consumes."
+    },
+    {
+      "command": "model-mnl-hb-mh::cv-fit-extend",
+      "description": "Extend every fold of an existing CV run."
+    },
+    {
+      "command": "model-mnl-hb-mh::cv-finalize",
+      "description": "Re-summarise an existing CV run with a different burnin."
+    },
+    {
+      "command": "model-mnl-hb-mh::fit",
+      "description": "Single-fit entry point — use this for non-CV runs."
+    },
+    {
+      "command": "model-mnl-lc::cv-fit",
+      "description": "Latent-class counterpart — useful as a comparison baseline."
+    },
+    {
+      "command": "model-mnl-lg::cv-fit",
+      "description": "Aggregate MNL counterpart — useful as a fast lower-complexity baseline."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic 5-fold CV run",
+      "body": "[[\"model-mnl-hb-mh::cv-fit\"]]\nfolds_dir = \"./cv-folds\"\nrun_dir = \"./runs/hb-cv\"\nrun_name = \"hbmh_run1\""
+    },
+    {
+      "title": "Long CV run with sign constraint and reproducible seed",
+      "body": "[[\"model-mnl-hb-mh::cv-fit\"]]\nfolds_dir = \"./cv-folds\"\nrun_dir = \"./runs/hb-cv-long\"\nrun_name = \"hbmh_run2\"\niterations = 20000\nattribute_signs = [{ name = \"price\", rule = \"non_pos\" }]\nrandom_seed = 42"
+    },
+    {
+      "title": "3-segment CV with respondent covariates",
+      "body": "[[\"model-mnl-hb-mh::cv-fit\"]]\nfolds_dir = \"./cv-folds\"\nrun_dir = \"./runs/hb-cv-3seg\"\nrun_name = \"hbmh_run3\"\nsegments = 3\niterations = 15000\ncovariate_input = \"./data/respondent_covariates.csv\"\nrandom_seed = 7"
+    }
+  ],
+  "fields": [
+    {
+      "name": "folds_dir",
+      "description": "Directory containing per-fold subdirs (each with train.csv + test.csv).",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Output directory. Per-fold subdirs and cv_summary.csv are written here.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "headers",
+      "description": "Whether CSVs have a header row. Default: true.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "segments",
+      "description": "Number of mixture segments. Default: 2.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "iterations",
+      "description": "Total MCMC iterations per fold. Default: 10000.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "save_every",
+      "description": "Save draws every N iterations. Default: 10.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "checkpoint_every",
+      "description": "Write checkpoint every N saved draws. Default: 100.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "threads",
+      "description": "Number of threads per fold. Default: 4.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "random_seed",
+      "description": "Random seed (0 = non-deterministic). Default: 0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "chains",
+      "description": "Number of independent MCMC chains per fold. Default: 1.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "report_thin",
+      "description": "Snapshot every N saved draws per fold (0 = checkpoint_every). Default: 0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "burnin",
+      "description": "Burnin fraction for per-fold holdout eval. Default: 0.2.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "amu",
+      "description": "Precision of normal prior on segment means. Default: 0.01.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "nu_inc",
+      "description": "Degrees-of-freedom increment for covariance prior. Default: 3.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "a",
+      "description": "Dirichlet concentration per segment (length = segments).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "covariate_prior_scale",
+      "description": "Prior scale for covariate regression coefficients. Default: 0.01.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "step_size",
+      "description": "MH proposal step size. Omit for automatic tuning.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "init_ridge",
+      "description": "Numerical ridge for Hessian during MAP init. Default: 1e-8.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "init_iterations",
+      "description": "Max iterations for MAP initialisation. Default: 250.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "attribute_signs",
+      "description": "Sign constraints: [{name, rule}] where rule is non_neg or non_pos.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "covariate_input",
+      "description": "Optional covariate CSV (resp_id + numeric columns).",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

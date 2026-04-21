@@ -1,0 +1,17 @@
+{
+  "plugin_id": "com.open-choice.julia-wrapper",
+  "display_name": "Julia Wrapper",
+  "description": "Runs arbitrary Julia scripts via julia and streams stdout/stderr as ocp-json/1 events. Requires Julia to be installed and on PATH.",
+  "publisher": "Open Choice",
+  "categories": [
+    "scripting"
+  ],
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/julia-wrapper-v0.1.0/julia-wrapper-0.1.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "a53638d3e6b089ce32b30c5cf2f8a4ee9dac0674f9c0a81762bf1544e70c9df1",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:29:08Z",
+  "release_notes": "Initial release.",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/julia-wrapper-v0.1.0"
+}

@@ -1,0 +1,12 @@
+[
+  {
+    "template_id": "hb-finalize",
+    "title": "HB: finalize a completed run",
+    "summary": "Recompute the FitSummary and write summary.json + per-respondent point estimates CSV for an existing run.",
+    "category": "starter",
+    "oce_text": "[[\"model-mnl-hb-mh::finalize\"]]\nrun_dir = \"./runs/hb\"\nrun_name = \"pilot\"\nburnin = 0.2\n",
+    "run_dir": "./runs/hb",
+    "run_name": "pilot",
+    "burnin": 0.2
+  }
+]

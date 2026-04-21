@@ -1,0 +1,14 @@
+{
+  "minimal": {
+    "memberships": "./memberships.csv",
+    "run_dir": "./runs",
+    "run_name": "m1"
+  },
+  "pairwise_comparison": {
+    "memberships": "./memberships.csv",
+    "run_dir": "./runs",
+    "run_name": "k3_vs_k4",
+    "uuid_col": "resp_id",
+    "solution_cols": ["sol_3", "sol_4"]
+  }
+}

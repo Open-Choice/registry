@@ -1,0 +1,39 @@
+[
+  {
+    "template_id": "run-python-script-basic",
+    "title": "Run Python Script",
+    "summary": "Run a Python script with no extra arguments.",
+    "category": "starter",
+    "oce_text": "[[\"python-wrapper::run_script\"]]\nscript = \"./analysis.py\"\noutput_dir = \"./outputs/py-run\"\ntrust_acknowledged = true\n",
+    "script": "./analysis.py",
+    "args": [],
+    "kwargs": {},
+    "output_dir": "./outputs/py-run",
+    "trust_acknowledged": true
+  },
+  {
+    "template_id": "run-python-script-with-args",
+    "title": "Run Python Script with Arguments",
+    "summary": "Run a Python script passing positional args and named --key value pairs.",
+    "category": "starter",
+    "oce_text": "[[\"python-wrapper::run_script\"]]\nscript = \"./process.py\"\nargs = [\"input.csv\"]\n\n[\"python-wrapper::run_script\".kwargs]\noutput = \"results.csv\"\nverbose = \"true\"\n\noutput_dir = \"./outputs/py-run\"\ntrust_acknowledged = true\n",
+    "script": "./process.py",
+    "args": ["input.csv"],
+    "kwargs": { "output": "results.csv", "verbose": "true" },
+    "output_dir": "./outputs/py-run",
+    "trust_acknowledged": true
+  },
+  {
+    "template_id": "run-python-script-venv",
+    "title": "Run Python Script in Virtualenv",
+    "summary": "Run a Python script using a project-local virtual environment instead of the system Python.",
+    "category": "starter",
+    "oce_text": "[[\"python-wrapper::run_script\"]]\nscript = \"./train.py\"\nexecutable = \".venv/Scripts/python.exe\"\noutput_dir = \"./outputs/py-run\"\ntrust_acknowledged = true\n",
+    "script": "./train.py",
+    "executable": ".venv/Scripts/python.exe",
+    "args": [],
+    "kwargs": {},
+    "output_dir": "./outputs/py-run",
+    "trust_acknowledged": true
+  }
+]

@@ -1,0 +1,173 @@
+{
+  "command": "sim_lock_step",
+  "title": "Lock-step multi-product sweep",
+  "summary": "Move multiple products together through parallel value lists, producing one simulation point per position.",
+  "description": "Runs the choice simulator for each position in a set of parallel value lists, applying the i-th value from each product's attribute list simultaneously. Unlike sim_sensitivities (one product/attribute at a time) or sim_combinations expand_grid (cartesian product), lock_step moves all products in unison: at position 0 ProductA gets price[0] and ProductB gets price[0]; at position 1 ProductA gets price[1] and ProductB gets price[1]; and so on. This is the natural model for industry-wide price movements, inflation scenarios, or portfolio repricing.",
+  "usage": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_lock_step\"]]\nscenarios = [\"base\"]\nmeasures = \"share|revenue\"\n\n[\"cs::sim_lock_step\".scenario_chgs.ProductA]\nprice = [9.0, 10.0, 11.0]\n\n[\"cs::sim_lock_step\".scenario_chgs.ProductB]\nprice = [14.0, 15.0, 16.0]",
+  "arguments": [
+    {
+      "name": "product_names",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Subset of product names from scenario_chgs to include in the lock-step sweep. When omitted, all products in scenario_chgs participate. Use this to restrict which products move together when scenario_chgs contains more products than you want in the sweep."
+    },
+    {
+      "name": "measures",
+      "type": "string",
+      "required": false,
+      "default": "share|revenue",
+      "description": "Pipe-separated output measures. Any subset of: share, revenue, volume, cost, profit, standard_error. Use \"__all__\" for all six."
+    },
+    {
+      "name": "scenarios",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Names of scenarios to run. Use [\"__all__\"] for every scenario in the sim_db."
+    },
+    {
+      "name": "subgroups",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Subgroup column names. Use [\"__all__\"] for every subgroup column."
+    },
+    {
+      "name": "weights",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Weight column names. Use [\"__all__\"] for all weights."
+    },
+    {
+      "name": "throttles",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Throttle-set name(s). Omit to use the sim_db default."
+    },
+    {
+      "name": "considerations",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Consideration-set name(s). Omit to use the sim_db default."
+    },
+    {
+      "name": "include_nets",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "When true, append net rows summed by product_net group."
+    },
+    {
+      "name": "exponents",
+      "type": "number",
+      "required": false,
+      "default": 1.0,
+      "description": "Beta scale factor applied before exponentiation."
+    },
+    {
+      "name": "prob_methods",
+      "type": "string",
+      "required": false,
+      "default": "sop",
+      "description": "Probability computation method(s). Single method or a pipe-separated blend (e.g. \"sop|top2\"). Methods: \"sop\" — standard share-of-preference (multinomial logit); \"topN\" where N ≥ 1 — top-N restricted MNL, only the N highest-utility products receive non-zero probability (\"top1\" is equivalent to first choice); \"<top_spec>:<bot_spec>-<att>\" — two-level nested logit where products are grouped by scenario attribute <att>, with <bot_spec> within groups and <top_spec> across groups (e.g. \"sop:sop-Brand\", \"top1:sop-Category\"); \"<bot_spec>-<att>\" shorthand sets top_spec=sop implicitly. Blend methods with | and weights via prob_methods_wgts."
+    },
+    {
+      "name": "prob_methods_wgts",
+      "type": "array<number>",
+      "required": false,
+      "default": [1.0],
+      "description": "Blend weights for prob_methods."
+    },
+    {
+      "name": "trips",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Monte Carlo shopping trips per respondent. Must be >= 1."
+    },
+    {
+      "name": "trip_seeds",
+      "type": "integer",
+      "required": false,
+      "default": 100,
+      "description": "Random seed for trip simulation."
+    },
+    {
+      "name": "price_formulas",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Eval-lang expressions for derived prices, applied before each lock-step point."
+    },
+    {
+      "name": "return_debug",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Include per-respondent debug output."
+    },
+    {
+      "name": "scenario_chgs",
+      "type": "object",
+      "required": false,
+      "default": null,
+      "description": "Parallel value lists keyed by product_name. All lists should be the same length; the sweep stops at the shortest. Example: {ProductA: {price: [9, 10, 11]}, ProductB: {price: [14, 15, 16]}}."
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Rayon worker threads for the points × scenarios × weights fan-out. `1` (default) runs serially. Each lock-step position is scored independently. Results are deterministic regardless of thread count."
+    }
+  ],
+  "details": "The implementation uses zip semantics: all attribute value lists across all participating products are zipped together positionally. Position 0 of every list is applied simultaneously in the first simulation, position 1 in the second, and so on.\n\nIf product_names is supplied, only the listed products are included in the zip; other products listed in scenario_chgs are ignored. This allows a single scenario_chgs block to serve both sim_lock_step (filtered to a subset) and sim_run (with the full override).\n\nScenario labels in the output encode the position: \"base|ProductA|price|9.00|ProductB|price|14.00\".\n\nAll value lists should be the same length for predictable results; the zip stops at the shortest list. Scalar values (single numbers) are treated as one-element lists.",
+  "value": "Writes sim_lock_step_0.csv. Scenario column encodes the position, e.g., \"base|ProductA|price|9.00|ProductB|price|14.00\". In protocol mode emits event.run.started, event.artifact.created, event.run.finished.",
+  "notes": [
+    "All value lists should be the same length; the sweep stops at the shortest list.",
+    "Use sim_combinations with expand_grid = true if you want the full cartesian product instead of parallel movement.",
+    "product_names is a filter on the keys of scenario_chgs, not on the products in the sim_db."
+  ],
+  "see_also": [
+    { "command": "cs::sim_combinations", "description": "Cartesian product or zip sweep (expand_grid = false is identical to lock_step without product_names filtering)." },
+    { "command": "cs::sim_sensitivities","description": "One product/attribute at a time sensitivity sweep." },
+    { "command": "cs::sim_run",          "description": "Single-scenario run without sweeping." }
+  ],
+  "examples": [
+    {
+      "title": "Industry-wide price movement",
+      "body": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_lock_step\"]]\nscenarios = [\"base\"]\nmeasures = \"share|revenue\"\n\n[\"cs::sim_lock_step\".scenario_chgs.ProductA]\nprice = [9.0, 10.0, 11.0]\n\n[\"cs::sim_lock_step\".scenario_chgs.ProductB]\nprice = [14.0, 15.0, 16.0]\n\n[\"cs::sim_lock_step\".scenario_chgs.ProductC]\nprice = [12.0, 13.0, 14.0]"
+    },
+    {
+      "title": "Filtered subset of products",
+      "body": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_lock_step\"]]\nscenarios = [\"base\"]\nmeasures = \"share|revenue\"\nproduct_names = [\"ProductA\", \"ProductB\"]\n\n[\"cs::sim_lock_step\".scenario_chgs.ProductA]\nprice = [9.0, 10.0, 11.0]\n\n[\"cs::sim_lock_step\".scenario_chgs.ProductB]\nprice = [14.0, 15.0, 16.0]\n\n[\"cs::sim_lock_step\".scenario_chgs.ProductC]\nprice = [5.0, 6.0, 7.0]"
+    },
+    {
+      "title": "Portfolio repricing across scenarios",
+      "body": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_lock_step\"]]\nscenarios = [\"base\", \"competitive\"]\nmeasures = \"share|revenue\"\n\n[\"cs::sim_lock_step\".scenario_chgs.ProductA]\nprice = [8.99, 9.99, 10.99]\n\n[\"cs::sim_lock_step\".scenario_chgs.ProductB]\nprice = [13.99, 14.99, 15.99]"
+    }
+  ],
+  "fields": [
+    { "name": "product_names",     "description": "Product names to include. Omit to include all products in scenario_chgs.", "required": false, "accepted_values": [] },
+    { "name": "measures",          "description": "Pipe-separated measures. Default: share|revenue.",                         "required": false, "accepted_values": ["share", "revenue", "volume", "cost", "profit", "standard_error", "__all__"] },
+    { "name": "scenarios",         "description": "Scenario name(s) to run. Use [\"__all__\"] for every scenario.",           "required": false, "accepted_values": [] },
+    { "name": "subgroups",         "description": "Subgroup column name(s). Use [\"__all__\"] for all.",                     "required": false, "accepted_values": [] },
+    { "name": "weights",           "description": "Weight column name(s). Use [\"__all__\"] for all.",                       "required": false, "accepted_values": [] },
+    { "name": "throttles",         "description": "Throttle set name(s). Omit to use sim_db default.",                       "required": false, "accepted_values": [] },
+    { "name": "considerations",    "description": "Consideration set name(s). Omit to use sim_db default.",                  "required": false, "accepted_values": [] },
+    { "name": "include_nets",      "description": "Add net rows summed by product_net group. Default: false.",               "required": false, "accepted_values": [] },
+    { "name": "exponents",         "description": "Beta scale factor applied before exponentiation. Default: 1.0.",           "required": false, "accepted_values": [] },
+    { "name": "prob_methods",      "description": "Probability method: sop, topN (N≥1), nested <top>:<bot>-<att>, or pipe-blended. Default: sop.", "required": false, "accepted_values": ["sop", "top1", "top2", "top3"] },
+    { "name": "prob_methods_wgts", "description": "Blend weights for prob_methods. Default: [1.0].",                         "required": false, "accepted_values": [] },
+    { "name": "trips",             "description": "Monte Carlo shopping trips per respondent. Default: 1.",                   "required": false, "accepted_values": [] },
+    { "name": "trip_seeds",        "description": "Random seed for trip simulation. Default: 100.",                          "required": false, "accepted_values": [] },
+    { "name": "price_formulas",    "description": "Eval-lang expressions for derived prices.",                                "required": false, "accepted_values": [] },
+    { "name": "return_debug",      "description": "Include per-respondent debug output. Default: false.",                    "required": false, "accepted_values": [] },
+    { "name": "scenario_chgs",     "description": "Parallel value lists: {product: {attr: [v1, v2, ...]}}.",                "required": false, "accepted_values": [] },
+    { "name": "threads",           "description": "Rayon worker threads for points × scenarios × weights fan-out. Default: 1.", "required": false, "accepted_values": [] }
+  ]
+}

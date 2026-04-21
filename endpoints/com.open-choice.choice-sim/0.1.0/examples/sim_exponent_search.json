@@ -1,0 +1,20 @@
+[
+  {
+    "template_id": "sim-exponent-search-basic",
+    "title": "Sim: exponent search to match stated shares",
+    "summary": "Calibrate the IIA exponent to match three stated market-share proportions.",
+    "category": "starter",
+    "oce_text": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_exponent_search\"]]\nscenarios = [\"base\"]\nexponent_range = [0.1, 5.0, 0.001]\n\n[\"cs::sim_exponent_search\".stated_proportions]\nProductA = 0.40\nProductB = 0.35\nProductC = 0.25\n",
+    "scenarios": ["base"],
+    "exponent_range": [0.1, 5.0, 0.001]
+  },
+  {
+    "template_id": "sim-exponent-search-narrow",
+    "title": "Sim: exponent search (narrow range, high precision)",
+    "summary": "Calibrate with a tighter search range when you have a prior estimate.",
+    "category": "advanced",
+    "oce_text": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_exponent_search\"]]\nscenarios = [\"base\"]\nexponent_range = [0.8, 2.0, 0.0001]\n\n[\"cs::sim_exponent_search\".stated_proportions]\nProductA = 0.45\nProductB = 0.30\nProductC = 0.25\n",
+    "scenarios": ["base"],
+    "exponent_range": [0.8, 2.0, 0.0001]
+  }
+]

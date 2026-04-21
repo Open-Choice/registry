@@ -1,0 +1,28 @@
+[
+  {
+    "template_id": "dfa-search-finalize-basic",
+    "title": "DFA: search-finalize (ladder-beam variable selection)",
+    "summary": "Sweep feature subsets across k using ladder-beam search with in-sample total log-likelihood as the objective. Writes a top-per-k table and the refitted best-subset coefficients.",
+    "category": "starter",
+    "oce_text": "[[\"model-dfa::search-finalize\"]]\ninput = \"wide.csv\"\nrun_dir = \"./runs\"\nrun_name = \"pilot_search\"\ny_col = \"y\"\n",
+    "input": "wide.csv",
+    "run_dir": "./runs",
+    "run_name": "pilot_search",
+    "y_col": "y"
+  },
+  {
+    "template_id": "dfa-search-finalize-bounded",
+    "title": "DFA: search-finalize with bounded k range",
+    "summary": "Constrain the search to k in [2, 5] and widen the beam. Useful when only a handful of predictors should survive.",
+    "category": "advanced",
+    "oce_text": "[[\"model-dfa::search-finalize\"]]\ninput = \"wide.csv\"\nrun_dir = \"./runs\"\nrun_name = \"pilot_search_k25\"\ny_col = \"y\"\nk_min = 2\nk_max = 5\nbeam_width = 50\nstep_top_n = 20\n",
+    "input": "wide.csv",
+    "run_dir": "./runs",
+    "run_name": "pilot_search_k25",
+    "y_col": "y",
+    "k_min": 2,
+    "k_max": 5,
+    "beam_width": 50,
+    "step_top_n": 20
+  }
+]

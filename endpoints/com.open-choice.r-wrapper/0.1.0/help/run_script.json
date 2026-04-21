@@ -1,0 +1,97 @@
+{
+  "command": "run_script",
+  "title": "Execute an R script or inline R code",
+  "summary": "Execute an R script file or inline R code. Stdout is captured line-by-line as Progress events and written to run.log. Stderr is captured line-by-line as Warning events and written to stderr.log. A non-zero exit code produces Finished { success: false }.",
+  "description": "Runs an R script (via `Rscript` or `R --no-save --no-restore --file`) and streams its output back to the Open Choice protocol. Either provide a path to an `.R` file via `script`, or supply inline code via `code` — the two fields are mutually exclusive. Positional and named arguments can be forwarded to the script via `args` and `kwargs`. All output files (run.log, stderr.log) are written to `output_dir`.\n\nThe `trust_acknowledged` field must be set to `true`. This is an explicit safety gate: the plugin executes arbitrary R code with the same OS permissions as the Open Choice process. Only run scripts from sources you trust.",
+  "usage": "[[\"r-wrapper::run_script\"]]\nscript = \"<path/to/script.R>\"\noutput_dir = \"<dir>\"\ntrust_acknowledged = true\n# optional:\nargs = [\"arg1\", \"arg2\"]\nkwargs = { key = \"value\" }\nexecutable = \"Rscript\"",
+  "arguments": [
+    {
+      "name": "script",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Path to the .R file to execute. Mutually exclusive with code. Relative paths are resolved from the directory containing the .oce file. Absolute paths are used as-is."
+    },
+    {
+      "name": "code",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Inline R source code to run. Mutually exclusive with script. Written to a temporary .R file and executed. Use TOML multiline strings (\"\"\"...\"\"\" or '''...''') for multi-line code."
+    },
+    {
+      "name": "args",
+      "type": "array",
+      "required": false,
+      "default": null,
+      "description": "Positional arguments appended after the script path. Accessed in R via commandArgs(trailingOnly=TRUE)."
+    },
+    {
+      "name": "kwargs",
+      "type": "object",
+      "required": false,
+      "default": null,
+      "description": "Named arguments passed as --key value pairs after positional args. Accessed in R via commandArgs(trailingOnly=TRUE) or an arg-parser library."
+    },
+    {
+      "name": "output_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Directory where run.log and stderr.log are written. Created if it does not exist."
+    },
+    {
+      "name": "executable",
+      "type": "string",
+      "required": false,
+      "default": "Rscript",
+      "description": "R executable to use. Defaults to \"Rscript\". Use \"R\" to invoke R --no-save --no-restore --file instead."
+    },
+    {
+      "name": "trust_acknowledged",
+      "type": "boolean",
+      "required": true,
+      "default": null,
+      "description": "Must be true. Explicitly acknowledges that this plugin executes arbitrary R code with the same OS permissions as the Open Choice process, and that the script source is trusted."
+    }
+  ],
+  "details": "`run_script` is a thin execution wrapper: it invokes `Rscript` (or `R`) on the provided script or inline code, streams stdout line-by-line as Progress events, and writes all output to `output_dir/run.log`. Stderr lines are captured as Warning events and written to `output_dir/stderr.log`.\n\nThe `trust_acknowledged = true` field is required and intentional — it prevents accidental execution of untrusted code by requiring the caller to explicitly opt in.\n\nArgument forwarding:\n- `args` becomes positional arguments after the script path on the command line\n- `kwargs` becomes `--key value` pairs following the positional args\nIn R, retrieve them with `commandArgs(trailingOnly = TRUE)`. For structured parsing, use a library like `optparse` or `argparse`.\n\nFor inline code use TOML multiline strings to keep the envelope readable.",
+  "value": "On success, `output_dir` contains:\n\n- `run.log` — all stdout lines from the R process.\n- `stderr.log` — all stderr lines from the R process.\n\nThe plugin emits `event.run.started`, per-line Progress events, and `event.run.finished` (or `event.run.failed` on non-zero exit).",
+  "notes": [
+    "Exactly one of `script` or `code` must be provided — supplying both or neither is an error.",
+    "The `trust_acknowledged` field must be `true`; any other value (including omitting it) causes the command to reject immediately.",
+    "Non-zero exit codes from R produce `event.run.failed`; the log files are still written.",
+    "Use `executable = \"R\"` if your script relies on interactive R session semantics or uses `.Rprofile`."
+  ],
+  "see_also": [
+    { "command": "python-wrapper::run_script", "description": "Python equivalent — run a .py file or pass a virtualenv interpreter." },
+    { "command": "julia-wrapper::run_script", "description": "Julia equivalent — run a .jl file and optionally activate a Julia project environment." }
+  ],
+  "examples": [
+    {
+      "title": "Run an R script with default Rscript",
+      "body": "[[\"r-wrapper::run_script\"]]\nscript = \"./analysis/run_analysis.R\"\noutput_dir = \"./runs/r-analysis\"\ntrust_acknowledged = true"
+    },
+    {
+      "title": "Pass kwargs to the script (e.g. input/output paths)",
+      "body": "[[\"r-wrapper::run_script\"]]\nscript = \"./analysis/export_partworths.R\"\noutput_dir = \"./runs/r-export\"\nkwargs = { input = \"./runs/hb-stan/part_worths.csv\", output = \"./outputs/partworths_clean.csv\" }\ntrust_acknowledged = true"
+    },
+    {
+      "title": "Run inline R code (quick sanity check)",
+      "body": "[[\"r-wrapper::run_script\"]]\ncode = \"\"\"\ncat('R version:', R.version$major, R.version$minor, '\\n')\ncat('Working directory:', getwd(), '\\n')\n\"\"\"\noutput_dir = \"./runs/r-check\"\ntrust_acknowledged = true"
+    },
+    {
+      "title": "Run a script with positional args using the R executable",
+      "body": "[[\"r-wrapper::run_script\"]]\nscript = \"./analysis/batch_model.R\"\nargs = [\"fold_01\", \"fold_02\", \"fold_03\"]\noutput_dir = \"./runs/r-batch\"\nexecutable = \"R\"\ntrust_acknowledged = true"
+    }
+  ],
+  "fields": [
+    { "name": "script",             "description": "Path to .R file. Mutually exclusive with code.",                           "required": false, "accepted_values": [] },
+    { "name": "code",               "description": "Inline R code. Mutually exclusive with script.",                           "required": false, "accepted_values": [] },
+    { "name": "args",               "description": "Positional args forwarded to the script via commandArgs(trailingOnly).",   "required": false, "accepted_values": [] },
+    { "name": "kwargs",             "description": "Named args forwarded as --key value pairs.",                               "required": false, "accepted_values": [] },
+    { "name": "output_dir",         "description": "Directory for run.log and stderr.log.",                                    "required": true,  "accepted_values": [] },
+    { "name": "executable",         "description": "R executable. Default: Rscript.",                                          "required": false, "accepted_values": ["Rscript", "R"] },
+    { "name": "trust_acknowledged", "description": "Must be true. Safety gate for arbitrary code execution.",                  "required": true,  "accepted_values": ["true"] }
+  ]
+}

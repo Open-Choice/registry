@@ -1,0 +1,14 @@
+[
+  {
+    "template_id": "hb-cv-fit",
+    "title": "HB: cross-validated 1-segment fit",
+    "summary": "Run a single-segment HB fit across all folds in folds_dir produced by `choice-cv split`.",
+    "category": "starter",
+    "oce_text": "[[\"model-mnl-hb-mh::cv-fit\"]]\nfolds_dir = \"./folds\"\nrun_dir = \"./runs/hb\"\nrun_name = \"pilot_cv\"\nsegments = 1\niterations = 10000\n",
+    "folds_dir": "./folds",
+    "run_dir": "./runs/hb",
+    "run_name": "pilot_cv",
+    "segments": 1,
+    "iterations": 10000
+  }
+]

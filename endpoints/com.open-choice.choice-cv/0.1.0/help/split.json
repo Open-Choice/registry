@@ -1,0 +1,133 @@
+{
+  "command": "split",
+  "title": "Split coded long-format choice data into balanced cross-validation folds",
+  "summary": "Split coded long-format choice data into balanced cross-validation folds at the respondent level. Each fold gets a train.csv and test.csv, plus a fold_assignments.csv mapping respondents to folds.",
+  "description": "Partitions a coded long-format choice CSV into `folds` cross-validation folds by assigning whole respondents (not individual rows) to folds. Splitting by respondent — and within respondent by whole choice sets — preserves the panel structure that hierarchical and latent-class choice models depend on. The output is laid out as one subdirectory per fold containing matching `train.csv` and `test.csv` files, suitable for direct consumption by `model-mnl-lg::cv-fit`, `model-mnl-lc::cv-fit`, and `model-mnl-hb-mh::cv-fit`.",
+  "usage": "[[\"choice-cv::split\"]]\ninput = \"<coded_long.csv>\"\noutput_dir = \"<dir>\"\n# optional:\nfolds = <int>\nrespondent_col = <int>\ntask_col = <int>\nrandom_seed = <int>\nbalance_iterations = <int>\nbalance_early_stop = <int>",
+  "arguments": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the coded long-format CSV to split. The file must contain a respondent column and a task column (configurable via `respondent_col` / `task_col`); all other columns are carried through unchanged into the train/test outputs."
+    },
+    {
+      "name": "output_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory. Created if it does not exist. The plugin writes one fold subdirectory per fold (each containing a train.csv and test.csv) plus a top-level fold_assignments.csv. Existing files in this directory may be overwritten — point at a fresh directory per run."
+    },
+    {
+      "name": "folds",
+      "type": "integer",
+      "required": false,
+      "default": 5,
+      "description": "Number of cross-validation folds to produce. Integer >= 2. Common choices are 5 (default) and 10. Higher fold counts shrink the test set per fold but increase the number of model fits required downstream."
+    },
+    {
+      "name": "respondent_col",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "1-based column index of the respondent ID column. Default 1 (first column)."
+    },
+    {
+      "name": "task_col",
+      "type": "integer",
+      "required": false,
+      "default": 2,
+      "description": "1-based column index of the task (choice set) number column. Default 2 (second column)."
+    },
+    {
+      "name": "random_seed",
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "description": "Seed for the underlying random number generator. 0 (default) uses an internal seed (123) for deterministic output. Provide a different non-zero value for an alternative reproducible assignment."
+    },
+    {
+      "name": "balance_iterations",
+      "type": "integer",
+      "required": false,
+      "default": 1000,
+      "description": "Maximum iterations of the post-assignment balance loop. After the initial random assignment, the splitter performs swap proposals to even out fold sizes (measured in rows, not respondents). 1000 is comfortable for studies with up to ~5000 respondents."
+    },
+    {
+      "name": "balance_early_stop",
+      "type": "integer",
+      "required": false,
+      "default": 20,
+      "description": "Early-stop patience: stop the balance loop if no improvement is found for this many consecutive iterations. Integer >= 1."
+    },
+    {
+      "name": "fold_prefix",
+      "type": "string",
+      "required": false,
+      "default": "fold",
+      "description": "Prefix for fold subdirectory names. Default 'fold' produces fold_01, fold_02, etc."
+    },
+    {
+      "name": "train_filename",
+      "type": "string",
+      "required": false,
+      "default": "train.csv",
+      "description": "Filename for the training CSV inside each fold directory. Default 'train.csv'."
+    },
+    {
+      "name": "test_filename",
+      "type": "string",
+      "required": false,
+      "default": "test.csv",
+      "description": "Filename for the test CSV inside each fold directory. Default 'test.csv'."
+    },
+    {
+      "name": "assignment_filename",
+      "type": "string",
+      "required": false,
+      "default": "fold_assignments.csv",
+      "description": "Filename for the fold-assignment summary CSV written at the top level of output_dir. Default 'fold_assignments.csv'."
+    }
+  ],
+  "details": "The split is two-phase. First, every distinct respondent ID is randomly assigned to one of `folds` test buckets using a seeded RNG. Second, an iterative balance loop runs up to `balance_iterations` swap proposals, each attempting to move a respondent between folds in order to reduce variance in fold size (measured in total rows, not respondent count). The loop exits early if no improvement is found for `balance_early_stop` consecutive iterations.\n\nThe splitter is deliberately respondent-level: for any individual respondent, every row appears in exactly one fold's test.csv and in `(folds - 1)` of the train.csv files. This is the only split policy that gives valid out-of-sample evaluations for hierarchical Bayes and latent class models.",
+  "value": "On success, `output_dir` contains:\n\n- `{fold_prefix}_NN/train.csv` and `{fold_prefix}_NN/test.csv` for each fold.\n- `fold_assignments.csv` — one row per respondent, recording which test fold they were assigned to.\n\nIn protocol mode the plugin emits `event.run.started`, one `event.artifact.created` per file written, and a final `event.run.finished` (or `event.run.failed`).",
+  "notes": [
+    "respondent_col and task_col are 1-based column indices, not column names.",
+    "`folds` must be >= 2.",
+    "The balance loop minimises row-count variance, not respondent-count variance."
+  ],
+  "see_also": [
+    { "command": "model-mnl-lg::cv-fit", "description": "Cross-validated multinomial logit fit consuming this split." },
+    { "command": "model-mnl-lc::cv-fit", "description": "Cross-validated latent class fit consuming this split." },
+    { "command": "model-mnl-hb-mh::cv-fit", "description": "Cross-validated hierarchical Bayes MH fit consuming this split." }
+  ],
+  "examples": [
+    {
+      "title": "5-fold split with default settings",
+      "body": "[[\"choice-cv::split\"]]\ninput = \"coded_long.csv\"\noutput_dir = \"./cv-folds\"\nfolds = 5"
+    },
+    {
+      "title": "10-fold split with explicit seed",
+      "body": "[[\"choice-cv::split\"]]\ninput = \"coded_long.csv\"\noutput_dir = \"./cv-folds-10\"\nfolds = 10\nrandom_seed = 42"
+    },
+    {
+      "title": "Custom column positions",
+      "body": "[[\"choice-cv::split\"]]\ninput = \"coded_long.csv\"\noutput_dir = \"./cv-folds\"\nfolds = 5\nrespondent_col = 3\ntask_col = 4"
+    }
+  ],
+  "fields": [
+    { "name": "input",               "description": "Path to the coded-long-format CSV file to split.",                       "required": true,  "accepted_values": [] },
+    { "name": "output_dir",          "description": "Output directory. Each fold gets a subdirectory.",                      "required": true,  "accepted_values": [] },
+    { "name": "folds",               "description": "Number of CV folds. Integer >= 2. Default: 5.",                         "required": false, "accepted_values": [] },
+    { "name": "respondent_col",      "description": "1-based column index of the respondent ID. Default: 1.",                "required": false, "accepted_values": [] },
+    { "name": "task_col",            "description": "1-based column index of the task number. Default: 2.",                  "required": false, "accepted_values": [] },
+    { "name": "random_seed",         "description": "RNG seed. 0 = internal default (123). Default: 0.",                    "required": false, "accepted_values": [] },
+    { "name": "balance_iterations",  "description": "Max iterations for fold-size balancing. Default: 1000.",                "required": false, "accepted_values": [] },
+    { "name": "balance_early_stop",  "description": "Stop early if no improvement for N iterations. Default: 20.",           "required": false, "accepted_values": [] },
+    { "name": "fold_prefix",         "description": "Prefix for fold subdirectory names. Default: 'fold'.",                  "required": false, "accepted_values": [] },
+    { "name": "train_filename",      "description": "Training CSV filename inside each fold directory. Default: 'train.csv'.", "required": false, "accepted_values": [] },
+    { "name": "test_filename",       "description": "Test CSV filename inside each fold directory. Default: 'test.csv'.",    "required": false, "accepted_values": [] },
+    { "name": "assignment_filename", "description": "Fold-assignment summary CSV filename. Default: 'fold_assignments.csv'.", "required": false, "accepted_values": [] }
+  ]
+}

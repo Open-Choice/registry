@@ -1,0 +1,24 @@
+{
+  "command": "famd",
+  "title": "Factor analysis of mixed (numeric + categorical) data",
+  "summary": "FAMD in the FactoMineR tradition: standardise numerics, disjunctively code categoricals with the (I_k - p_k)/sqrt(p_k) transform, and run SVD on the concatenated matrix. Emits per-batch dimension summaries plus per-variable and per-level coordinate/contribution/cos² tables.",
+  "description": "For each batch and each n_factors in [min_count, max_count]: complete-case filter, split into numeric and qualitative columns, drop any variable with zero variance or a single-level factor, standardise numerics with n-1 SD, disjunctive code categoricals as (indicator - proportion)/sqrt(proportion), horizontally concatenate, and compute thin SVD of X/sqrt(n). Dimension coordinates are σ·V, contributions are V²·100 (%), cos² is coord²/total per item. Per-variable rows aggregate per-level contributions (categorical) or take the single quantitative row directly. Sheet names follow `<batch>_k<n>_sum`, `<batch>_k<n>_vars`, `<batch>_k<n>_cats` (only emitted when categorical levels exist), truncated to Excel's 31-char limit.",
+  "usage": "[[\"factor-analysis::famd\"]]\ninput = \"./data.csv\"\nmeta = \"./meta.csv\"\nrun_dir = \"./runs\"\nrun_name = \"famd1\"\nmin_count = 2\nmax_count = 5",
+  "arguments": [
+    { "name": "input",     "type": "string",  "required": true,  "description": "CSV of mixed (numeric + categorical) responses." },
+    { "name": "meta",      "type": "string",  "required": true,  "description": "Variable metadata CSV. Column `type` drives encoding: numeric is standardised, dichotomous/ordinal/categorical are disjunctively coded." },
+    { "name": "run_dir",   "type": "string",  "required": true,  "description": "Base directory. Outputs land in `<run_dir>/ocinfo/<run_name>_factor_analysis/`." },
+    { "name": "run_name",  "type": "string",  "required": true,  "description": "Short identifier for this run; no '..', '/' or '\\\\'." },
+    { "name": "batches",   "type": "array",   "required": false, "default": [], "description": "Subset of batches to analyse. Empty = one FAMD per batch, or a single `all` batch if meta has no batch column." },
+    { "name": "min_count", "type": "integer", "required": false, "default": 2, "description": "Smallest number of dimensions per batch." },
+    { "name": "max_count", "type": "integer", "required": false, "default": 5, "description": "Largest number of dimensions per batch." },
+    { "name": "na_action", "type": "string",  "required": false, "default": "complete_cases", "description": "complete_cases (listwise) or fail (abort on NA). FAMD is always listwise per batch." },
+    { "name": "headers",   "type": "boolean", "required": false, "default": true, "description": "Whether CSV inputs have a header row." },
+    { "name": "threads",   "type": "integer", "required": false, "default": 1, "description": "Number of worker threads for the batch × n_factors fan-out. `1` (default) runs serially. Results are deterministic regardless of thread count." },
+    { "name": "output_format", "type": "string", "required": false, "description": "Override stdout format: human, protocol, or quiet." }
+  ],
+  "notes": [
+    "Variables with zero variance (numeric) or a single level (categorical) are dropped from a batch with a warning.",
+    "`strongest_dim` / `strongest_abs_coord` identify the axis on which each variable or level loads most heavily."
+  ]
+}

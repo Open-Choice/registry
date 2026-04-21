@@ -1,0 +1,36 @@
+{
+  "command": "assess-design",
+  "title": "Assess an existing CBC design",
+  "summary": "Computes all valuation criteria (balance, D-efficiency) for a previously generated or externally constructed CBC design.",
+  "arguments": [
+    {
+      "name": "design_path",
+      "type": "string",
+      "required": true,
+      "description": "Path to the wide-format design CSV. Must have columns Version, Task, Concept followed by one column per attribute containing integer level codes."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "description": "Workspace directory where assessment artifacts will be written."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "description": "Run identifier; output files are written to {run_dir}/ocinfo/{run_name}_design/."
+    }
+  ],
+  "value": "Produces a unified assessment with both BO (balance / overlap) and DE (D-efficiency) metrics for any design, regardless of the objective used to generate it. This allows comparing designs across objectives on common ground.",
+  "notes": [
+    "The spec (attribute names, max levels) is inferred from the CSV header and data.",
+    "BO metrics include SSE of total and per-version marginals and pair counts.",
+    "DE metrics assume uniform 1/C choice probabilities (no beta prior) and effects coding with ridge=1e-6.",
+    "d_efficiency = exp(logdet_total / n_parameters)."
+  ],
+  "see_also": [
+    { "command": "design-cbc::design-bo", "description": "Balance / minimum-overlap design generator; faster and prior-free." },
+    { "command": "design-cbc::design-de", "description": "D-efficient design generator; useful when prior beliefs about respondent utilities exist." }
+  ]
+}

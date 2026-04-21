@@ -1,0 +1,308 @@
+{
+  "command": "cv-fit",
+  "title": "Run K-fold cross-validated latent class fits against a `choice-cv split` directory",
+  "summary": "Run latent class fits across a directory of cross-validation folds. Each fold subdirectory must contain train.csv and test.csv (the layout produced by `choice-cv split`). Writes per-fold runs under run_dir/<fold_id>/ and an aggregate cv_summary.csv summarising train/holdout fit across folds.",
+  "description": "Walks a `choice-cv split` directory (one subdirectory per fold, each containing `train.csv` and `test.csv`) and runs an LC fit on every fold. The hyperparameters supplied apply to all folds. After all folds complete, an aggregate `cv_summary.csv` is written to the top of `run_dir` with mean and standard deviation of train and holdout log-likelihood across folds.",
+  "usage": "[[\"model-lc::cv-fit\"]]\nfolds_dir = \"<cv-folds dir>\"\nrun_dir = \"<output dir>\"\nrun_name = \"lc_run\"\n# optional:\nsegments = 2\nem_iterations = 200\nrandom_seed = 0\nthreads = 1",
+  "arguments": [
+    {
+      "name": "folds_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Directory containing per-fold subdirectories. Each subdirectory must contain `train.csv` and `test.csv` files in coded long format. This is exactly the layout `choice-cv::split` produces."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory. Created if it does not exist. Each fold gets its own subdirectory under `run_dir/`, and `cv_summary.csv` plus `cv_summary.json` are written at the top level after all folds complete."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether the per-fold CSVs have a header row. Default `true`."
+    },
+    {
+      "name": "segments",
+      "type": "integer",
+      "required": false,
+      "default": 2,
+      "description": "Number of latent classes. Default `2`. Applied to every fold. Cross-validated holdout LL is the standard model-selection signal for picking the right `segments` value: run several `cv-fit` calls with different segment counts and pick the one with the highest mean holdout LL."
+    },
+    {
+      "name": "em_iterations",
+      "type": "integer",
+      "required": false,
+      "default": 200,
+      "description": "Maximum EM iterations per fold. Default `200`."
+    },
+    {
+      "name": "convergence_threshold",
+      "type": "number",
+      "required": false,
+      "default": 0.00001,
+      "description": "EM convergence tolerance. Default `1e-5`."
+    },
+    {
+      "name": "coefficient_iterations",
+      "type": "integer",
+      "required": false,
+      "default": 50,
+      "description": "Inner-loop maximum iterations for the per-class coefficient fit. Default `50`."
+    },
+    {
+      "name": "coefficient_precision",
+      "type": "number",
+      "required": false,
+      "default": 1e-7,
+      "description": "Inner-loop convergence precision. Default `1e-7`."
+    },
+    {
+      "name": "start_method",
+      "type": "string",
+      "required": false,
+      "default": "smart_random",
+      "accepted_values": [
+        "smart_random",
+        "random_normal",
+        "random_hard_assignment",
+        "zero_start"
+      ],
+      "description": "Initialisation strategy applied to every fold. `user_provided` is not accepted in CV mode because providing a single starting state across folds would be inconsistent with the per-fold split."
+    },
+    {
+      "name": "use_soft_start",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Enable simulated-annealing soft start on segment assignments. See `fit` for details."
+    },
+    {
+      "name": "softness_start",
+      "type": "number",
+      "required": false,
+      "default": null,
+      "description": "Initial soft-start membership softness."
+    },
+    {
+      "name": "softness_end",
+      "type": "number",
+      "required": false,
+      "default": null,
+      "description": "Final soft-start membership softness."
+    },
+    {
+      "name": "soft_start_iterations",
+      "type": "integer",
+      "required": false,
+      "default": null,
+      "description": "Iterations over which the softness decays."
+    },
+    {
+      "name": "fit_error_variance",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Fit a per-respondent scale parameter in every fold."
+    },
+    {
+      "name": "error_variance_grid",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Comma-separated grid of scale values searched over when `fit_error_variance = true`."
+    },
+    {
+      "name": "fixed_zero_effects",
+      "type": "array<object>",
+      "required": false,
+      "default": null,
+      "description": "Force specific segment-attribute coefficients to zero in every fold."
+    },
+    {
+      "name": "random_seed",
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "description": "Random seed (`0` = non-deterministic). Default `0`. Each fold derives its own seed from the base seed."
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Number of threads per fold. Default `1`. Folds are processed sequentially, so the overall thread count never exceeds this value."
+    }
+  ],
+  "details": "`cv-fit` is the standard way to get a cross-validated holdout signal for latent class model selection. Choosing the number of latent classes is the central modelling decision in LC, and CV holdout LL is much more reliable than in-sample BIC / AIC for the typical small-to-medium choice study. The recommended workflow is:\n\n1. Run `choice-cv::split` once to produce a fold directory.\n2. Run `cv-fit` against the same fold directory once per candidate `segments` value (e.g., `segments = 2, 3, 4, 5`).\n3. Compare the aggregate holdout LL across runs (each writes its own `cv_summary.csv`).\n4. Pick the segment count with the highest holdout LL — but cross-check stakeholder interpretability.\n\nFolds are processed sequentially. Within each fold, `threads` worker threads parallelise the per-respondent E-step contributions. Total wall-clock time scales linearly with fold count and roughly linearly with the number of segments and EM iterations.\n\nIf a CV run finishes but the holdout LL across folds is very inconsistent (high standard deviation), the EM landscape is multi-modal under that segment count — try a larger `random_seed` budget (i.e., re-run with several different seeds and average) or enable `use_soft_start`.",
+  "value": "On success, `run_dir` contains:\n\n- One subdirectory per fold (named to match the input fold), each containing the same layout as a single `fit` run.\n- `cv_summary.csv` and `cv_summary.json` at the top level: per-fold and aggregate train / holdout log-likelihood.\n\nIn protocol mode the plugin emits `event.run.started`, then per-fold start / progress / finish events, then `event.run.finished` (or `event.run.failed`) carrying the aggregate summary.",
+  "notes": [
+    "Folds are processed sequentially — total wall-clock time scales linearly with fold count.",
+    "For model selection on `segments`, run several `cv-fit` calls against the same fold directory and compare the aggregate holdout LL.",
+    "If the per-fold holdout LL is very inconsistent, the EM landscape is multi-modal — try multiple seeds or enable `use_soft_start`."
+  ],
+  "see_also": [
+    {
+      "command": "choice-cv::split",
+      "description": "Produces the per-fold directory layout this command consumes."
+    },
+    {
+      "command": "model-lc::cv-finalize",
+      "description": "Re-summarise an existing CV run."
+    },
+    {
+      "command": "model-lc::fit",
+      "description": "Single-fit entry point — use this for non-CV runs."
+    },
+    {
+      "command": "model-hb-mh::cv-fit",
+      "description": "Hierarchical Bayes counterpart — useful as a comparison baseline."
+    },
+    {
+      "command": "model-lg::cv-fit",
+      "description": "Aggregate MNL counterpart — single-class baseline."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic 5-fold CV at 2 classes",
+      "body": "[[\"model-lc::cv-fit\"]]\nfolds_dir = \"./cv-folds\"\nrun_dir = \"./runs/lc-cv-2\"\nrun_name = \"lc_run1\""
+    },
+    {
+      "title": "Sweep over segment counts (run separately for each)",
+      "body": "[[\"model-lc::cv-fit\"]]\nfolds_dir = \"./cv-folds\"\nrun_dir = \"./runs/lc-cv-3\"\nrun_name = \"lc_run2\"\nsegments = 3\nrandom_seed = 42"
+    }
+  ],
+  "fields": [
+    {
+      "name": "folds_dir",
+      "description": "Directory containing per-fold subdirectories (each with train.csv + test.csv).",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Output directory. Per-fold subdirectories and cv_summary.csv are written here.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "headers",
+      "description": "Whether CSVs have a header row. Default: true.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "segments",
+      "description": "Number of latent classes. Default: 2.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "em_iterations",
+      "description": "Maximum EM iterations per fold. Default: 200.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "convergence_threshold",
+      "description": "EM convergence tolerance. Default: 1e-5.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "coefficient_iterations",
+      "description": "Inner-loop maximum iterations. Default: 50.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "coefficient_precision",
+      "description": "Inner-loop convergence precision. Default: 1e-7.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "start_method",
+      "description": "Initialisation strategy.",
+      "required": false,
+      "accepted_values": [
+        "smart_random",
+        "random_normal",
+        "random_hard_assignment",
+        "zero_start"
+      ]
+    },
+    {
+      "name": "use_soft_start",
+      "description": "Enable simulated-annealing soft start.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "softness_start",
+      "description": "Initial soft-start membership softness.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "softness_end",
+      "description": "Final soft-start membership softness.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "soft_start_iterations",
+      "description": "Iterations over which softness decays.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "fit_error_variance",
+      "description": "Fit a per-respondent scale parameter.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "error_variance_grid",
+      "description": "Comma-separated grid of scale values to search over.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "fixed_zero_effects",
+      "description": "Force specific segment-attribute coefficients to zero.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "random_seed",
+      "description": "Random seed (0 = non-deterministic).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "threads",
+      "description": "Number of threads per fold. Default: 1.",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

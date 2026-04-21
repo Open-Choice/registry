@@ -1,0 +1,51 @@
+{
+  "command": "search-finalize",
+  "title": "Search feature subsets and finalize the best LDA fit in one call",
+  "summary": "Ladder-beam subset search over feature columns using in-sample total log-likelihood of the LDA fit as the objective. Produces a top-per-k table, a refitted best-subset coefficient sheet, and a run-info sheet.",
+  "description": "Loads a wide-format training CSV, builds an unconstrained pool over all feature columns, and runs a beam ladder that sweeps k from `k_min` to `k_max` (both directions from a central anchor). At each size the best-scoring subset is retained; each candidate is optionally improved with a local 1-swap. The best overall subset is refitted and written as a coefficient table. Emits a single started / finished event pair.",
+  "usage": "[[\"model-dfa::search-finalize\"]]\ninput = \"<wide.csv>\"\nrun_dir = \"<dir>\"\nrun_name = \"dfa_search\"\ny_col = \"y\"\n# optional:\nk_min = 1\nk_max = 8\nbeam_width = 25\nstep_top_n = 10\n",
+  "arguments": [
+    { "name": "input", "type": "string", "required": true, "default": null, "description": "Path to the wide-format CSV." },
+    { "name": "run_dir", "type": "string", "required": true, "default": null, "description": "Output directory. Artefacts land in `{run_dir}/ocinfo/{run_name}_dfa/`." },
+    { "name": "run_name", "type": "string", "required": true, "default": null, "description": "Short identifier for this run. Must not contain path separators or '..'." },
+    { "name": "y_col", "type": "string", "required": true, "default": null, "description": "Name or 1-based index of the class-label column. Labels must be exactly 1..=K." },
+    { "name": "x_cols", "type": "string", "required": false, "default": null, "description": "Comma-separated specifier picking which columns to use as features. Default: all columns except y_col." },
+    { "name": "headers", "type": "boolean", "required": false, "default": true, "description": "Whether the input CSV has a header row." },
+    { "name": "k_min", "type": "integer", "required": false, "default": 1, "description": "Smallest subset size to evaluate." },
+    { "name": "k_max", "type": "integer", "required": false, "default": null, "description": "Largest subset size to evaluate. Defaults to the number of eligible features (`p`)." },
+    { "name": "beam_width", "type": "integer", "required": false, "default": 25, "description": "Beam width carried between ladder steps." },
+    { "name": "step_top_n", "type": "integer", "required": false, "default": 10, "description": "Top-N children retained per parent at each ladder step." },
+    { "name": "local_improve", "type": "boolean", "required": false, "default": true, "description": "Apply a local 1-swap refinement to each beam candidate." },
+    { "name": "random_seed", "type": "integer", "required": false, "default": 0, "description": "Random seed (0 = non-deterministic)." },
+    { "name": "threads", "type": "integer", "required": false, "default": 1, "description": "Number of Rayon worker threads used to score candidate subsets in parallel at each ladder step. `1` (default) runs serially. Results are deterministic under a given `random_seed` regardless of thread count." }
+  ],
+  "details": "The objective is `sum_i log P(y_i | x_i)` under the LDA fit to the subset — the same total log-likelihood returned by `fit-finalize`. The search is a beam ladder: an anchor search at the midpoint of `[k_min, k_max]` seeds a descent toward `k_min` and an ascent toward `k_max`, both with a frontier of up to `beam_width` candidates. Each candidate expands by drop (down-step) or add (up-step); the best `step_top_n` children feed the next frontier. With `local_improve = true` each child is improved by a local 1-swap until no drop+add pair raises the objective.",
+  "value": "On success, `{run_dir}/ocinfo/{run_name}_dfa/` contains:\n\n- `{run_name}_dfa_search_summary.csv` — one row per k with the best subset found (rank, k, total_llh, item indices/names, scenario_id).\n- `{run_name}_dfa_search_summary.json` — same rows plus ladder diagnostics.\n- `{run_name}_dfa_search_report.xlsx` — `top_subsets`, `best_coefficients`, and `run_info` sheets.\n\nThe primary xlsx is also copied to `{run_dir}/{run_name}_dfa_search.xlsx`.",
+  "notes": [
+    "In-sample total log-likelihood will always favour larger k; compare `cv-search-finalize` (Phase D) for an unbiased selection metric.",
+    "Subsets whose induced pooled covariance is singular are silently assigned `-inf` and are pruned from the ladder."
+  ],
+  "see_also": [
+    { "command": "model-dfa::fit-finalize", "description": "Fit LDA on a fixed feature set." },
+    { "command": "model-dfa::cv-fit-finalize", "description": "Cross-validated LDA fit on a fixed feature set." }
+  ],
+  "examples": [
+    { "title": "Basic search-finalize", "body": "[[\"model-dfa::search-finalize\"]]\ninput = \"./wide.csv\"\nrun_dir = \"./runs\"\nrun_name = \"pilot_search\"\ny_col = \"y\"" },
+    { "title": "Search with bounded k range", "body": "[[\"model-dfa::search-finalize\"]]\ninput = \"./wide.csv\"\nrun_dir = \"./runs\"\nrun_name = \"pilot_search_k25\"\ny_col = \"y\"\nk_min = 2\nk_max = 5\nbeam_width = 50\nstep_top_n = 20" }
+  ],
+  "fields": [
+    { "name": "input", "description": "Path to the wide-format CSV.", "required": true, "accepted_values": [] },
+    { "name": "run_dir", "description": "Output directory.", "required": true, "accepted_values": [] },
+    { "name": "run_name", "description": "Short identifier for this run.", "required": true, "accepted_values": [] },
+    { "name": "y_col", "description": "Name or 1-based index of the class-label column.", "required": true, "accepted_values": [] },
+    { "name": "x_cols", "description": "Feature-column specifier (names, indices, or ranges).", "required": false, "accepted_values": [] },
+    { "name": "k_min", "description": "Smallest subset size.", "required": false, "accepted_values": [] },
+    { "name": "k_max", "description": "Largest subset size.", "required": false, "accepted_values": [] },
+    { "name": "beam_width", "description": "Beam width between ladder steps.", "required": false, "accepted_values": [] },
+    { "name": "step_top_n", "description": "Top-N children retained per parent at each ladder step.", "required": false, "accepted_values": [] },
+    { "name": "local_improve", "description": "Apply a local 1-swap refinement.", "required": false, "accepted_values": [] },
+    { "name": "headers", "description": "CSV header flag.", "required": false, "accepted_values": [] },
+    { "name": "random_seed", "description": "Random seed (0 = non-deterministic).", "required": false, "accepted_values": [] },
+    { "name": "threads", "description": "Rayon worker threads used to score candidates in parallel. Default: 1.", "required": false, "accepted_values": [] }
+  ]
+}

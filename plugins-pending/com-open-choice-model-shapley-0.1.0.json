@@ -1,0 +1,19 @@
+{
+  "plugin_id": "com.open-choice.model-shapley",
+  "display_name": "Model Shapley",
+  "description": "Rust port of R's `relaimpo::calc.relimp(type=\"lmg\")` (exact Shapley), `iopsych::relWt` (Johnson's ε), plus a Castro–Gómez–Tejada sampled Shapley for medium-p. Auto-detects categorical predictors and one-hot expands them; Shapley enumerates over original variable groups, not dummies. Outputs per-variable ε summing to R².",
+  "publisher": "Open Choice",
+  "categories": [
+    "regression",
+    "importance",
+    "statistics",
+    "machine-learning"
+  ],
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/model-shapley-v0.1.0/model-shapley-0.1.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "445d6531bbb4072058e9252b863ae03dd08613e40257f231f6b6ae068c243eab",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:29:05Z",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-shapley-v0.1.0"
+}

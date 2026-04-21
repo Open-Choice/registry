@@ -1,0 +1,171 @@
+{
+  "command": "build-estimation-long",
+  "title": "Apply attribute coding and produce an estimation-ready coded long CSV",
+  "summary": "Transform choice-set data into a coded long-format CSV ready for model estimation. Applies attribute coding from a JSON spec and outputs one row per respondent-task-alternative combination.",
+  "description": "Reads a choice-sets CSV (the output of `build-choice-sets`) along with a coding specification JSON, applies the coding (effects coding, dummy coding, thermometer, etc.) to each design attribute, and writes a coded long-format CSV ready for direct ingestion by the modelling plugins. Also writes a 'cookbook' JSON describing how each estimation-time column maps back to the original attribute and level — needed by `expand-coefficients` for human-readable reporting.",
+  "usage": "[[\"choice-wrangling::build-estimation-long\"]]\nchoice_sets_csv = \"<choice-sets.csv>\"\ntask_metadata_csv = \"<task-metadata.csv>\"\ncoding_json = \"<coding.json>\"\nrun_dir = \"<dir>\"\nrun_name = \"pilot\"\n# optional:\nalternative_position_name = \"alternative_position\"\nadd_best_position_attribute = false\nadd_worst_position_attribute = false\nnegate_worst_utilities = false",
+  "arguments": [
+    {
+      "name": "choice_sets_csv",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the choice-sets CSV produced by `build-choice-sets`. Must contain one row per (respondent, task, alternative) with `chosen_best` / `chosen_worst` indicators and the design attribute columns named in the coding spec."
+    },
+    {
+      "name": "task_metadata_csv",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the task-metadata CSV produced alongside the choice-sets file. Describes the task structure (items per task, best/worst layout, none-mode) and is used to construct the per-row response variable correctly."
+    },
+    {
+      "name": "coding_json",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the coding specification JSON. One entry per design attribute, declaring the coding type (`dummy`, `effects`, `interp_effects`, `thermometer`) and any holdout / base-level overrides. Attributes not listed in the spec are passed through unchanged."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory for the coded-long CSV and its accompanying cookbook JSON. Created if it does not exist."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "alternative_position_name",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Name of the column to write for alternative position within a task (1-based slot index). Used together with the position-attribute toggles to enable position-effect terms in the model. Omit to skip the position column entirely."
+    },
+    {
+      "name": "add_best_position_attribute",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "When `true`, add a coded position attribute for best-side responses, so the model can absorb the slot-position effect on best picks. Effective only if `alternative_position_name` is also set."
+    },
+    {
+      "name": "add_worst_position_attribute",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "When `true`, add a coded position attribute for worst-side responses, capturing slot-position effects on worst picks separately from best picks."
+    },
+    {
+      "name": "negate_worst_utilities",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "When `true`, negate the design-attribute features for worst-side rows so that worst picks contribute with the opposite sign in the linear utility. This is the conventional way to fold best and worst observations into a single MNL likelihood; leave at the default if your downstream model handles best / worst separately."
+    }
+  ],
+  "details": "`build-estimation-long` is the third and final stage of the wrangling pipeline. It converts human-readable choice-set rows into the numeric long-format file that estimation kernels actually consume. Two things happen here: (1) every design attribute named in `coding_json` is replaced with one or more coded columns according to its declared coding type, and (2) the best / worst chosen flags are folded into a single response variable.\n\nThe coding spec is a JSON document with one entry per attribute. Each entry declares a coding type (e.g., `effects`, `dummy`, `interp_effects`, `thermometer`) and may declare a holdout or base level. Attributes not present in the spec are written to the output unchanged, so you can mix coded and pass-through columns freely.\n\n`negate_worst_utilities` toggles the standard 'best minus worst' representation: when enabled, worst-side rows are written with negated feature columns so a single MNL fit can absorb both halves. The plugins in this monorepo (`model-mnl-lg`, `model-mnl-lc`, `model-mnl-hb-mh`) all assume this layout, so it's the right default for most users — but it's left off by default to keep the output explicitly opt-in.\n\nThe accompanying cookbook JSON is what `expand-coefficients` uses later to translate fitted coefficient names back into the original attribute / level form. Keep it alongside the coded CSV; without it, model output is much harder to read.",
+  "value": "On success, `out_dir` contains:\n\n- The coded long-format CSV (one row per respondent-task-alternative, with coded columns for each attribute and a single response variable).\n- A cookbook JSON describing how each coded column maps back to the original attribute and level.\n\nIn protocol mode the plugin emits `event.run.started`, then `event.run.finished` (or `event.run.failed`).",
+  "notes": [
+    "`negate_worst_utilities = true` is required when feeding the output into the bundled `model-mnl-lg`, `model-mnl-lc`, or `model-mnl-hb-mh` plugins on best-worst data. The default is `false` so that callers using a different downstream model are not surprised.",
+    "Position-effect terms require both `alternative_position_name` and the corresponding `add_*_position_attribute` toggle.",
+    "The cookbook JSON is needed by `expand-coefficients` later — keep it next to the coded CSV."
+  ],
+  "see_also": [
+    {
+      "command": "choice-wrangling::build-choice-sets",
+      "description": "Previous stage — produces the choice-sets and task-metadata CSVs that this command consumes."
+    },
+    {
+      "command": "choice-wrangling::expand-coefficients",
+      "description": "Inverse operation — translate fitted coefficients back to attribute / level form using the cookbook."
+    },
+    {
+      "command": "model-mnl-lg::fit",
+      "description": "Aggregate MNL fit on the coded long output."
+    },
+    {
+      "command": "model-mnl-lc::fit",
+      "description": "Latent class fit on the coded long output."
+    },
+    {
+      "command": "model-mnl-hb-mh::fit",
+      "description": "Hierarchical Bayes MH fit on the coded long output."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic best-worst estimation build with negation",
+      "body": "[[\"choice-wrangling::build-estimation-long\"]]\nchoice_sets_csv = \"./choice-sets/choice_sets.csv\"\ntask_metadata_csv = \"./choice-sets/task_metadata.csv\"\ncoding_json = \"./coding.json\"\nrun_dir = \"./estimation\"\nrun_name = \"pilot1\"\nnegate_worst_utilities = true"
+    },
+    {
+      "title": "Add separate best / worst position effects",
+      "body": "[[\"choice-wrangling::build-estimation-long\"]]\nchoice_sets_csv = \"./choice-sets/choice_sets.csv\"\ntask_metadata_csv = \"./choice-sets/task_metadata.csv\"\ncoding_json = \"./coding.json\"\nrun_dir = \"./estimation\"\nrun_name = \"pilot2\"\nalternative_position_name = \"alternative_position\"\nadd_best_position_attribute = true\nadd_worst_position_attribute = true\nnegate_worst_utilities = true"
+    },
+    {
+      "title": "Best-only study — no worst-side negation, no position effects",
+      "body": "[[\"choice-wrangling::build-estimation-long\"]]\nchoice_sets_csv = \"./choice-sets/choice_sets.csv\"\ntask_metadata_csv = \"./choice-sets/task_metadata.csv\"\ncoding_json = \"./coding.json\"\nrun_dir = \"./estimation\"\nrun_name = \"pilot3\""
+    }
+  ],
+  "fields": [
+    {
+      "name": "choice_sets_csv",
+      "description": "Path to the choice-sets CSV.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "task_metadata_csv",
+      "description": "Path to the task metadata CSV.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "coding_json",
+      "description": "Path to the coding specification JSON.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Output directory for the coded-long CSV.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "alternative_position_name",
+      "description": "Name of the alternative-position column in the output. Optional.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "add_best_position_attribute",
+      "description": "Add a coded position attribute for best-side responses. Default: false.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "add_worst_position_attribute",
+      "description": "Add a coded position attribute for worst-side responses. Default: false.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "negate_worst_utilities",
+      "description": "Negate features for worst-side rows so best/worst fold into one MNL. Default: false.",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

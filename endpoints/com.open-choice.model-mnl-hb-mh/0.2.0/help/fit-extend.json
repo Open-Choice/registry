@@ -1,0 +1,98 @@
+{
+  "command": "fit-extend",
+  "title": "Extend an existing HB run by additional MCMC iterations",
+  "summary": "Extend an existing HB run by additional_iterations more MCMC iterations on top of its persisted chain. Useful when an initial `fit` run did not converge: instead of re-running from scratch, picks up where the chain left off and samples more iterations. Running `fit` for 10 000 iterations and then `fit-extend` for another 5 000 produces the same posterior as a single 15 000-iteration run. If the original fit recorded a holdout (test_input), the holdout evaluation is recomputed against the larger draw pool when the run completes.",
+  "description": "Resumes a completed (or interrupted) HB MCMC run from its persisted chain and samples `additional_iterations` more iterations on top of it. The kernel re-uses the existing `spec.json` so all hyperparameters, sign constraints, segment count, threads, and adaptive step size settings carry forward unchanged — only the iteration count and (optionally) the burnin fraction can be changed. The result after extension is mathematically equivalent to having originally run for `(original_iterations + additional_iterations)` iterations in one go.",
+  "usage": "[[\"model-mnl-hb-mh::fit-extend\"]]\nrun_dir = \"<existing run dir>\"\nrun_name = \"hbmh_run\"\nadditional_iterations = <int>\n# optional:\nburnin = 0.2",
+  "arguments": [
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Directory of an existing HB run. Must contain `spec.json`, `manifest.postcard`, `checkpoint.postcard`, and `status.postcard` — the bookkeeping files written by `fit` that allow the chain to resume from the last saved state. The chain chunks under `chunks/` are appended to, not replaced."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "additional_iterations",
+      "type": "integer",
+      "required": true,
+      "default": null,
+      "description": "Number of additional MCMC iterations to sample on top of the existing chain. Must be at least 1. After extension, the chain length is `original_iterations + additional_iterations` and any subsequent `fit-extend` call will resume from this new endpoint."
+    },
+    {
+      "name": "burnin",
+      "type": "number",
+      "required": false,
+      "default": 0.2,
+      "description": "Burnin fraction used when re-evaluating the holdout after the extended run completes. Only relevant if the original fit recorded a `test_input`. Default `0.2`. The burnin is applied to the *full* extended chain, not to the new iterations alone."
+    }
+  ],
+  "details": "`fit-extend` exists because HB chains often need more iterations than the user's first guess. The naive alternative is to re-run `fit` with a larger iteration budget, but that throws away the warm-up work and the adaptively-tuned step size from the original run. Extending picks up exactly where the chain left off and is therefore much cheaper.\n\nThe command does not accept hyperparameter overrides on purpose: if you change the prior, the segment count, the sign constraints, etc., you no longer have a single coherent chain — you have two pieces of two different chains glued together, and the resulting posterior is meaningless. To explore a different specification, run a fresh `fit` instead.\n\nWhen the original run recorded a holdout, the holdout log-likelihood is recomputed at the end of the extension against the new (larger) post-burnin draw pool. To re-evaluate with a different burnin without further extending, just call `finalize` with that burnin.\n\nThe complementary cross-validation entry point is `cv-fit-extend`, which extends every fold of a `cv-fit` run in the same way.",
+  "value": "On success, the existing `run_dir` is updated in place: new chain chunks are appended under `chunks/`, `status.postcard` and `manifest.postcard` are updated to reflect the new chain length, and the `exports/` summary is regenerated against the larger draw pool.\n\nIn protocol mode the plugin emits `event.run.started`, periodic `event.run.progress` events, then `event.run.finished` (or `event.run.failed`).",
+  "notes": [
+    "Extending preserves the original hyperparameters and adaptive step size — to change those, run a fresh `fit` instead.",
+    "Extending is mathematically equivalent to having originally run for `(original + additional)` iterations: the chain state is fully restored from the checkpoint.",
+    "If you only want to re-evaluate with a different burnin and don't need more iterations, use `finalize` instead — it doesn't sample anything."
+  ],
+  "see_also": [
+    {
+      "command": "model-mnl-hb-mh::fit",
+      "description": "Initial fit — run this first; extend if it undershoots."
+    },
+    {
+      "command": "model-mnl-hb-mh::cv-fit-extend",
+      "description": "Cross-validation counterpart — extends every fold of a `cv-fit` run."
+    },
+    {
+      "command": "model-mnl-hb-mh::finalize",
+      "description": "Re-summarise an existing chain with a different burnin."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Extend a run by 5 000 more iterations",
+      "body": "[[\"model-mnl-hb-mh::fit-extend\"]]\nrun_dir = \"./runs/hb\"\nrun_name = \"hbmh_run1\"\nadditional_iterations = 5000"
+    },
+    {
+      "title": "Extend and re-evaluate the holdout with a higher burnin",
+      "body": "[[\"model-mnl-hb-mh::fit-extend\"]]\nrun_dir = \"./runs/hb\"\nrun_name = \"hbmh_run2\"\nadditional_iterations = 10000\nburnin = 0.3"
+    },
+    {
+      "title": "Short diagnostic extension to check if a struggling chain recovers",
+      "body": "[[\"model-mnl-hb-mh::fit-extend\"]]\nrun_dir = \"./runs/hb\"\nrun_name = \"hbmh_run3\"\nadditional_iterations = 2000"
+    }
+  ],
+  "fields": [
+    {
+      "name": "run_dir",
+      "description": "Directory of an existing HB run (must contain spec.json + manifest.postcard + checkpoint.postcard + status.postcard).",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "additional_iterations",
+      "description": "Number of additional MCMC iterations to sample on top of the existing chain.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "burnin",
+      "description": "Burnin fraction used when re-evaluating the holdout after the extended run completes (only relevant if the original fit recorded a test_input). Default: 0.2.",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+[
+  {
+    "template_id": "lg-fit-finalize-basic",
+    "title": "Logit: fit and finalize in one call",
+    "summary": "Fit a multinomial logit and write all exports in a single command.",
+    "category": "starter",
+    "oce_text": "[[\"model-mnl-lg::fit-finalize\"]]\ninput = \"coded_long.csv\"\nrun_dir = \"./runs\"\nrun_name = \"pilot\"\n",
+    "input": "coded_long.csv",
+    "run_dir": "./runs",
+    "run_name": "pilot"
+  },
+  {
+    "template_id": "lg-fit-finalize-with-holdout",
+    "title": "Logit: fit-finalize with holdout evaluation",
+    "summary": "Fit with a separate test set and export summaries in one call.",
+    "category": "advanced",
+    "oce_text": "[[\"model-mnl-lg::fit-finalize\"]]\ninput = \"coded_long.csv\"\ntest_input = \"coded_long_test.csv\"\nrun_dir = \"./runs\"\nrun_name = \"pilot_holdout\"\n",
+    "input": "coded_long.csv",
+    "test_input": "coded_long_test.csv",
+    "run_dir": "./runs",
+    "run_name": "pilot_holdout"
+  }
+]

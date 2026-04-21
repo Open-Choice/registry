@@ -1,0 +1,39 @@
+[
+  {
+    "template_id": "design-maxdiff-basic",
+    "title": "Basic MaxDiff Design",
+    "summary": "Generate a 10-item, 3-per-task, 8-task, 4-version design.",
+    "category": "starter",
+    "oce_text": "[[\"design-maxdiff::design\"]]\nn_items = 10\nitems_per_task = 3\ntasks_per_version = 8\nversions = 4\nrun_dir = \"./runs/design\"\nrun_name = \"v1\"\n",
+    "n_items": 10,
+    "items_per_task": 3,
+    "tasks_per_version": 8,
+    "versions": 4,
+    "run_dir": "./runs/design"
+  },
+  {
+    "template_id": "design-maxdiff-large",
+    "title": "Large Multi-Start Design",
+    "summary": "30-item study with parallel restarts for better optimization.",
+    "category": "advanced",
+    "oce_text": "[[\"design-maxdiff::design\"]]\nn_items = 30\nitems_per_task = 5\ntasks_per_version = 12\nversions = 10\nrun_dir = \"./runs/design-large\"\nrun_name = \"large_v1\"\nn_starts = 4\nthreads = 4\niterations = 500000\n",
+    "n_items": 30,
+    "items_per_task": 5,
+    "tasks_per_version": 12,
+    "versions": 10,
+    "run_dir": "./runs/design-large"
+  },
+  {
+    "template_id": "design-maxdiff-verbose",
+    "title": "Verbose Design (per-version progress)",
+    "summary": "Emits one progress line per completed version. Safe at any version count.",
+    "category": "advanced",
+    "oce_text": "[[\"design-maxdiff::design\"]]\nn_items = 15\nitems_per_task = 4\ntasks_per_version = 10\nversions = 5\nrun_dir = \"./runs/design-verbose\"\nrun_name = \"verbose_v1\"\nverbose = true\n",
+    "n_items": 15,
+    "items_per_task": 4,
+    "tasks_per_version": 10,
+    "versions": 5,
+    "run_dir": "./runs/design-verbose",
+    "verbose": true
+  }
+]

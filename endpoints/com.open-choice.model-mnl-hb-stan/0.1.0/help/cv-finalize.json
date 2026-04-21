@@ -1,0 +1,64 @@
+{
+  "command": "cv-finalize",
+  "title": "Finalize each fold from a cv-fit run and produce a pooled CV summary",
+  "summary": "Finalize each fold run directory written by cv-fit: compute diagnostics and part-worth utilities for each fold using all post-warmup draws, then write a pooled cv_summary.json and cv_summary.csv to run_dir/. The CV summary reports per-fold log joint posterior (lp__) for model comparison.",
+  "description": "Processes every per-fold subdirectory written by `cv-fit`, applying `finalize` to each: loading the chain CSVs and writing diagnostics.json, summary.json, and part_worths.csv in-place using all post-warmup draws. After all folds are finalized, writes cv_summary.json and cv_summary.csv at the top of run_dir with the per-fold log joint posterior (lp__) — the standard metric for comparing HB-Stan model configurations across a CV run.",
+  "usage": "[[\"hb-stan::cv-finalize\"]]\nrun_dir = \"<dir written by cv-fit>\"\nrun_name = \"stan_run\"",
+  "arguments": [
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Directory written by cv-fit. Subdirectories containing hb_fit_chain_*.csv files are treated as fold run directories and finalized in-place. diagnostics.json, summary.json, and part_worths.csv are written to each fold subdirectory. cv_summary.json and cv_summary.csv are written to run_dir/."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    }
+  ],
+  "details": "`cv-finalize` is the post-processing counterpart to `cv-fit`. It walks the per-fold subdirectories of run_dir, identifies those that contain chain CSVs, and runs the same finalization logic as the standalone `finalize` command on each — producing diagnostics.json, summary.json, and part_worths.csv per fold using all post-warmup draws.\n\nOnce all folds are finalized, it assembles a pooled summary (cv_summary.json + cv_summary.csv) at the top of run_dir, reporting the mean log joint posterior (lp__) per fold. This per-fold lp__ is the standard metric for comparing HB-Stan configurations in cross-validation: higher lp__ indicates better posterior fit on the fold's training data.\n\nLike the standalone `finalize`, this command does not touch the chain CSVs — it is purely a read-and-summarise step and can be re-run.",
+  "value": "On success:\n\n- Each fold subdirectory receives diagnostics.json, summary.json, and part_worths.csv.\n- run_dir/ receives cv_summary.json and cv_summary.csv with per-fold lp__ statistics.\n\nIn protocol mode the plugin emits event.run.started, then event.run.finished (or event.run.failed).",
+  "notes": [
+    "All post-warmup draws are used; adaptation draws are controlled by num_warmup at sampling time.",
+    "The per-fold lp__ in cv_summary is used for model comparison, not the absolute value of part-worths.",
+    "Use cv-fit-finalize to run both cv-fit and cv-finalize in one call."
+  ],
+  "see_also": [
+    {
+      "command": "hb-stan::cv-fit",
+      "description": "Produces the per-fold chain CSVs that this command processes."
+    },
+    {
+      "command": "hb-stan::cv-fit-finalize",
+      "description": "Runs cv-fit then cv-finalize in a single call."
+    },
+    {
+      "command": "hb-stan::finalize",
+      "description": "Single-fold finalization."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Finalize a completed cv-fit run",
+      "body": "[[\"hb-stan::cv-finalize\"]]\nrun_dir = \"./runs/hb-stan-cv\"\nrun_name = \"stan_run1\""
+    }
+  ],
+  "fields": [
+    {
+      "name": "run_dir",
+      "description": "Directory written by cv-fit containing per-fold subdirectories.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    }
+  ]
+}

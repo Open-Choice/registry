@@ -1,0 +1,185 @@
+{
+  "command": "pipeline-maxdiff",
+  "title": "Run the full MaxDiff wrangling pipeline end-to-end",
+  "summary": "Run the full MaxDiff data-wrangling pipeline in one step: prepare raw survey data, build choice sets, and produce an estimation-ready coded-long-format CSV. Equivalent to running `prepare-maxdiff`, `build-choice-sets`, and `build-estimation-long` in sequence.",
+  "description": "Convenience wrapper that runs all three stages of the MaxDiff wrangling pipeline (`prepare-maxdiff` → `build-choice-sets` → `build-estimation-long`) in a single call, with a single shared output directory. Designed as the recommended entry point for users who don't need to inspect intermediate files. The argument surface is a superset of `prepare-maxdiff`'s — the same column-name overrides apply, and all intermediate stages are wired together internally.",
+  "usage": "[[\"choice-wrangling::pipeline-maxdiff\"]]\ndesign_csv = \"<design.csv>\"\nrespondent_csv = \"<respondents.csv>\"\nrun_dir = \"<dir>\"\nrun_name = \"pilot\"\n# optional column-name overrides (same as prepare-maxdiff):\nprefix = \"MaxDiff\"\nrespondent_id = \"sys_RespNum\"\nversion_col = \"sys_MXDVersion_MaxDiff\"\nbest_columns = [\"...\"]\nworst_columns = [\"...\"]\ntask_numbers = [1, 2, 3]",
+  "arguments": [
+    {
+      "name": "design_csv",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the experimental design CSV (wide format). Same shape as `prepare-maxdiff` expects: one row per (version, task) with columns identifying the version, task number, and the items shown in each slot of that task."
+    },
+    {
+      "name": "respondent_csv",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the wide-format respondent survey CSV. Must contain a respondent ID, a design-version column, and one column per (task, slot) for the best / worst selections. Auto-discovery handles the typical Decipher naming convention; use the explicit `best_columns` / `worst_columns` overrides for non-Decipher exports."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory for all pipeline files. Created if it does not exist. Receives the prepared respondent CSV, the choice-sets CSV, the task-metadata CSV, the coded long-format CSV, and the cookbook JSON — i.e., the union of all three stages' outputs."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "prefix",
+      "type": "string",
+      "required": false,
+      "default": "MaxDiff",
+      "description": "Column-name prefix used to auto-discover best / worst selection columns when explicit `best_columns` / `worst_columns` are not supplied. With the default, the loader looks for columns matching `<prefix>_b<n>` and `<prefix>_w<n>`."
+    },
+    {
+      "name": "respondent_id",
+      "type": "string",
+      "required": false,
+      "default": "sys_RespNum",
+      "description": "Name of the respondent ID column in `respondent_csv`. Defaults to Decipher's system column naming. Override for any non-Decipher export."
+    },
+    {
+      "name": "version_col",
+      "type": "string",
+      "required": false,
+      "default": "sys_MXDVersion_MaxDiff",
+      "description": "Name of the design-version column in `respondent_csv` — the column that records which version of the design each respondent saw. Used to join respondent selections against the right rows of `design_csv`."
+    },
+    {
+      "name": "selection_value_type",
+      "type": "string",
+      "required": false,
+      "default": "item_name",
+      "description": "How best / worst selection cells encode the chosen item. `\"item_name\"` (default) means cells contain the item label directly."
+    },
+    {
+      "name": "best_columns",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Explicit list of best-selection columns in `respondent_csv`, in task order. Use to bypass auto-discovery for non-Decipher exports."
+    },
+    {
+      "name": "worst_columns",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Explicit list of worst-selection columns in `respondent_csv`, in task order. Optional in best-only studies."
+    },
+    {
+      "name": "task_numbers",
+      "type": "array<integer>",
+      "required": false,
+      "default": null,
+      "description": "Explicit list of task numbers (1-based) corresponding to `best_columns` / `worst_columns`. Use when task numbers are non-contiguous or do not start at 1."
+    },
+    {
+      "name": "design_version_col",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Name of the design-version column in `design_csv`. Defaults to Decipher-style auto-discovery."
+    },
+    {
+      "name": "design_task_col",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Name of the task-number column in `design_csv`. Defaults to Decipher-style auto-discovery."
+    },
+    {
+      "name": "design_item_cols",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Explicit list of item-slot columns in `design_csv`, in slot order."
+    },
+    {
+      "name": "include_original_columns",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "When `true`, the prepared respondent CSV stage retains the original respondent-side selection columns alongside the normalised ones. Default `false` for the pipeline wrapper to keep intermediate files lean."
+    },
+    {
+      "name": "negate_worst_utilities",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "When `true` (the default for the pipeline wrapper), the final `build-estimation-long` stage negates feature columns for worst-side rows so a single MNL fit can absorb both halves of the best/worst response. This matches what the bundled `model-mnl-lg`, `model-mnl-lc`, and `model-mnl-hb-mh` plugins expect. Set to `false` only if your downstream model handles best / worst separately."
+    },
+    {
+      "name": "alternative_position_name",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Name of the alternative-position column to write in the coded-long output (1-based slot index). Required if you want position-effect terms in the model. Omit to skip position columns entirely."
+    },
+    {
+      "name": "add_best_position_attribute",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "When `true`, add a coded position attribute for best-side responses. Effective only if `alternative_position_name` is also set."
+    },
+    {
+      "name": "add_worst_position_attribute",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "When `true`, add a coded position attribute for worst-side responses, capturing slot-position effects on worst picks separately from best picks."
+    }
+  ],
+  "details": "`pipeline-maxdiff` is the recommended one-shot entry point into the wrangling pipeline. It internally invokes `prepare-maxdiff`, `build-choice-sets`, and `build-estimation-long` against a shared output directory, threading the right column names and intermediate file paths between stages so the user doesn't have to.\n\nThe argument surface is a superset of `prepare-maxdiff`'s, with three additions from the estimation-long stage: `negate_worst_utilities`, `alternative_position_name`, and the two `add_*_position_attribute` toggles. The defaults are tuned for the common case: best-worst data, Decipher conventions on the respondent side, and downstream consumption by one of the bundled modelling plugins (so `negate_worst_utilities` defaults to `true` here, unlike the standalone `build-estimation-long` command).\n\nUse the three-stage form (`prepare-maxdiff` → `build-choice-sets` → `build-estimation-long`) instead of this wrapper when you need to inspect intermediate files, re-run a single stage with different settings, or apply a non-default coding spec via `coding_json`. The pipeline wrapper deliberately does not expose `coding_json` — it builds the estimation file with the default per-attribute coding decisions.",
+  "value": "On success, `out_dir` contains the union of all three stages' outputs:\n\n- The prepared respondent CSV (from `prepare-maxdiff`).\n- The choice-sets CSV and task-metadata CSV (from `build-choice-sets`).\n- The coded long-format CSV and cookbook JSON (from `build-estimation-long`).\n\nThe coded long CSV plus cookbook are what downstream estimation plugins (`model-mnl-lg`, `model-mnl-lc`, `model-mnl-hb-mh`) consume directly.\n\nIn protocol mode the plugin emits `event.run.started`, then `event.run.finished` (or `event.run.failed`).",
+  "notes": [
+    "If you need to apply a non-default coding spec (effects vs dummy vs interp_effects per attribute), use the three-stage form and supply `coding_json` to `build-estimation-long`. The pipeline wrapper uses default coding throughout.",
+    "`negate_worst_utilities` defaults to `true` here (vs `false` in the standalone `build-estimation-long` command) because the pipeline assumes you're feeding the bundled best-worst MNL plugins.",
+    "Intermediate files are not deleted at the end of the run — you can inspect or reuse them after the fact."
+  ],
+  "see_also": [
+    {
+      "command": "choice-wrangling::prepare-maxdiff",
+      "description": "First stage of the pipeline, run standalone."
+    },
+    {
+      "command": "choice-wrangling::build-choice-sets",
+      "description": "Second stage of the pipeline, run standalone."
+    },
+    {
+      "command": "choice-wrangling::build-estimation-long",
+      "description": "Third stage of the pipeline, run standalone — needed if you want to supply a custom coding spec."
+    },
+    {
+      "command": "choice-wrangling::expand-coefficients",
+      "description": "Inverse operation that uses the cookbook JSON produced by this pipeline."
+    },
+    {
+      "command": "design-maxdiff::design",
+      "description": "Generate the experimental design CSV that this pipeline consumes."
+    }
+  ],
+  "examples": [
+    {
+      "title": "End-to-end run with Decipher defaults",
+      "body": "[[\"choice-wrangling::pipeline-maxdiff\"]]\ndesign_csv = \"design.csv\"\nrespondent_csv = \"respondents.csv\"\nrun_dir = \"./wrangled\"\nrun_name = \"pilot1\""
+    },
+    {
+      "title": "End-to-end run on a Qualtrics export",
+      "body": "[[\"choice-wrangling::pipeline-maxdiff\"]]\ndesign_csv = \"design.csv\"\nrespondent_csv = \"qualtrics_export.csv\"\nrun_dir = \"./wrangled\"\nrun_name = \"pilot2\"\nrespondent_id = \"ResponseId\"\nversion_col = \"design_version\"\nbest_columns = [\"Q1_best\", \"Q2_best\", \"Q3_best\", \"Q4_best\"]\nworst_columns = [\"Q1_worst\", \"Q2_worst\", \"Q3_worst\", \"Q4_worst\"]\ntask_numbers = [1, 2, 3, 4]"
+    },
+    {
+      "title": "End-to-end run with separate best / worst position effects",
+      "body": "[[\"choice-wrangling::pipeline-maxdiff\"]]\ndesign_csv = \"design.csv\"\nrespondent_csv = \"respondents.csv\"\nrun_dir = \"./wrangled\"\nrun_name = \"pilot3\"\nalternative_position_name = \"alternative_position\"\nadd_best_position_attribute = true\nadd_worst_position_attribute = true"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "command": "sim_db_build",
+  "templates": [
+    {
+      "id": "build-db-hb-basic",
+      "title": "Build sim_db from HB model (basic)",
+      "description": "Minimal setup for model-mnl-hb-mh output with a single 'total' subgroup.",
+      "body": "[sim_db_build]\nbetas_csv     = \"point_estimates.csv\"\ncookbook_json = \"cookbook.json\"\noutput        = \"model.xlsx\"\nmodel_type    = \"hb\"\nresp_id_col   = \"resp_id\"\nsubgroup_cols = [\"total\"]\nweight_col    = \"weight\""
+    },
+    {
+      "id": "build-db-hb-with-scenarios",
+      "title": "Build sim_db from HB model with scenarios",
+      "description": "Full setup including a scenarios CSV and multiple demographic subgroups.",
+      "body": "[sim_db_build]\nbetas_csv     = \"point_estimates.csv\"\ncookbook_json = \"cookbook.json\"\nscenarios_csv = \"scenarios.csv\"\noutput        = \"model.xlsx\"\nmodel_type    = \"hb\"\nresp_id_col   = \"resp_id\"\nsubgroup_cols = [\"total\", \"male\", \"female\", \"age_18_34\", \"age_35_plus\"]\nweight_col    = \"weight\""
+    },
+    {
+      "id": "build-db-hb-stan",
+      "title": "Build sim_db from HB Stan model",
+      "description": "model-mnl-hb-stan output: no header row, no resp_id column, columns in cookbook order.",
+      "body": "[sim_db_build]\nbetas_csv     = \"part_worths.csv\"\ncookbook_json = \"cookbook.json\"\noutput        = \"model_stan.xlsx\"\nmodel_type    = \"hb_stan\""
+    },
+    {
+      "id": "build-db-lc",
+      "title": "Build sim_db from LC model",
+      "description": "model-mnl-lc output: coefficient × segment matrix. Each segment becomes a pseudo-respondent.",
+      "body": "[sim_db_build]\nbetas_csv     = \"coefficients.csv\"\ncookbook_json = \"cookbook.json\"\nscenarios_csv = \"scenarios.csv\"\noutput        = \"model_lc.xlsx\"\nmodel_type    = \"lc\""
+    },
+    {
+      "id": "build-db-lg",
+      "title": "Build sim_db from LG (logit) model",
+      "description": "model-mnl-lg aggregate coefficients. A single pseudo-respondent row is created.",
+      "body": "[sim_db_build]\nbetas_csv     = \"coef_table.csv\"\ncookbook_json = \"cookbook.json\"\nscenarios_csv = \"scenarios.csv\"\noutput        = \"model_lg.xlsx\"\nmodel_type    = \"lg\""
+    }
+  ]
+}

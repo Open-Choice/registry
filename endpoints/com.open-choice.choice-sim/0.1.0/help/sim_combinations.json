@@ -1,0 +1,173 @@
+{
+  "command": "sim_combinations",
+  "title": "Multi-product attribute combinations",
+  "summary": "Run a market simulation for every combination (cartesian product or zip) of attribute values across multiple products.",
+  "description": "Generates multiple simulation points by combining the value lists in scenario_chgs across all products and attributes, then runs each point through the choice simulator. The result is a stacked CSV suitable for price-grid or feature-matrix analyses. Use expand_grid = true (default) for a full cartesian product, or expand_grid = false to zip the lists together in parallel.",
+  "usage": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_combinations\"]]\nscenarios = [\"base\"]\nmeasures = \"share|revenue\"\nexpand_grid = true\n\n[\"cs::sim_combinations\".scenario_chgs.ProductA]\nprice = [9.0, 10.0, 11.0]\n\n[\"cs::sim_combinations\".scenario_chgs.ProductB]\nprice = [14.0, 15.0, 16.0]",
+  "arguments": [
+    {
+      "name": "measures",
+      "type": "string",
+      "required": false,
+      "default": "share|revenue",
+      "description": "Pipe-separated output measures. Any subset of: share, revenue, volume, cost, profit, standard_error. Use \"__all__\" for all six."
+    },
+    {
+      "name": "scenarios",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Names of scenarios to run. Use [\"__all__\"] for every scenario in the sim_db."
+    },
+    {
+      "name": "subgroups",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Subgroup column names. Use [\"__all__\"] for every subgroup column."
+    },
+    {
+      "name": "weights",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Weight column names. Use [\"__all__\"] for all weights."
+    },
+    {
+      "name": "throttles",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Throttle-set name(s). Omit to use the sim_db default."
+    },
+    {
+      "name": "considerations",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Consideration-set name(s). Omit to use the sim_db default."
+    },
+    {
+      "name": "include_nets",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "When true, append net rows summed by product_net group."
+    },
+    {
+      "name": "expand_grid",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "When true (default), compute the full cartesian product of all value lists across all products and attributes, producing one simulation point per unique combination. When false, zip the lists together in parallel (stopping at the shortest list length), producing one simulation point per position."
+    },
+    {
+      "name": "exponents",
+      "type": "number",
+      "required": false,
+      "default": 1.0,
+      "description": "Beta scale factor applied before exponentiation."
+    },
+    {
+      "name": "prob_methods",
+      "type": "string",
+      "required": false,
+      "default": "sop",
+      "description": "Probability computation method(s). Single method or a pipe-separated blend (e.g. \"sop|top2\"). Methods: \"sop\" — standard share-of-preference (multinomial logit); \"topN\" where N ≥ 1 — top-N restricted MNL, only the N highest-utility products receive non-zero probability (\"top1\" is equivalent to first choice); \"<top_spec>:<bot_spec>-<att>\" — two-level nested logit where products are grouped by scenario attribute <att>, with <bot_spec> within groups and <top_spec> across groups (e.g. \"sop:sop-Brand\", \"top1:sop-Category\"); \"<bot_spec>-<att>\" shorthand sets top_spec=sop implicitly. Blend methods with | and weights via prob_methods_wgts."
+    },
+    {
+      "name": "prob_methods_wgts",
+      "type": "array<number>",
+      "required": false,
+      "default": [1.0],
+      "description": "Blend weights for prob_methods."
+    },
+    {
+      "name": "trips",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Monte Carlo shopping trips per respondent. Must be >= 1."
+    },
+    {
+      "name": "trip_seeds",
+      "type": "integer",
+      "required": false,
+      "default": 100,
+      "description": "Random seed for trip simulation."
+    },
+    {
+      "name": "price_formulas",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Eval-lang expressions for derived prices, applied before each combination point."
+    },
+    {
+      "name": "return_debug",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Include per-respondent debug output."
+    },
+    {
+      "name": "scenario_chgs",
+      "type": "object",
+      "required": false,
+      "default": null,
+      "description": "Attribute value lists keyed by product_name. Arrays define the axis of values to combine. Example: {ProductA: {price: [9, 10, 11]}, ProductB: {price: [14, 15, 16]}}."
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Rayon worker threads for the points × scenarios × weights fan-out. `1` (default) runs serially. Each combination point is scored independently, so parallel speedup scales with the size of the grid. Results are deterministic regardless of thread count."
+    }
+  ],
+  "details": "All products' value lists in scenario_chgs are flattened into a list of axes: [(product, attribute, [values])]. The expand_grid mode builds the cartesian product of all axes; the zip mode pairs position 0 of each axis together, position 1 together, etc., stopping at the shortest axis.\n\nFor a grid over two products with three prices each, expand_grid = true produces 3 × 3 = 9 simulation points. zip mode (expand_grid = false) produces 3 points: one per position in the parallel lists.\n\nScenario labels in the output encode the combination: \"base|ProductA|price|9.00|ProductB|price|14.00\".\n\nFor uniform lock-step movement of all products, sim_lock_step is more concise and makes the intent explicit.",
+  "value": "Writes one CSV file (sim_combinations_0.csv). Scenario column encodes the combination point. In protocol mode emits event.run.started, event.artifact.created, event.run.finished.",
+  "notes": [
+    "expand_grid = true can produce a very large result set. Two products with 10 prices each yields 100 simulation points; three products, 1000.",
+    "For lock-step parallel movement of all products by the same deltas, sim_lock_step is more concise.",
+    "In zip mode, all lists should be the same length; the shortest list determines the number of points."
+  ],
+  "see_also": [
+    { "command": "cs::sim_sensitivities", "description": "One attribute at a time sensitivity sweep." },
+    { "command": "cs::sim_lock_step",     "description": "Parallel movement of all products by the same delta values." },
+    { "command": "cs::sim_run",           "description": "Single scenario run without sweeping." }
+  ],
+  "examples": [
+    {
+      "title": "Price grid (2 products, cartesian)",
+      "body": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_combinations\"]]\nscenarios = [\"base\"]\nmeasures = \"share|revenue\"\nexpand_grid = true\n\n[\"cs::sim_combinations\".scenario_chgs.ProductA]\nprice = [9.0, 10.0, 11.0]\n\n[\"cs::sim_combinations\".scenario_chgs.ProductB]\nprice = [14.0, 15.0, 16.0]"
+    },
+    {
+      "title": "Parallel price movement (zip)",
+      "body": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_combinations\"]]\nscenarios = [\"base\"]\nmeasures = \"share|revenue\"\nexpand_grid = false\n\n[\"cs::sim_combinations\".scenario_chgs.ProductA]\nprice = [9.0, 10.0, 11.0]\n\n[\"cs::sim_combinations\".scenario_chgs.ProductB]\nprice = [14.0, 15.0, 16.0]"
+    },
+    {
+      "title": "Feature matrix (2 binary features, cartesian)",
+      "body": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_combinations\"]]\nscenarios = [\"base\"]\nmeasures = \"share\"\nexpand_grid = true\n\n[\"cs::sim_combinations\".scenario_chgs.ProductA]\nfeature_x = [0, 1]\nfeature_y = [0, 1]"
+    }
+  ],
+  "fields": [
+    { "name": "measures",          "description": "Pipe-separated measures. Default: share|revenue.",                  "required": false, "accepted_values": ["share", "revenue", "volume", "cost", "profit", "standard_error", "__all__"] },
+    { "name": "scenarios",         "description": "Scenario name(s) to run. Use [\"__all__\"] for every scenario.",    "required": false, "accepted_values": [] },
+    { "name": "subgroups",         "description": "Subgroup column name(s). Use [\"__all__\"] for all.",              "required": false, "accepted_values": [] },
+    { "name": "weights",           "description": "Weight column name(s). Use [\"__all__\"] for all.",                "required": false, "accepted_values": [] },
+    { "name": "throttles",         "description": "Throttle set name(s). Omit to use sim_db default.",                "required": false, "accepted_values": [] },
+    { "name": "considerations",    "description": "Consideration set name(s). Omit to use sim_db default.",           "required": false, "accepted_values": [] },
+    { "name": "include_nets",      "description": "Add net rows summed by product_net group. Default: false.",        "required": false, "accepted_values": [] },
+    { "name": "expand_grid",       "description": "Cartesian product (true) or zip (false). Default: true.",         "required": false, "accepted_values": [] },
+    { "name": "exponents",         "description": "Beta scale factor applied before exponentiation. Default: 1.0.",   "required": false, "accepted_values": [] },
+    { "name": "prob_methods",      "description": "Probability method: sop, topN (N≥1), nested <top>:<bot>-<att>, or pipe-blended. Default: sop.", "required": false, "accepted_values": ["sop", "top1", "top2", "top3"] },
+    { "name": "prob_methods_wgts", "description": "Blend weights for prob_methods. Default: [1.0].",                 "required": false, "accepted_values": [] },
+    { "name": "trips",             "description": "Monte Carlo shopping trips per respondent. Default: 1.",           "required": false, "accepted_values": [] },
+    { "name": "trip_seeds",        "description": "Random seed for trip simulation. Default: 100.",                  "required": false, "accepted_values": [] },
+    { "name": "price_formulas",    "description": "Eval-lang expressions for derived prices.",                        "required": false, "accepted_values": [] },
+    { "name": "return_debug",      "description": "Include per-respondent debug output. Default: false.",             "required": false, "accepted_values": [] },
+    { "name": "scenario_chgs",     "description": "Attribute value lists: {product: {attr: [v1, v2, ...]}}.",        "required": false, "accepted_values": [] },
+    { "name": "threads",           "description": "Rayon worker threads for points × scenarios × weights fan-out. Default: 1.", "required": false, "accepted_values": [] }
+  ]
+}

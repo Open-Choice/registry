@@ -1,0 +1,102 @@
+{
+  "command": "expand-coefficients",
+  "title": "Expand coded model coefficients back to human-readable attribute / level form",
+  "summary": "Translate raw coded coefficients from a model fit back into attribute / level form using the coding cookbook produced by `build-estimation-long`. Reverses the effects / dummy / interp coding so each estimation column maps to one or more report rows.",
+  "description": "Reads a fitted coefficients CSV (the raw output from any of the modelling plugins) and the cookbook JSON written by `build-estimation-long`, and produces an expanded coefficients CSV in attribute / level form. The cookbook records the mapping from each coded estimation column back to its source attribute and level, plus the linear weights needed to recover dropped (base) levels under effects coding. The expansion uses these weights to compute level-form coefficients that sum to zero (or to the dropped level) within each attribute.",
+  "usage": "[[\"choice-wrangling::expand-coefficients\"]]\ncoefficients_csv = \"<coefficients.csv>\"\ncookbook_json = \"<cookbook.json>\"\nrun_dir = \"<out.csv>\"\nrun_name = \"pilot\"",
+  "arguments": [
+    {
+      "name": "coefficients_csv",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the raw coefficients CSV from model estimation. Expected format: one column per estimation column (matching the names in the coded-long CSV), plus rows for the point estimate and any standard errors / posterior summaries the model produced. The plugin reads all numeric columns and applies the cookbook expansion to each."
+    },
+    {
+      "name": "cookbook_json",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the coding cookbook JSON written by `build-estimation-long`. This file describes how each coded column maps back to an original attribute and level, and provides the linear weights needed to recover dropped base levels."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output path for the expanded coefficients CSV. The output has one row per (attribute, level), with the corresponding expanded coefficient value(s) — one column per metric carried in `coefficients_csv` (point estimate, SE, posterior mean, etc.)."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    }
+  ],
+  "details": "Coding schemes used by `build-estimation-long` (effects, dummy, interp_effects, thermometer) all reduce a `K`-level attribute to fewer than `K` columns by dropping or contrasting against a base level. The fitted coefficients in those reduced columns are statistically convenient but hard to read directly: an effects-coded coefficient is the level-vs-grand-mean contrast, a dummy-coded one is the level-vs-base contrast, and so on.\n\n`expand-coefficients` undoes this reduction. For each attribute, it reads the cookbook entries describing the source coding, applies the inverse linear transform, and emits one row per original level — including the dropped level under effects or dummy coding. The output is what you'd put in a report table or hand to a stakeholder.\n\nThis command is purely a post-processing step: it does not re-estimate anything, does not require any of the original survey data, and does not communicate with any model. It only needs the coefficients file and the cookbook produced earlier by `build-estimation-long`.",
+  "value": "On success, `out_csv` contains the expanded coefficient table — one row per (attribute, level), with one numeric column per metric in the input coefficients file.\n\nIn protocol mode the plugin emits `event.run.started`, then `event.run.finished` (or `event.run.failed`).",
+  "notes": [
+    "The cookbook must come from the same `build-estimation-long` run that produced the data the model was fit on. Mixing cookbooks across runs will silently produce wrong expansions if column names happen to overlap.",
+    "Pass-through columns (attributes that were not coded) are emitted unchanged in the output.",
+    "Standard errors and posterior intervals are expanded using the same linear weights as the point estimate; this is exact for linear contrasts and is the standard approach in the choice-modelling literature."
+  ],
+  "see_also": [
+    {
+      "command": "choice-wrangling::build-estimation-long",
+      "description": "Produces the cookbook JSON that this command consumes."
+    },
+    {
+      "command": "model-mnl-lg::finalize",
+      "description": "Produces a coefficients CSV from an aggregate MNL fit."
+    },
+    {
+      "command": "model-mnl-lc::finalize",
+      "description": "Produces per-class coefficients from a latent class fit."
+    },
+    {
+      "command": "model-mnl-hb-mh::finalize",
+      "description": "Produces a posterior coefficient summary from an HB-MH fit."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Expand coefficients from a finalised aggregate MNL fit",
+      "body": "[[\"choice-wrangling::expand-coefficients\"]]\ncoefficients_csv = \"./runs/lg/coefficients.csv\"\ncookbook_json = \"./estimation/cookbook.json\"\nrun_dir = \"./runs/lg/coefficients_expanded.csv\"\nrun_name = \"pilot1\""
+    },
+    {
+      "title": "Expand a hierarchical Bayes posterior summary",
+      "body": "[[\"choice-wrangling::expand-coefficients\"]]\ncoefficients_csv = \"./runs/hb/posterior_summary.csv\"\ncookbook_json = \"./estimation/cookbook.json\"\nrun_dir = \"./runs/hb/posterior_expanded.csv\"\nrun_name = \"pilot2\""
+    },
+    {
+      "title": "Expand per-class latent class coefficients",
+      "body": "[[\"choice-wrangling::expand-coefficients\"]]\ncoefficients_csv = \"./runs/lc/exports/coefficients.csv\"\ncookbook_json = \"./estimation/cookbook.json\"\nrun_dir = \"./runs/lc/exports/coefficients_expanded.csv\"\nrun_name = \"pilot3\""
+    }
+  ],
+  "fields": [
+    {
+      "name": "coefficients_csv",
+      "description": "Path to the raw coefficients CSV from model estimation.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "cookbook_json",
+      "description": "Path to the coding cookbook JSON (maps coded columns to original attribute labels).",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Output path for the expanded coefficients CSV.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    }
+  ]
+}

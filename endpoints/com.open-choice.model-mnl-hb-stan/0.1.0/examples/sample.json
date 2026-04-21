@@ -1,0 +1,30 @@
+[
+  {
+    "template_id": "hb-stan-sample-default",
+    "title": "Sample: default settings",
+    "summary": "Run 4 chains × 1000 draws with default priors.",
+    "category": "starter",
+    "oce_text": "[[\"hb-stan::sample\"]]\ndata = \"./data/hb_data.json\"\nrun_dir = \"./runs/hb_stan\"\nnum_samples = 1000\nnum_warmup = 500\nnum_chains = 4\nseed = 42\n",
+    "data": "./data/hb_data.json",
+    "run_dir": "./runs/hb_stan",
+    "num_samples": 1000,
+    "num_warmup": 500,
+    "num_chains": 4,
+    "seed": 42,
+    "parallel_chains": true
+  },
+  {
+    "template_id": "hb-stan-sample-quick",
+    "title": "Sample: quick test",
+    "summary": "Single chain, 250 draws — for testing data and model setup.",
+    "category": "starter",
+    "oce_text": "[[\"hb-stan::sample\"]]\ndata = \"./data/hb_data.json\"\nrun_dir = \"./runs/hb_stan_quick\"\nnum_samples = 250\nnum_warmup = 250\nnum_chains = 1\nseed = 1\n",
+    "data": "./data/hb_data.json",
+    "run_dir": "./runs/hb_stan_quick",
+    "num_samples": 250,
+    "num_warmup": 250,
+    "num_chains": 1,
+    "seed": 1,
+    "parallel_chains": false
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "template_id": "maxdiff-turf-score-scenarios-basic",
+    "title": "TURF: score hand-built scenarios",
+    "summary": "Score a CSV of candidate subsets against per-respondent utilities.",
+    "category": "starter",
+    "oce_text": "[[\"maxdiff-turf::score-scenarios\"]]\nutilities = \"./utilities.csv\"\nscenarios = \"./scenarios.csv\"\nout_dir = \"./runs/score-scenarios\"\nreach_method = \"first-choice\"\nnon_utility_cols = \"1,2\"\n",
+    "utilities": "./utilities.csv",
+    "scenarios": "./scenarios.csv",
+    "out_dir": "./runs/score-scenarios",
+    "reach_method": "first-choice",
+    "non_utility_cols": "1,2"
+  }
+]

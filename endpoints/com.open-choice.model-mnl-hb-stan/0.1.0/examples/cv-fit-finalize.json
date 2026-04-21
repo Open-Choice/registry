@@ -1,0 +1,20 @@
+{
+  "command": "cv-fit-finalize",
+  "examples": [
+    {
+      "id": "cv-fit-finalize-default",
+      "title": "Cross-validated fit and finalize (default settings)",
+      "description": "Run HB-MNL sampling across all folds, then finalize each fold immediately to produce part_worths and diagnostics, and write the aggregate cv_summary.",
+      "params": {
+        "folds_dir":       "./data/folds",
+        "run_dir":         "./runs",
+        "run_name":        "pilot_cv",
+        "num_samples":     1000,
+        "num_warmup":      500,
+        "num_chains":      4,
+        "seed":            42,
+        "parallel_chains": true
+      }
+    }
+  ]
+}

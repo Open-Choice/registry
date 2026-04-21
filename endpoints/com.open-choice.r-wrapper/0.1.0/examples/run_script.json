@@ -1,0 +1,26 @@
+[
+  {
+    "template_id": "run-r-script-basic",
+    "title": "Run R Script",
+    "summary": "Run an R script with no extra arguments.",
+    "category": "starter",
+    "oce_text": "[[\"rscript-wrapper::run_script\"]]\nscript = \"./analysis.R\"\noutput_dir = \"./outputs/r-run\"\ntrust_acknowledged = true\n",
+    "script": "./analysis.R",
+    "args": [],
+    "kwargs": {},
+    "output_dir": "./outputs/r-run",
+    "trust_acknowledged": true
+  },
+  {
+    "template_id": "run-r-script-with-args",
+    "title": "Run R Script with Arguments",
+    "summary": "Run an R script passing positional args and named --key value pairs.",
+    "category": "starter",
+    "oce_text": "[[\"rscript-wrapper::run_script\"]]\nscript = \"./analyse.R\"\nargs = [\"input.csv\"]\n\n[\"rscript-wrapper::run_script\".kwargs]\nn = \"100\"\nverbose = \"true\"\n\noutput_dir = \"./outputs/r-run\"\ntrust_acknowledged = true\n",
+    "script": "./analyse.R",
+    "args": ["input.csv"],
+    "kwargs": { "n": "100", "verbose": "true" },
+    "output_dir": "./outputs/r-run",
+    "trust_acknowledged": true
+  }
+]

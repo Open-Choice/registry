@@ -1,0 +1,209 @@
+{
+  "command": "prepare-maxdiff",
+  "title": "Prepare raw MaxDiff survey data for choice-set construction",
+  "summary": "Reshape raw MaxDiff / best-worst survey data by joining respondent selections with the experimental design. Produces a cleaned, joined CSV ready for choice-set construction.",
+  "description": "Reads a wide-format respondent survey CSV (typically a Decipher / Sawtooth / Qualtrics export) together with the experimental design CSV used to field the study, and produces a single prepared CSV in long-ish form: one row per (respondent, task) with the design version, the items shown in that task, and the best / worst selections normalised onto consistent column names. The default conventions match Decipher's `MaxDiff` export format, but every respondent-side and design-side column name is overridable for non-Decipher data.",
+  "usage": "[[\"choice-wrangling::prepare-maxdiff\"]]\ndesign_csv = \"<design.csv>\"\nrespondent_csv = \"<respondents.csv>\"\nrun_dir = \"<dir>\"\nrun_name = \"pilot\"\n# optional column-name overrides:\nprefix = \"MaxDiff\"\nrespondent_id = \"sys_RespNum\"\nversion_col = \"sys_MXDVersion_MaxDiff\"\nselection_value_type = \"item_name\"\nbest_columns = [\"...\"]\nworst_columns = [\"...\"]\ntask_numbers = [1, 2, 3]\ndesign_version_col = \"version\"\ndesign_task_col = \"task\"\ndesign_item_cols = [\"item1\", \"item2\", ...]\ninclude_original_columns = true",
+  "arguments": [
+    {
+      "name": "design_csv",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the experimental design CSV (wide format). One row per (version, task) with columns identifying the version, task number, and the items shown in that task. Column names default to Decipher conventions but can be overridden via `design_version_col`, `design_task_col`, and `design_item_cols`."
+    },
+    {
+      "name": "respondent_csv",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the wide-format respondent survey CSV. Must contain a respondent ID column, a design-version column identifying which version each respondent saw, and one column per (task, slot) for the best / worst selections. Column auto-discovery handles the typical Decipher naming convention (`MaxDiff_b1`, `MaxDiff_w1`, etc.); use `best_columns` / `worst_columns` for non-standard schemas."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory for prepared files. Created if it does not exist. Receives the prepared CSV plus diagnostic files describing the column auto-discovery decisions."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "prefix",
+      "type": "string",
+      "required": false,
+      "default": "MaxDiff",
+      "description": "Column-name prefix used to auto-discover best / worst selection columns when `best_columns` / `worst_columns` are not supplied. With the default, the loader looks for columns matching `<prefix>_b<n>` and `<prefix>_w<n>` patterns."
+    },
+    {
+      "name": "respondent_id",
+      "type": "string",
+      "required": false,
+      "default": "sys_RespNum",
+      "description": "Name of the respondent ID column in `respondent_csv`. The default matches Decipher's system column naming. Override for any non-Decipher export."
+    },
+    {
+      "name": "version_col",
+      "type": "string",
+      "required": false,
+      "default": "sys_MXDVersion_MaxDiff",
+      "description": "Name of the design-version column in `respondent_csv` — the column that records which version of the design each respondent was randomised to. Used to join respondent selections against the right rows of `design_csv`."
+    },
+    {
+      "name": "selection_value_type",
+      "type": "string",
+      "required": false,
+      "default": "item_name",
+      "description": "How best / worst selection cells encode the chosen item. `\"item_name\"` (default) means cells contain the item label directly. Other values are reserved for future selection encodings (e.g., position indices)."
+    },
+    {
+      "name": "best_columns",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Explicit list of best-selection columns in `respondent_csv`, in task order. Use this to bypass auto-discovery for non-Decipher exports. If supplied, must have one entry per task. Mutually informative with `worst_columns` and `task_numbers`."
+    },
+    {
+      "name": "worst_columns",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Explicit list of worst-selection columns in `respondent_csv`, in task order. Same shape as `best_columns`. Optional in MaxDiff studies that collect best only; if omitted, the worst side of the output is left empty."
+    },
+    {
+      "name": "task_numbers",
+      "type": "array<integer>",
+      "required": false,
+      "default": null,
+      "description": "Explicit list of task numbers (1-based) corresponding to `best_columns` / `worst_columns`. Use this when task numbers are not contiguous or do not start at 1. Length must match the longer of the two column lists."
+    },
+    {
+      "name": "design_version_col",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Name of the design-version column in `design_csv`. Defaults to a Decipher-style auto-discovery; override for any non-standard design layout."
+    },
+    {
+      "name": "design_task_col",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Name of the task-number column in `design_csv`. Defaults to a Decipher-style auto-discovery."
+    },
+    {
+      "name": "design_item_cols",
+      "type": "array<string>",
+      "required": false,
+      "default": null,
+      "description": "Explicit list of item-slot columns in `design_csv`, in slot order (slot 1, slot 2, ...). Use this when the design has non-default column names or extra columns that auto-discovery should not pick up."
+    },
+    {
+      "name": "include_original_columns",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "When `true`, the prepared CSV includes the original (untouched) respondent-side selection columns alongside the normalised ones, useful for auditing. Set to `false` for a leaner output."
+    },
+    {
+      "name": "output_version_col",
+      "type": "string",
+      "required": false,
+      "default": "mxd_design_version",
+      "description": "Name to use for the normalised design-version column in the prepared output. Override only if downstream tools require a different convention."
+    },
+    {
+      "name": "output_best_prefix",
+      "type": "string",
+      "required": false,
+      "default": "mxd_best_",
+      "description": "Column-name prefix for the normalised best-selection columns in the prepared output (e.g., `mxd_best_1`, `mxd_best_2`, ...)."
+    },
+    {
+      "name": "output_worst_prefix",
+      "type": "string",
+      "required": false,
+      "default": "mxd_worst_",
+      "description": "Column-name prefix for the normalised worst-selection columns in the prepared output."
+    },
+    {
+      "name": "output_design_version_name",
+      "type": "string",
+      "required": false,
+      "default": "design_version",
+      "description": "Name of the design-version column as it should appear in the prepared output's design-side join key. Used downstream by `build-choice-sets`."
+    },
+    {
+      "name": "output_design_task_name",
+      "type": "string",
+      "required": false,
+      "default": "design_task",
+      "description": "Name of the task column as it should appear in the prepared output's design-side join key."
+    },
+    {
+      "name": "output_alternative_name",
+      "type": "string",
+      "required": false,
+      "default": "alternative",
+      "description": "Name of the alternative (item-within-task) column in the prepared output."
+    },
+    {
+      "name": "output_item_attribute_name",
+      "type": "string",
+      "required": false,
+      "default": "item",
+      "description": "Name of the item-attribute column in the prepared output. This is the column that downstream coding plugins look up against item-level metadata."
+    },
+    {
+      "name": "output_position_attribute_name",
+      "type": "string",
+      "required": false,
+      "default": "alternative_position",
+      "description": "Name of the alternative-position column in the prepared output. Useful when fitting position-effect terms in the model."
+    }
+  ],
+  "details": "`prepare-maxdiff` is the first stage in the MaxDiff wrangling pipeline; its job is purely structural — joining the respondent CSV against the experimental design CSV and reshaping selections into a consistent layout. It does not do any coding or estimation; that happens later in `build-choice-sets` and `build-estimation-long`.\n\nMost users do not need to override any of the column-name parameters. The defaults match Decipher's MaxDiff export format directly, so a minimal call with just `design_csv`, `respondent_csv`, and `out_dir` works for the common case. The override surface exists for non-Decipher exports (Qualtrics, Sawtooth, in-house tooling) and for studies with non-standard task numbering or column conventions.\n\nThe loader auto-discovers best / worst columns by walking the respondent CSV header looking for columns matching `<prefix>_b<n>` and `<prefix>_w<n>`. If your data uses a different naming convention, supply `best_columns`, `worst_columns`, and (if needed) `task_numbers` explicitly to bypass discovery entirely. The same applies to the design side: provide `design_version_col`, `design_task_col`, and `design_item_cols` to bypass design-side auto-discovery.\n\nFor a one-shot end-to-end run that chains prepare → build-choice-sets → build-estimation-long, use `pipeline-maxdiff` instead.",
+  "value": "On success, `out_dir` contains the prepared respondent CSV (one row per respondent-task with normalised column names) plus diagnostics describing the column-discovery decisions. The prepared CSV is the input to `build-choice-sets`.\n\nIn protocol mode the plugin emits `event.run.started`, then `event.run.finished` (or `event.run.failed`) carrying elapsed time.",
+  "notes": [
+    "Column-name defaults match Decipher's MaxDiff export. For Qualtrics or Sawtooth data you'll typically need `best_columns`, `worst_columns`, and `task_numbers`.",
+    "`include_original_columns = false` is recommended when chaining into `build-choice-sets` to keep the choice-sets file lean.",
+    "Worst-only studies are supported by leaving `best_columns` empty, but most MaxDiff exports include both."
+  ],
+  "see_also": [
+    {
+      "command": "choice-wrangling::build-choice-sets",
+      "description": "Next stage of the pipeline — turn prepared selections into canonical choice-set rows."
+    },
+    {
+      "command": "choice-wrangling::pipeline-maxdiff",
+      "description": "Convenience wrapper that runs prepare + build-choice-sets + build-estimation-long in one call."
+    },
+    {
+      "command": "design-maxdiff::design",
+      "description": "Generate the experimental design CSV that this command consumes."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic prepare with Decipher defaults",
+      "body": "[[\"choice-wrangling::prepare-maxdiff\"]]\ndesign_csv = \"design.csv\"\nrespondent_csv = \"respondents.csv\"\nrun_dir = \"./prepared\"\nrun_name = \"pilot1\""
+    },
+    {
+      "title": "Non-Decipher export with explicit column lists",
+      "body": "[[\"choice-wrangling::prepare-maxdiff\"]]\ndesign_csv = \"design.csv\"\nrespondent_csv = \"qualtrics_export.csv\"\nrun_dir = \"./prepared\"\nrun_name = \"pilot2\"\nrespondent_id = \"ResponseId\"\nversion_col = \"design_version\"\nbest_columns = [\"Q1_best\", \"Q2_best\", \"Q3_best\", \"Q4_best\"]\nworst_columns = [\"Q1_worst\", \"Q2_worst\", \"Q3_worst\", \"Q4_worst\"]\ntask_numbers = [1, 2, 3, 4]"
+    },
+    {
+      "title": "Lean output — drop original selection columns for downstream use",
+      "body": "[[\"choice-wrangling::prepare-maxdiff\"]]\ndesign_csv = \"design.csv\"\nrespondent_csv = \"respondents.csv\"\nrun_dir = \"./prepared\"\nrun_name = \"pilot3\"\ninclude_original_columns = false"
+    },
+    {
+      "title": "Best-only study with custom prefix",
+      "body": "[[\"choice-wrangling::prepare-maxdiff\"]]\ndesign_csv = \"design.csv\"\nrespondent_csv = \"respondents.csv\"\nrun_dir = \"./prepared\"\nrun_name = \"pilot4\"\nprefix = \"MXD\"\nbest_columns = [\"MXD_b1\", \"MXD_b2\", \"MXD_b3\", \"MXD_b4\", \"MXD_b5\", \"MXD_b6\"]\ntask_numbers = [1, 2, 3, 4, 5, 6]"
+    }
+  ]
+}

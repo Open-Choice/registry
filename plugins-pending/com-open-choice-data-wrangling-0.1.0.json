@@ -1,0 +1,19 @@
+{
+  "plugin_id": "com.open-choice.data-wrangling",
+  "display_name": "Data Wrangling",
+  "description": "Polars-native data manipulation. Ops mode chains verbs (select / filter / with_columns / sort / group_by / join / distinct / rename / drop / slice / head / tail) against a named set of CSV / Parquet / SAV inputs; query mode runs SQL via polars_sql::SQLContext over the same inputs. Per-input pre-pipelines, SQL-flavoured expressions (polars-sql), and CSV / Parquet outputs.",
+  "publisher": "Open Choice",
+  "categories": [
+    "data-wrangling",
+    "transformation",
+    "sql",
+    "polars"
+  ],
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/data-wrangling-v0.1.0/data-wrangling-0.1.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "7058767ffbc430f834186c5dee55e7b19d1f7a52e52b1fe5091269d87852bfdc",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:28:18Z",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/data-wrangling-v0.1.0"
+}

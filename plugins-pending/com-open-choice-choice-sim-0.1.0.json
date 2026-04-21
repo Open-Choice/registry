@@ -1,0 +1,18 @@
+{
+  "plugin_id": "com.open-choice.choice-sim",
+  "display_name": "Choice Simulator",
+  "description": "Hierarchical Bayes choice simulator. Runs market simulations from an Excel sim_db â€” share, volume, revenue, sensitivity, and exponent-search analyses.",
+  "publisher": "Open Choice",
+  "categories": [
+    "simulation",
+    "choice-modeling"
+  ],
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/choice-sim-v0.1.0/choice-sim-0.1.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "9e34ce55ff8f151845926de02d715bc09705085fe5a4141ea54c8e977871468a",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:28:08Z",
+  "release_notes": "Initial release of the Choice Simulator plugin for Open Choice.\n\n## Commands\n\n- **sim_run** â€” Standard market simulation. Returns shares, revenue, volume, cost, profit, and standard error per scenario Ã— subgroup Ã— product.\n- **sim_sensitivities** â€” Attribute sensitivity sweep. Runs one simulation per (product, attribute, value) triple, stacking all results for chart-ready sensitivity analysis.\n- **sim_combinations** â€” Multi-product attribute grid. Cartesian product (expand_grid = true) or zip (expand_grid = false) across value lists for two or more products.\n- **sim_take_rate** â€” Take-rate simulation. Identical engine to sim_run; intended for population-projected volume and revenue analyses.\n- **sim_exponent_search** â€” IIA exponent calibration. Bisection search over the beta scale factor to match stated market-share proportions.\n- **sim_lock_step** â€” Lock-step multi-product sweep. Moves all participating products through parallel value lists simultaneously, one position per simulation run.\n\n## Features\n\n- Reads HB utility draws directly from an Excel sim_db workbook (or pre-built JSON + binary snapshot).\n- Share of preference (SoP) and first-choice (FC) probability methods, with blending support.\n- Monte Carlo multi-trip simulation with seeded RNG for reproducibility.\n- Per-respondent subgroup cuts and multiple weight columns.\n- Throttle and consideration set support.\n- Eval-lang price formula expressions for derived pricing rules.\n- Product net (brand roll-up) rows via include_nets.\n- Monotonicity constraints on HB beta draws.\n- ocp-json/1 protocol: structured NDJSON event stream with run.started, artifact.created, and run.finished events.",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/choice-sim-v0.1.0"
+}

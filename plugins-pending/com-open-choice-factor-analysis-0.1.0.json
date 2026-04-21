@@ -1,0 +1,19 @@
+{
+  "plugin_id": "com.open-choice.factor-analysis",
+  "display_name": "Factor Analysis",
+  "description": "Rust port of psych::fa and FactoMineR::FAMD: exploratory factor analysis on numeric data, factor analysis of mixed data, and a standalone correlation-matrix builder covering the full psych::fa(cor=...) method surface.",
+  "publisher": "Open Choice",
+  "categories": [
+    "factor-analysis",
+    "psychometrics",
+    "correlation"
+  ],
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/factor-analysis-v0.1.0/factor-analysis-0.1.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "c46e5b28244dc68813426f78fe6ca15ec662a99744e9c342e95439429f2f81be",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:28:40Z",
+  "release_notes": "Initial release. Rust port of `psych::fa` and `FactoMineR::FAMD` with three `ocp-json/1` commands:\n\n- `fa`: EFA on numeric data. Iterative principal-axis / minimum-residual factor extraction (SMC communality init, fallback to max-abs-off-diag on singular R), Kaiser-normalized analytic Varimax rotation (pairwise column rotation matching `stats::varimax`), per-variable rows sorted by dominant factor then |loading|. Iterates over meta `batch` groupings Ã— `[min_count, max_count]` factors.\n- `famd`: Factor analysis of mixed data. Standardises numerics (n-1 SD), disjunctively codes categoricals with `(indicator - proportion)/sqrt(proportion)`, thin SVD of the concatenated `X/sqrt(n)`. Emits coord / contrib / cosÂ² per dimension at both variable and level granularity.\n- `correlation`: Standalone correlation-matrix builder. Accepts the full `psych::fa(cor=...)` method enum; Phase 1 implements `pearson` and `covariance`. Writes a CSV plus a three-sheet xlsx (correlation, n_obs, meta).\n\nPhase 1 scope: `pearson` / `covariance` correlations, `minres` / `pa` extraction, `none` / `varimax` rotation, full FAMD. Other cor/fm/rotate values round-trip through validation and return `NotImplemented` at runtime pending Phases 2-3 (categorical correlations; remaining factoring methods and GPArotation rotations).",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/factor-analysis-v0.1.0"
+}

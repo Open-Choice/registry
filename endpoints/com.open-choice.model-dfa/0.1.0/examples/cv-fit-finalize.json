@@ -1,0 +1,13 @@
+[
+  {
+    "template_id": "dfa-cv-fit-finalize-basic",
+    "title": "DFA: cross-validated fit over pre-split folds",
+    "summary": "Fit LDA on each fold's train.csv, score test.csv, and aggregate hit rate and log-likelihood across folds.",
+    "category": "starter",
+    "oce_text": "[[\"model-dfa::cv-fit-finalize\"]]\nfolds_dir = \"./folds\"\nrun_dir = \"./runs\"\nrun_name = \"pilot_cv\"\ny_col = \"y\"\n",
+    "folds_dir": "./folds",
+    "run_dir": "./runs",
+    "run_name": "pilot_cv",
+    "y_col": "y"
+  }
+]

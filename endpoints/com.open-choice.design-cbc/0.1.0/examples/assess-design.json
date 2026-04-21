@@ -1,0 +1,14 @@
+{
+  "command": "assess-design",
+  "examples": [
+    {
+      "id": "assess-basic",
+      "title": "Assess a design from CSV",
+      "params": {
+        "design_path": "./runs/design-bo/pilot_design.csv",
+        "run_dir": "./runs/assess",
+        "run_name": "pilot"
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "command": "export-excel",
+  "title": "Export an SPSS / CSV / Excel file to a labeled Excel workbook",
+  "summary": "Writes a two-sheet Excel workbook: sheet 1 contains the data with value labels applied, sheet 2 contains variable metadata (name, label, type, measure, missing codes).",
+  "description": "Input format is inferred from the file extension: .sav/.zsav are read via readstat; .csv/.tsv are read as delimited text (UTF-8 with BOM tolerated); .xlsx files are read from the first sheet. The exported workbook preserves SPSS variable labels and value labels where present; categorical integer codes are rendered with their labels applied while the raw codes are retained in a hidden companion column so the workbook round-trips through `write-sav` (with from_export_excel=true) without information loss.",
+  "usage": "[[\"spss-reader::export-excel\"]]\ninput_path = \"./data/survey.sav\"\noutput_dir = \"./output\"",
+  "arguments": [
+    { "name": "input_path", "type": "string", "required": true,  "description": "Path to .sav/.zsav, .csv/.tsv, or .xlsx." },
+    { "name": "output_dir", "type": "string", "required": true,  "description": "Directory for the output .xlsx; created if missing." },
+    { "name": "prefix",     "type": "string", "required": false, "description": "Optional filename prefix." },
+    { "name": "suffix",     "type": "string", "required": false, "description": "Optional filename suffix (before the extension)." }
+  ],
+  "notes": [
+    "Round-trip: an export-excel workbook can be fed back to `write-sav` with `from_export_excel = true` to reconstruct the .sav from the workbook's embedded metadata.",
+    "CSV inputs have no SPSS metadata, so the variable-metadata sheet is populated from detected types only."
+  ]
+}

@@ -1,0 +1,202 @@
+{
+  "command": "cv-fit",
+  "title": "Run K-fold cross-validated MNL fits against a `choice-cv split` directory",
+  "summary": "Run logit fits across a directory of cross-validation folds. Each fold subdirectory must contain train.csv and test.csv (the layout produced by `choice-cv split`). Writes per-fold runs under run_dir/<fold_id>/ and an aggregate cv_summary.csv summarising train/holdout fit across folds.",
+  "description": "Walks a `choice-cv split` directory (one subdirectory per fold, each containing `train.csv` and `test.csv`) and runs an MNL fit on every fold. The hyperparameters supplied apply to all folds. After all folds complete, an aggregate `cv_summary.csv` is written to the top of `run_dir` with mean and standard deviation of train and holdout log-likelihood across folds — the standard MNL baseline for comparison against `model-lc::cv-fit` and `model-hb-mh::cv-fit`.",
+  "usage": "[[\"model-lg::cv-fit\"]]\nfolds_dir = \"<cv-folds dir>\"\nrun_dir = \"<output dir>\"\nrun_name = \"lg_run\"\n# optional:\niterations = 500\nthreads = 1",
+  "arguments": [
+    {
+      "name": "folds_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Directory containing per-fold subdirectories. Each subdirectory must contain `train.csv` and `test.csv` files in coded long format. This is exactly the layout `choice-cv::split` produces."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory. Created if it does not exist. Each fold gets its own subdirectory under `run_dir/`, and `cv_summary.csv` plus `cv_summary.json` are written at the top level after all folds complete."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether the per-fold CSVs have a header row. Default `true`."
+    },
+    {
+      "name": "iterations",
+      "type": "integer",
+      "required": false,
+      "default": 500,
+      "description": "Maximum optimizer iterations per fold. Default `500`."
+    },
+    {
+      "name": "convergence_threshold",
+      "type": "number",
+      "required": false,
+      "default": 1e-8,
+      "description": "Convergence tolerance per fold. Default `1e-8`. The optimizer stops when *either* this or `gradient_threshold` is met."
+    },
+    {
+      "name": "gradient_threshold",
+      "type": "number",
+      "required": false,
+      "default": 1e-8,
+      "description": "Gradient norm threshold per fold. Default `1e-8`."
+    },
+    {
+      "name": "rootlik_denominator",
+      "type": "string",
+      "required": false,
+      "default": "sets",
+      "accepted_values": [
+        "sets",
+        "rows",
+        "weight"
+      ],
+      "description": "Root-likelihood denominator used for the per-fold reporting diagnostic. See `fit` for the per-option semantics."
+    },
+    {
+      "name": "vcov_ridge",
+      "type": "number",
+      "required": false,
+      "default": 0,
+      "description": "Ridge added to the Hessian before inversion when computing standard errors. Default `0.0`. Applied uniformly across folds."
+    },
+    {
+      "name": "random_seed",
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "description": "Random seed (`0` = non-deterministic). Default `0`. The MNL fit itself is deterministic; the seed only matters for tie-breaking edge cases."
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Number of threads per fold. Default `1`. Folds are processed sequentially."
+    }
+  ],
+  "details": "`cv-fit` is the cross-validation entry point for the MNL plugin. It exists for the same reason `model-lc::cv-fit` and `model-hb-mh::cv-fit` exist — to give a holdout-LL baseline computed against the same fold structure — but it's much cheaper than the other two because each MNL fit converges in seconds.\n\nThe recommended workflow is to run `cv-fit` for all three model families (`model-lg`, `model-lc`, `model-hb-mh`) against the same `choice-cv split` directory and compare their aggregate holdout LL. The MNL run is the lower bound: any model that doesn't beat it on holdout LL isn't earning its complexity. If MNL is competitive with LC and HB, the data probably doesn't have meaningful preference heterogeneity, and the simpler model is the right call for downstream consumption.\n\nFolds are processed sequentially, but each individual fit is so fast that total wall-clock time is rarely a concern. There is no `cv-fit-extend` counterpart for MNL because the optimizer always runs to convergence in a single call.",
+  "value": "On success, `run_dir` contains:\n\n- One subdirectory per fold, each containing the same layout as a single `fit` run.\n- `cv_summary.csv` and `cv_summary.json` at the top level: per-fold and aggregate train / holdout log-likelihood.\n\nIn protocol mode the plugin emits `event.run.started`, then per-fold start / progress / finish events, then `event.run.finished` (or `event.run.failed`) carrying the aggregate summary.",
+  "notes": [
+    "MNL is the recommended baseline for cross-validated model comparison — run it alongside `model-lc::cv-fit` and `model-hb-mh::cv-fit` against the same fold directory.",
+    "Folds are processed sequentially, but each MNL fit is fast enough that this rarely matters.",
+    "There is no `cv-fit-extend` for MNL because each fit converges in one call."
+  ],
+  "see_also": [
+    {
+      "command": "choice-cv::split",
+      "description": "Produces the per-fold directory layout this command consumes."
+    },
+    {
+      "command": "model-lg::cv-finalize",
+      "description": "Re-summarise an existing CV run."
+    },
+    {
+      "command": "model-lg::fit",
+      "description": "Single-fit entry point — use this for non-CV runs."
+    },
+    {
+      "command": "model-lc::cv-fit",
+      "description": "Latent class counterpart — adds population segments."
+    },
+    {
+      "command": "model-hb-mh::cv-fit",
+      "description": "Hierarchical Bayes counterpart — adds individual-level heterogeneity."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic 5-fold MNL CV",
+      "body": "[[\"model-lg::cv-fit\"]]\nfolds_dir = \"./cv-folds\"\nrun_dir = \"./runs/lg-cv\"\nrun_name = \"lg_run1\""
+    },
+    {
+      "title": "MNL CV with a Hessian ridge for SE stability",
+      "body": "[[\"model-lg::cv-fit\"]]\nfolds_dir = \"./cv-folds\"\nrun_dir = \"./runs/lg-cv-ridge\"\nrun_name = \"lg_run2\"\nvcov_ridge = 1e-6"
+    }
+  ],
+  "fields": [
+    {
+      "name": "folds_dir",
+      "description": "Directory containing per-fold subdirs (each with train.csv + test.csv).",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Output directory. Per-fold subdirs and cv_summary.csv are written here.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "headers",
+      "description": "Whether CSVs have a header row. Default: true.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "iterations",
+      "description": "Maximum optimizer iterations per fold. Default: 500.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "convergence_threshold",
+      "description": "Convergence tolerance per fold. Default: 1e-8.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "gradient_threshold",
+      "description": "Gradient norm threshold per fold. Default: 1e-8.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "rootlik_denominator",
+      "description": "Root-likelihood denominator.",
+      "required": false,
+      "accepted_values": [
+        "sets",
+        "rows",
+        "weight"
+      ]
+    },
+    {
+      "name": "vcov_ridge",
+      "description": "Ridge added to Hessian before inversion. Default: 0.0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "random_seed",
+      "description": "Random seed (0 = non-deterministic).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "threads",
+      "description": "Number of threads per fold. Default: 1.",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

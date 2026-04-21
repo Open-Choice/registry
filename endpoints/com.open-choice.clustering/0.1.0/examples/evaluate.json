@@ -1,0 +1,39 @@
+[
+  {
+    "template_id": "evaluate-kmeans-sweep",
+    "title": "Evaluate a k-means k-sweep",
+    "summary": "Score every solution produced by the kmeans_demo run.",
+    "category": "starter",
+    "oce_text": "[[\"clustering::evaluate\"]]\ninput = \"./data/respondents.csv\"\nvars = [\"q1\", \"q2\", \"q3\", \"q4\"]\nsolutions = [\"kmeans_demo_kmeans_k2\", \"kmeans_demo_kmeans_k3\", \"kmeans_demo_kmeans_k4\", \"kmeans_demo_kmeans_k5\"]\nrun_dir = \"./runs\"\nrun_name = \"kmeans_demo\"\nmetric = \"euclidean\"\nna_action = \"complete_cases\"\nheaders = true\n",
+    "input": "./data/respondents.csv",
+    "vars": ["q1", "q2", "q3", "q4"],
+    "solutions": [
+      "kmeans_demo_kmeans_k2",
+      "kmeans_demo_kmeans_k3",
+      "kmeans_demo_kmeans_k4",
+      "kmeans_demo_kmeans_k5"
+    ],
+    "run_dir": "./runs",
+    "run_name": "kmeans_demo",
+    "metric": "euclidean",
+    "na_action": "complete_cases",
+    "headers": true
+  },
+  {
+    "template_id": "evaluate-multi-method",
+    "title": "Evaluate three methods at k=3",
+    "summary": "Compare quality of kmeans / hier / kmedoids at a fixed k.",
+    "category": "comparison",
+    "oce_text": "[[\"clustering::evaluate\"]]\ninput = \"./data/respondents.csv\"\nvars = [\"q1\", \"q2\", \"q3\", \"q4\"]\nsolutions = [\"multi_demo_kmeans_k3\", \"multi_demo_hier_k3\", \"multi_demo_kmedoids_k3\"]\nrun_dir = \"./runs\"\nrun_name = \"multi_demo\"\nmetric = \"euclidean\"\n",
+    "input": "./data/respondents.csv",
+    "vars": ["q1", "q2", "q3", "q4"],
+    "solutions": [
+      "multi_demo_kmeans_k3",
+      "multi_demo_hier_k3",
+      "multi_demo_kmedoids_k3"
+    ],
+    "run_dir": "./runs",
+    "run_name": "multi_demo",
+    "metric": "euclidean"
+  }
+]

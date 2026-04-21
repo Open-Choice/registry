@@ -1,0 +1,32 @@
+[
+  {
+    "template_id": "sim-combinations-price-grid",
+    "title": "Sim: price grid (2 products)",
+    "summary": "Run every combination of three prices for two products (9 points).",
+    "category": "starter",
+    "oce_text": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_combinations\"]]\nscenarios = [\"base\"]\nmeasures = \"share|revenue\"\nexpand_grid = true\n\n[\"cs::sim_combinations\".scenario_chgs.ProductA]\nprice = [9.0, 10.0, 11.0]\n\n[\"cs::sim_combinations\".scenario_chgs.ProductB]\nprice = [14.0, 15.0, 16.0]\n",
+    "scenarios": ["base"],
+    "measures": "share|revenue",
+    "expand_grid": true
+  },
+  {
+    "template_id": "sim-combinations-zip",
+    "title": "Sim: parallel price movement (zip)",
+    "summary": "Move two products together through three price points in parallel.",
+    "category": "advanced",
+    "oce_text": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_combinations\"]]\nscenarios = [\"base\"]\nmeasures = \"share|revenue\"\nexpand_grid = false\n\n[\"cs::sim_combinations\".scenario_chgs.ProductA]\nprice = [9.0, 10.0, 11.0]\n\n[\"cs::sim_combinations\".scenario_chgs.ProductB]\nprice = [14.0, 15.0, 16.0]\n",
+    "scenarios": ["base"],
+    "measures": "share|revenue",
+    "expand_grid": false
+  },
+  {
+    "template_id": "sim-combinations-feature-matrix",
+    "title": "Sim: 2×2 feature matrix",
+    "summary": "Evaluate all four combinations of two binary features on one product.",
+    "category": "advanced",
+    "oce_text": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_combinations\"]]\nscenarios = [\"base\"]\nmeasures = \"share\"\nexpand_grid = true\n\n[\"cs::sim_combinations\".scenario_chgs.ProductA]\nfeature_x = [0, 1]\nfeature_y = [0, 1]\n",
+    "scenarios": ["base"],
+    "measures": "share",
+    "expand_grid": true
+  }
+]

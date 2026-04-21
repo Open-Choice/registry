@@ -1,0 +1,14 @@
+[
+  {
+    "template_id": "hb-cv-fit-extend",
+    "title": "HB: extend a CV fit by more iterations",
+    "summary": "Extend every existing fold under run_dir by additional_iterations more MCMC iterations on top of its persisted chain. Useful when an initial cv-fit run did not converge.",
+    "category": "starter",
+    "oce_text": "[[\"model-mnl-hb-mh::cv-fit-extend\"]]\nfolds_dir = \"./folds\"\nrun_dir = \"./runs/hb\"\nrun_name = \"pilot_cv\"\nadditional_iterations = 5000\nburnin = 0.2\n",
+    "folds_dir": "./folds",
+    "run_dir": "./runs/hb",
+    "run_name": "pilot_cv",
+    "additional_iterations": 5000,
+    "burnin": 0.2
+  }
+]

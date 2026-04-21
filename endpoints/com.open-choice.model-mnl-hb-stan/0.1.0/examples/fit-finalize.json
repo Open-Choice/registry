@@ -1,0 +1,38 @@
+{
+  "command": "fit-finalize",
+  "examples": [
+    {
+      "id": "fit-finalize-default",
+      "title": "Default settings (4 chains × 1000 draws, then finalize)",
+      "description": "Standard fit followed by automatic finalization. The CSV must be sorted by (resp_id, task_id, alt_id).",
+      "params": {
+        "input":           "./data/hb_data.csv",
+        "run_dir":         "./runs",
+        "run_name":        "pilot",
+        "headers":         true,
+        "num_samples":     1000,
+        "num_warmup":      500,
+        "num_chains":      4,
+        "seed":            42,
+        "parallel_chains": true
+      }
+    },
+    {
+      "id": "fit-finalize-tighter-prior",
+      "title": "Tighter prior with finalize in one call",
+      "description": "Use η = 2.0 to shrink correlations toward zero, then immediately finalize to get diagnostics and part_worths.csv.",
+      "params": {
+        "input":           "./data/hb_data.csv",
+        "run_dir":         "./runs",
+        "run_name":        "pilot_tight",
+        "headers":         true,
+        "num_samples":     1000,
+        "num_warmup":      500,
+        "num_chains":      4,
+        "seed":            42,
+        "prior_lkj_eta":  2.0,
+        "sigma_scale":     0.5
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+[
+  {
+    "template_id": "maxdiff-turf-inspect-input-basic",
+    "title": "TURF: inspect input",
+    "summary": "Report basic shape statistics for a utilities CSV without writing artifacts.",
+    "category": "starter",
+    "oce_text": "[[\"maxdiff-turf::inspect-input\"]]\nutilities = \"./utilities.csv\"\nnon_utility_cols = \"1,2\"\n",
+    "utilities": "./utilities.csv",
+    "non_utility_cols": "1,2"
+  }
+]

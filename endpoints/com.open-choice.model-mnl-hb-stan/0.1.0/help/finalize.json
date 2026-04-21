@@ -1,0 +1,64 @@
+{
+  "command": "finalize",
+  "title": "Compute diagnostics and part-worth exports from completed HB-Stan chain CSVs",
+  "summary": "Load chain CSVs from a completed fit run and write three output files: diagnostics.json (per-parameter Rhat and ESS), summary.json (posterior mean, SD, and quantiles), and part_worths.csv (U × P matrix of posterior-mean part-worth utilities). Uses all post-warmup draws. Idempotent — safe to re-run.",
+  "description": "Reads all hb_fit_chain_*.csv files from a completed `fit` run and computes three outputs using all post-warmup draws: convergence diagnostics (Rhat and ESS per parameter), a posterior summary (mean, SD, and quantiles), and a per-respondent part-worth matrix. The chain CSVs are unmodified — `finalize` is purely a read-and-summarise step.",
+  "usage": "[[\"hb-stan::finalize\"]]\nrun_dir = \"<dir with chain CSVs>\"\nrun_name = \"stan_run\"",
+  "arguments": [
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Directory containing hb_fit_chain_*.csv files from a previous `fit` run. All files matching the pattern are loaded as independent chains."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    }
+  ],
+  "details": "`finalize` is the post-processing step that turns raw CmdStan chain output into actionable deliverables. It loads all chain CSV files, combines them, and uses all post-warmup draws to compute:\n\n- **diagnostics.json** — per-parameter Rhat (potential scale reduction factor) and ESS (effective sample size). Rhat values above 1.01 indicate chains that have not mixed; ESS below ~400 indicates the posterior is imprecisely estimated.\n\n- **summary.json** — posterior mean, standard deviation, and quantiles (5%, 25%, 50%, 75%, 95%) for each population-level parameter.\n\n- **part_worths.csv** — U × P matrix (U respondents, P attributes) of posterior-mean part-worth utilities, one row per respondent.\n\nCmdStan's `num_warmup` parameter controls how many adaptation draws are discarded before sampling begins — `finalize` uses all `num_samples` post-warmup draws. Because `finalize` does not modify the chain CSVs, it is safe to re-run.",
+  "value": "On success, run_dir receives:\n\n- diagnostics.json — per-parameter Rhat and ESS.\n- summary.json — posterior mean, SD, and quantiles for population-level parameters.\n- part_worths.csv — U × P matrix of posterior-mean part-worth utilities.\n\nIn protocol mode the plugin emits event.run.started, then event.run.finished (or event.run.failed).",
+  "notes": [
+    "Rhat > 1.01 for any parameter is a convergence warning — extend the run before trusting the part-worths.",
+    "All post-warmup draws are used; adaptation draws are controlled by num_warmup at sampling time.",
+    "Chain CSVs are never modified — re-running is safe."
+  ],
+  "see_also": [
+    {
+      "command": "hb-stan::fit",
+      "description": "Produces the chain CSVs that this command processes."
+    },
+    {
+      "command": "hb-stan::fit-finalize",
+      "description": "Runs fit then finalize in a single call."
+    },
+    {
+      "command": "hb-stan::cv-finalize",
+      "description": "Finalizes every fold produced by cv-fit."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Finalize a completed fit run",
+      "body": "[[\"hb-stan::finalize\"]]\nrun_dir = \"./runs/hb-stan\"\nrun_name = \"stan_run1\""
+    }
+  ],
+  "fields": [
+    {
+      "name": "run_dir",
+      "description": "Directory containing hb_fit_chain_*.csv files.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+[
+  {
+    "template_id": "lg-fit-basic",
+    "title": "Logit: basic fit",
+    "summary": "Fit a multinomial logit from a coded-long CSV.",
+    "category": "starter",
+    "oce_text": "[[\"model-mnl-lg::fit\"]]\ninput = \"coded_long.csv\"\nrun_dir = \"./runs/lg\"\n",
+    "input": "coded_long.csv",
+    "run_dir": "./runs/lg"
+  },
+  {
+    "template_id": "lg-fit-with-holdout",
+    "title": "Logit: fit with holdout",
+    "summary": "Fit with a separate test set for out-of-sample evaluation.",
+    "category": "advanced",
+    "oce_text": "[[\"model-mnl-lg::fit\"]]\ninput = \"coded_long.csv\"\ntest_input = \"coded_long_test.csv\"\nrun_dir = \"./runs/lg-holdout\"\n",
+    "input": "coded_long.csv",
+    "test_input": "coded_long_test.csv",
+    "run_dir": "./runs/lg-holdout"
+  }
+]

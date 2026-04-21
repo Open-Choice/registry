@@ -1,0 +1,12 @@
+[
+  {
+    "template_id": "lc-cv-fit-2class",
+    "title": "LC: 2-class CV fit",
+    "summary": "Run 2-class latent class fits across all folds in folds_dir produced by `choice-cv split`.",
+    "category": "starter",
+    "oce_text": "[[\"model-mnl-lc::cv-fit\"]]\nfolds_dir = \"./folds\"\nrun_dir = \"./runs/lc-k2-cv\"\nsegments = 2\n",
+    "folds_dir": "./folds",
+    "run_dir": "./runs/lc-k2-cv",
+    "segments": 2
+  }
+]

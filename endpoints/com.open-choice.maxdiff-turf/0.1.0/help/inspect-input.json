@@ -1,0 +1,108 @@
+{
+  "command": "inspect-input",
+  "title": "Inspect a TURF utilities file and report shape statistics",
+  "summary": "Load a utilities CSV (and optional subgroups/labels) and report basic shape statistics: respondent count, item totals, eligible items, locked-in items, and choose-from count. Does not write any artifacts.",
+  "description": "Reads the same utilities / subgroups / labels files that the search and scoring commands consume, applies the same column-spec and include / exclude rules, and reports a structured summary of the resolved input. Useful as a sanity check before launching a long-running search: it tells you exactly how many items the search will be choosing from, after force-includes and force-excludes have been applied, without actually running anything.",
+  "usage": "[[\"maxdiff-turf::inspect-input\"]]\nutilities = \"<utilities.csv>\"\n# optional:\nsubgroups = \"<subgroups.csv>\"\nlabels = \"<labels.csv>\"\ninclude = \"1,4,7\"\nexclude = \"2,3\"\nutility_cols = \"3-12\"\nnon_utility_cols = \"1,2\"\nforbidden_pairs = \"1:2,3:4\"\nheaders = true",
+  "arguments": [
+    {
+      "name": "utilities",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to a per-respondent utilities CSV. One row per respondent, one column per item (after `non_utility_cols` are stripped). The numeric values are the per-respondent partworths or scores that downstream TURF reach calculations operate on."
+    },
+    {
+      "name": "subgroups",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Path to an optional subgroup-membership CSV: one row per respondent (aligned to `utilities`), one column per subgroup, with 0/1 entries indicating membership. Used by the search commands when `target_subgroup` is set; here it's read so the inspector can report subgroup sizes."
+    },
+    {
+      "name": "labels",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Path to an optional item-labels CSV with one row per item (in the same order as the utility columns). Carried into the inspection report so item indices are easier to interpret."
+    },
+    {
+      "name": "include",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Comma-separated 1-based item indices to force-include in every candidate. Locked-in items are still counted in the eligible total but reduce the effective `choose_from` count."
+    },
+    {
+      "name": "exclude",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Comma-separated 1-based item indices to exclude from all candidates. Excluded items disappear from the eligible total entirely."
+    },
+    {
+      "name": "utility_cols",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Explicit utility column spec, 1-based, supports ranges like `3-12` and comma lists like `3,5,7`. Use this when the utility columns are not contiguous or when the file contains extra columns that auto-detection should not pick up."
+    },
+    {
+      "name": "non_utility_cols",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Comma-separated 1-based columns to ignore (e.g., respondent id, weight, demographic columns). Mutually exclusive in spirit with `utility_cols` — supply whichever is more convenient for your file layout."
+    },
+    {
+      "name": "forbidden_pairs",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Forbidden-pair spec, e.g. `1:2,3:4`, listing 1-based item-index pairs that may not coexist in the same candidate subset. Reported in the inspection summary so you can verify the constraint is being parsed as intended."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether the input CSVs have header rows. Default `true`. Set to `false` for raw numeric files without column names."
+    }
+  ],
+  "details": "`inspect-input` exists because TURF runs are easy to misconfigure: a missing column spec, an off-by-one item index, or a wrong include / exclude list can quietly make the search operate on a different problem than you expected. Running this command first gives you a one-shot sanity check on the resolved input — it applies all the same parsing rules as the search commands and reports exactly what the search will see.\n\nThe report includes the respondent count, the total number of items detected in the utility columns, the number eligible after include / exclude filtering, the number locked in by `include`, and the resulting `choose_from` count (total eligible minus locked-in). When subgroups are supplied, per-subgroup sizes are reported as well.\n\nThis command does not write any files and does not run any optimisation. It is purely a read-and-report step.",
+  "value": "On success, returns a structured shape report (no files written). In protocol mode the plugin emits `event.run.started`, then `event.run.finished` carrying the inspection result. No `event.artifact.created` events are emitted.",
+  "notes": [
+    "Use this before any long search run on a new dataset — it's cheap and catches the common configuration errors.",
+    "`include` and `exclude` are 1-based to match the conventions used by all the maxdiff-turf commands."
+  ],
+  "see_also": [
+    { "command": "maxdiff-turf::search-k", "description": "Search for the best subset of size k against the same utilities file." },
+    { "command": "maxdiff-turf::search-ladder", "description": "Build an anchored value ladder against the same utilities file." },
+    { "command": "maxdiff-turf::score-scenarios", "description": "Score a hand-built list of candidate subsets against the same utilities file." }
+  ],
+  "examples": [
+    {
+      "title": "Sanity-check a utilities file",
+      "body": "[[\"maxdiff-turf::inspect-input\"]]\nutilities = \"./utilities.csv\""
+    },
+    {
+      "title": "Inspect after applying include / exclude / column overrides",
+      "body": "[[\"maxdiff-turf::inspect-input\"]]\nutilities = \"./utilities.csv\"\nlabels = \"./labels.csv\"\nutility_cols = \"3-22\"\nnon_utility_cols = \"1,2\"\ninclude = \"5,7\"\nexclude = \"1\""
+    },
+    {
+      "title": "Inspect with subgroups and forbidden pairs to verify constraint parsing",
+      "body": "[[\"maxdiff-turf::inspect-input\"]]\nutilities = \"./utilities.csv\"\nsubgroups = \"./subgroups.csv\"\nlabels = \"./labels.csv\"\nnon_utility_cols = \"1,2\"\nforbidden_pairs = \"3:5,7:9\""
+    }
+  ],
+  "fields": [
+    { "name": "utilities",        "description": "Path to per-respondent utilities CSV.",                       "required": true,  "accepted_values": [] },
+    { "name": "subgroups",        "description": "Optional subgroup membership CSV.",                           "required": false, "accepted_values": [] },
+    { "name": "labels",           "description": "Optional item labels CSV.",                                   "required": false, "accepted_values": [] },
+    { "name": "include",          "description": "Comma-separated 1-based item indices to force-include.",      "required": false, "accepted_values": [] },
+    { "name": "exclude",          "description": "Comma-separated 1-based item indices to exclude.",            "required": false, "accepted_values": [] },
+    { "name": "utility_cols",     "description": "Explicit utility column spec (1-based, supports ranges).",    "required": false, "accepted_values": [] },
+    { "name": "non_utility_cols", "description": "Comma-separated 1-based columns to ignore.",                  "required": false, "accepted_values": [] },
+    { "name": "forbidden_pairs",  "description": "Forbidden pairs spec, e.g. '1:2,3:4'.",                       "required": false, "accepted_values": [] },
+    { "name": "headers",          "description": "Whether the CSV files have header rows. Default: true.",      "required": false, "accepted_values": [] }
+  ]
+}

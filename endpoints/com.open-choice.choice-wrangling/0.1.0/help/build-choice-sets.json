@@ -1,0 +1,211 @@
+{
+  "command": "build-choice-sets",
+  "title": "Build canonical choice-set rows from prepared MaxDiff data",
+  "summary": "Join prepared respondent selections against the experimental design and emit canonical choice-set rows: one row per (respondent, task, alternative) with the chosen-best / chosen-worst flags filled in.",
+  "description": "Takes the output of `prepare-maxdiff` (a respondent-level CSV with normalised best / worst columns) and the experimental design CSV, and produces a canonical choice-set table: one row per *alternative-within-task*, with explicit `chosen_best` and `chosen_worst` indicators. This is the standard 'long' representation that downstream estimation plugins expect, before any attribute coding has been applied.",
+  "usage": "[[\"choice-wrangling::build-choice-sets\"]]\nrespondents_csv = \"<prepared.csv>\"\ndesign_csv = \"<design.csv>\"\nrun_dir = \"<dir>\"\nrun_name = \"pilot\"\nrespondent_id = \"<col>\"\nrespondent_design_reference = \"<col>\"\ndesign_version_name = \"<col>\"\ndesign_task_name = \"<col>\"\nalternative_label = \"<col>\"\n# optional:\ntask_structure = \"best_worst\"\nnone_mode = \"explicit\"\nkeep_debug_columns = false",
+  "arguments": [
+    {
+      "name": "respondents_csv",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the prepared respondent CSV produced by `prepare-maxdiff` (or any equivalent file with normalised best / worst columns and the design-version key)."
+    },
+    {
+      "name": "design_csv",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the experimental design CSV in long format (one row per alternative-within-task). Joined to `respondents_csv` on the design-version key."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory for choice-set files. Created if it does not exist."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "respondent_id",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Name of the respondent ID column in `respondents_csv`. Carried through to the output unchanged and used as the leading group key for downstream models."
+    },
+    {
+      "name": "respondent_design_reference",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Name of the column in `respondents_csv` that links each respondent to a row in `design_csv` — typically the design-version column. Used as the join key against `design_version_name`."
+    },
+    {
+      "name": "design_version_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Name of the design-version column in `design_csv`. The build joins respondents to design rows on `respondent_design_reference == design_version_name`."
+    },
+    {
+      "name": "design_task_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Name of the task column in `design_csv`. Used as the per-version task identifier in the output."
+    },
+    {
+      "name": "alternative_label",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Name of the alternative-label column in `design_csv` — the column that identifies which item is in each alternative slot. Carried through into the output as the per-row item identifier."
+    },
+    {
+      "name": "task_structure",
+      "type": "string",
+      "required": false,
+      "default": "best_worst",
+      "accepted_values": [
+        "best_worst",
+        "best_only",
+        "worst_only"
+      ],
+      "description": "Task structure of the source study. `\"best_worst\"` (default) means each task collected both a best and a worst pick. `\"best_only\"` and `\"worst_only\"` skip the absent side and leave the corresponding chosen flag at zero for every row."
+    },
+    {
+      "name": "none_mode",
+      "type": "string",
+      "required": false,
+      "default": "explicit",
+      "description": "How to handle the 'none of the above' option, if present. `\"explicit\"` (default) treats a none option as a real alternative with its own row in the output. Other modes are reserved for studies where none was implicit or omitted."
+    },
+    {
+      "name": "keep_debug_columns",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "When `true`, the output retains intermediate columns from the join (e.g., raw best / worst selection cells) for auditing. Default `false` produces a leaner output suitable for direct ingestion by `build-estimation-long`."
+    }
+  ],
+  "details": "`build-choice-sets` is the second stage of the wrangling pipeline. Its job is to materialise the per-alternative rows that estimation plugins consume, with the chosen indicators filled in. Concretely, for each respondent and each task they completed, it expands the design row for that (version, task) into one row per alternative slot, then sets `chosen_best = 1` on the alternative the respondent picked best (and `chosen_worst = 1` on the worst pick).\n\nThe join key is `respondent_design_reference -> design_version_name`. Both columns are typically named something like `design_version` after `prepare-maxdiff` has normalised them, but they can be different if your data was prepared by a different upstream tool. The five required column-name parameters exist precisely so this stage doesn't need to guess.\n\n`task_structure` controls which side(s) of the join are populated. For best-only or worst-only studies, the absent side is left empty rather than synthesised. `none_mode` controls how an explicit none-of-the-above option is materialised, if your design contains one.\n\nThis command does not perform attribute coding (effects coding, dummy coding, etc.) — that's `build-estimation-long`'s job. Its output is still in human-readable item-label form.",
+  "value": "On success, `out_dir` contains the choice-sets CSV (one row per respondent-task-alternative with chosen-best / chosen-worst flags) plus a task-metadata CSV describing the task structure (items per task, none-mode, etc.). The two files together are the input to `build-estimation-long`.\n\nIn protocol mode the plugin emits `event.run.started`, then `event.run.finished` (or `event.run.failed`).",
+  "notes": [
+    "All five `*_name` parameters are required even when defaults would work, because there is no widely-shared 'standard' name for these columns across survey platforms — the safer policy is to make the join keys explicit.",
+    "The output is still in item-label form, not coded form. Use `build-estimation-long` to apply attribute coding and produce the file that estimators consume.",
+    "For best-only or worst-only studies, set `task_structure` accordingly — the default `best_worst` will leave the absent side blank but won't automatically detect this case."
+  ],
+  "see_also": [
+    {
+      "command": "choice-wrangling::prepare-maxdiff",
+      "description": "Previous stage — produces the normalised respondent CSV that this command consumes."
+    },
+    {
+      "command": "choice-wrangling::build-estimation-long",
+      "description": "Next stage — apply attribute coding and produce the estimation-ready CSV."
+    },
+    {
+      "command": "choice-wrangling::pipeline-maxdiff",
+      "description": "End-to-end wrapper that runs all three wrangling stages."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic best-worst choice-set build",
+      "body": "[[\"choice-wrangling::build-choice-sets\"]]\nrespondents_csv = \"./prepared/respondents_prepared.csv\"\ndesign_csv = \"design.csv\"\nrun_dir = \"./choice-sets\"\nrun_name = \"pilot1\"\nrespondent_id = \"sys_RespNum\"\nrespondent_design_reference = \"design_version\"\ndesign_version_name = \"design_version\"\ndesign_task_name = \"design_task\"\nalternative_label = \"item\""
+    },
+    {
+      "title": "Best-only study with debug columns retained",
+      "body": "[[\"choice-wrangling::build-choice-sets\"]]\nrespondents_csv = \"./prepared/respondents_prepared.csv\"\ndesign_csv = \"design.csv\"\nrun_dir = \"./choice-sets\"\nrun_name = \"pilot2\"\nrespondent_id = \"sys_RespNum\"\nrespondent_design_reference = \"design_version\"\ndesign_version_name = \"design_version\"\ndesign_task_name = \"design_task\"\nalternative_label = \"item\"\ntask_structure = \"best_only\"\nkeep_debug_columns = true"
+    },
+    {
+      "title": "Non-Decipher export with Qualtrics respondent ID column",
+      "body": "[[\"choice-wrangling::build-choice-sets\"]]\nrespondents_csv = \"./prepared/respondents_prepared.csv\"\ndesign_csv = \"design.csv\"\nrun_dir = \"./choice-sets\"\nrun_name = \"pilot3\"\nrespondent_id = \"ResponseId\"\nrespondent_design_reference = \"mxd_design_version\"\ndesign_version_name = \"version\"\ndesign_task_name = \"task\"\nalternative_label = \"item\""
+    }
+  ],
+  "fields": [
+    {
+      "name": "respondents_csv",
+      "description": "Path to the prepared respondent CSV.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "design_csv",
+      "description": "Path to the design CSV.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Output directory for choice-set files.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "respondent_id",
+      "description": "Respondent ID column name.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "respondent_design_reference",
+      "description": "Column linking respondents to design versions.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "design_version_name",
+      "description": "Version column name in the design CSV.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "design_task_name",
+      "description": "Task column name in the design CSV.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "alternative_label",
+      "description": "Alternative label column name in the design CSV.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "task_structure",
+      "description": "Task structure: best_worst (default), best_only, or worst_only.",
+      "required": false,
+      "accepted_values": [
+        "best_worst",
+        "best_only",
+        "worst_only"
+      ]
+    },
+    {
+      "name": "none_mode",
+      "description": "None-option handling mode. Default: explicit.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "keep_debug_columns",
+      "description": "Keep intermediate debug columns in output. Default: false.",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

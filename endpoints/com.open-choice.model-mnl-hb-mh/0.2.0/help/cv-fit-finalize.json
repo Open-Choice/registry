@@ -1,0 +1,223 @@
+{
+  "command": "cv-fit-finalize",
+  "title": "Run K-fold cross-validated HB fits and finalize all folds in one call",
+  "summary": "Combines `cv-fit` and `cv-finalize` into a single command: runs HB MCMC across all folds in a `choice-cv split` directory, then immediately finalizes each fold and writes the aggregate CV summary. Emits a single started / finished event pair.",
+  "description": "Walks a `choice-cv split` directory and runs an HB fit on every fold via Metropolis-Hastings MCMC, then immediately finalizes each fold to produce per-fold exports. After all folds complete, writes `cv_summary.csv` and `cv_summary.json`. Equivalent to calling `cv-fit` then `cv-finalize` back-to-back, but in a single protocol invocation. The raw per-fold chains are preserved so you can still call `cv-finalize` or `cv-fit-extend` if needed.",
+  "usage": "[[\"model-mnl-hb-mh::cv-fit-finalize\"]]\nfolds_dir = \"<cv-folds dir>\"\nrun_dir = \"<output dir>\"\nrun_name = \"hbmh_run\"\n# optional:\nsegments = 1\niterations = 10000\nburnin = 0.2\nthreads = 4",
+  "arguments": [
+    {
+      "name": "folds_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Directory containing per-fold subdirectories. Each subdirectory must contain `train.csv` and `test.csv` files in coded long format."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory. Created if it does not exist. Each fold gets its own subdirectory, and `cv_summary.csv` plus `cv_summary.json` are written at the top level."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "export_dir",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Where to write per-fold CSV exports. Defaults to `{run_dir}/{fold_id}/exports`."
+    },
+    {
+      "name": "covariate_input",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Optional respondent-level covariate CSV applied uniformly to all folds."
+    },
+    {
+      "name": "segments",
+      "type": "integer",
+      "required": false,
+      "default": 2,
+      "description": "Number of mixture components. Default `2`. Applied to every fold."
+    },
+    {
+      "name": "iterations",
+      "type": "integer",
+      "required": false,
+      "default": 10000,
+      "description": "Total MCMC iterations per fold. Default `10000`."
+    },
+    {
+      "name": "save_every",
+      "type": "integer",
+      "required": false,
+      "default": 10,
+      "description": "Save draws every N iterations. Default `10`."
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 4,
+      "description": "Number of threads per fold. Default `4`."
+    },
+    {
+      "name": "random_seed",
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "description": "Random seed (`0` = non-deterministic). Each fold derives its own seed from the base seed."
+    },
+    {
+      "name": "chains",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Number of independent MCMC chains per fold. Default `1`. Each chain uses a seed derived from `random_seed` and its chain index. Draws are pooled at finalize time within each fold."
+    },
+    {
+      "name": "report_thin",
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "description": "Convergence-report snapshot interval in saved draws per fold. Default `0` (same as `checkpoint_every`). Controls chart data-point density."
+    },
+    {
+      "name": "burnin",
+      "type": "number",
+      "required": false,
+      "default": 0.2,
+      "description": "Burnin fraction discarded when computing per-fold summaries. Default `0.2`."
+    },
+    {
+      "name": "attribute_signs",
+      "type": "array<object>",
+      "required": false,
+      "default": null,
+      "description": "Sign constraints applied uniformly to all folds: `{ name, rule }` where `rule` is `\"non_neg\"` or `\"non_pos\"`."
+    }
+  ],
+  "details": "`cv-fit-finalize` runs the complete HB cross-validation pipeline in a single call. Each fold is sampled via MH MCMC and immediately finalized before moving to the next fold. The aggregate CV summary is written after all folds complete. The raw per-fold chains are persisted so you can still `cv-finalize` separately to change the burnin.",
+  "value": "On success, `run_dir` contains:\n\n- One subdirectory per fold, each containing the chain state and finalized exports (`point_estimates.csv`).\n- `cv_summary.csv` and `cv_summary.json` at the top level.\n\nIn protocol mode the plugin emits a single `event.run.started`, then `event.run.finished` (or `event.run.failed`) carrying the aggregate summary.",
+  "notes": [
+    "Equivalent to calling `cv-fit` then `cv-finalize` with the same `run_dir`.",
+    "Per-fold chains are persisted — you can still call `cv-finalize` to change burnin or `cv-fit-extend` to add more iterations."
+  ],
+  "see_also": [
+    {
+      "command": "model-mnl-hb-mh::cv-fit",
+      "description": "CV fit only — call `cv-finalize` separately."
+    },
+    {
+      "command": "model-mnl-hb-mh::cv-finalize",
+      "description": "Re-summarise an existing CV run."
+    },
+    {
+      "command": "model-mnl-hb-mh::fit-finalize",
+      "description": "Single-fit counterpart."
+    },
+    {
+      "command": "choice-cv::split",
+      "description": "Produces the per-fold directory layout this command consumes."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic HB CV fit-finalize (1 segment)",
+      "body": "[[\"model-mnl-hb-mh::cv-fit-finalize\"]]\nfolds_dir = \"./folds\"\nrun_dir = \"./runs/hb-cv\"\nrun_name = \"hbmh_run1\"\nsegments = 1\niterations = 10000\nburnin = 0.2"
+    }
+  ],
+  "fields": [
+    {
+      "name": "folds_dir",
+      "description": "Directory containing per-fold subdirectories (each with train.csv + test.csv).",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Output directory. Per-fold subdirs and cv_summary.csv are written here.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "export_dir",
+      "description": "Where to write per-fold CSV exports. Defaults to {fold_dir}/exports.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "covariate_input",
+      "description": "Optional covariate CSV applied to all folds.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "segments",
+      "description": "Number of mixture segments. Default: 2.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "iterations",
+      "description": "Total MCMC iterations per fold. Default: 10000.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "save_every",
+      "description": "Save draws every N iterations. Default: 10.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "threads",
+      "description": "Number of threads per fold. Default: 4.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "random_seed",
+      "description": "Random seed (0 = non-deterministic). Default: 0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "chains",
+      "description": "Number of independent MCMC chains per fold. Default: 1.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "report_thin",
+      "description": "Snapshot every N saved draws per fold (0 = checkpoint_every). Default: 0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "burnin",
+      "description": "Burnin fraction discarded when computing summaries. Default: 0.2.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "attribute_signs",
+      "description": "Sign constraints: [{name, rule}] where rule is non_neg or non_pos.",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "command": "write-cleaning-map-template",
+  "title": "Write a blank cleaning-map Excel workbook seeded from the input's variables and observed values",
+  "summary": "Produces an editable .xlsx where each row is an observed (variable, value) pair. The analyst fills in rename / recode / missing columns and feeds the result to `apply-cleaning-map`.",
+  "description": "Reads the input file, enumerates every variable and the distinct observed values for each categorical variable (subject to the plugin's internal cutoff), and emits a workbook with columns such as: variable name, current label, observed value, observed count, new label (blank), new value (blank), mark-missing (blank). Continuous / free-text variables are listed with metadata rows only (no per-value rows). The workbook is the contract for `apply-cleaning-map`: every row left blank is a no-op.",
+  "usage": "[[\"spss-reader::write-cleaning-map-template\"]]\ninput_path = \"./data/survey.sav\"\noutput_dir = \"./cleaning\"",
+  "arguments": [
+    { "name": "input_path", "type": "string", "required": true,  "description": "Input data file (.sav/.zsav, .csv/.tsv, or .xlsx)." },
+    { "name": "output_dir", "type": "string", "required": true,  "description": "Directory for the cleaning-map .xlsx; created if missing." },
+    { "name": "prefix",     "type": "string", "required": false, "description": "Optional filename prefix." },
+    { "name": "suffix",     "type": "string", "required": false, "description": "Optional filename suffix (before the extension)." }
+  ],
+  "notes": [
+    "The workbook is meant to be edited by hand (or by a downstream tool). Leaving a row untouched keeps the original value/label/missing-state intact.",
+    "Re-running this command overwrites the template — edits must be copied forward or saved under a different name before regenerating."
+  ]
+}

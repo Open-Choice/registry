@@ -1,0 +1,102 @@
+{
+  "command": "finalize",
+  "title": "Re-summarise a completed HB run and emit user-facing CSV exports",
+  "summary": "Recompute the FitSummary from a completed HB run and write the user-facing artifacts: summary.json with segment means, mixture probabilities, log-likelihood, and per-respondent point-estimates CSV. Idempotent — safe to re-run with a different burnin.",
+  "description": "Reads the persisted chain from a completed HB `fit` (or `fit-extend`) run, applies the requested burnin, and writes the user-facing artifacts: a `summary.json` containing segment means, mixture probabilities, posterior log-likelihood, and per-respondent point-estimates as a CSV. Does not sample anything — purely a post-processing step that re-derives the summary from the saved chain. Safe to re-run any number of times with different burnin values.",
+  "usage": "[[\"model-mnl-hb-mh::finalize\"]]\nrun_dir = \"<existing run dir>\"\nrun_name = \"hbmh_run\"\n# optional:\nburnin = 0.2\nexport_dir = \"<dir>\"",
+  "arguments": [
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Directory of a completed HB fit run. Must contain `spec.json`, `manifest.postcard`, and the `chunks/` directory with the saved chain. This is what `fit` and `fit-extend` produce."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "burnin",
+      "type": "number",
+      "required": false,
+      "default": 0.2,
+      "description": "Burnin fraction to discard from the saved draws. Default `0.2`. The burnin is applied at summary time only — the persisted chain is unaffected, so re-running `finalize` with a different burnin gives a different summary without re-sampling."
+    },
+    {
+      "name": "export_dir",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Where to write the CSV exports. Defaults to `{run_dir}/exports`. Override only if you want to keep multiple finalisations side-by-side (e.g., one per burnin value)."
+    }
+  ],
+  "details": "`finalize` is the post-processing step that turns a raw HB chain into a stakeholder-ready summary. It reads the saved draws from `chunks/`, discards the leading `burnin` fraction, and computes:\n\n- Segment-level mean partworths and mixture probabilities.\n- Posterior log-likelihood (in-sample, and holdout if `test_input` was recorded).\n- Per-respondent point estimates (the post-burnin posterior mean of each respondent's partworth vector).\n\nThe persisted chain itself is left untouched. This means `finalize` is idempotent and cheap to re-run: if you want to see how a different burnin value changes the summary, just call it again with the new value. No sampling is done, no chain state is modified.\n\n`fit` and `fit-extend` both call `finalize` automatically at the end of a successful run with the burnin value originally supplied, so you don't normally need to invoke this command explicitly. Use it directly when you want to re-summarise an existing run with different settings.\n\nThe `export_dir` override exists so that you can keep multiple side-by-side finalisations of the same chain — for example, one with `burnin = 0.2` and one with `burnin = 0.5` — without overwriting either.",
+  "value": "On success, `export_dir` (defaulting to `{run_dir}/exports`) contains:\n\n- `summary.json` — segment means, mixture probabilities, log-likelihood, and per-segment / overall fit statistics.\n- A per-respondent point-estimates CSV — one row per respondent, one column per partworth, holding the post-burnin posterior mean.\n\nIn protocol mode the plugin emits `event.run.started`, then `event.run.finished` (or `event.run.failed`).",
+  "notes": [
+    "`finalize` does not sample anything — it only re-summarises the existing chain. To sample more iterations, use `fit-extend`.",
+    "Re-running with a different `burnin` is safe and cheap; the persisted chain is unaffected.",
+    "Use `export_dir` to keep multiple finalisations side-by-side without overwriting each other."
+  ],
+  "see_also": [
+    {
+      "command": "model-mnl-hb-mh::fit",
+      "description": "Initial HB fit — calls `finalize` automatically at the end."
+    },
+    {
+      "command": "model-mnl-hb-mh::fit-extend",
+      "description": "Add more iterations on top of an existing chain."
+    },
+    {
+      "command": "model-mnl-hb-mh::cv-finalize",
+      "description": "Cross-validation counterpart — finalises every fold of a `cv-fit` run."
+    },
+    {
+      "command": "choice-wrangling::expand-coefficients",
+      "description": "Translate the per-respondent point-estimates back into attribute / level form for reporting."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Re-summarise an existing run with a higher burnin",
+      "body": "[[\"model-mnl-hb-mh::finalize\"]]\nrun_dir = \"./runs/hb\"\nrun_name = \"hbmh_run1\"\nburnin = 0.5"
+    },
+    {
+      "title": "Write the summary to a side-by-side directory",
+      "body": "[[\"model-mnl-hb-mh::finalize\"]]\nrun_dir = \"./runs/hb\"\nrun_name = \"hbmh_run2\"\nburnin = 0.5\nexport_dir = \"./runs/hb/exports_burnin50\""
+    },
+    {
+      "title": "Re-finalise after extending the chain",
+      "body": "[[\"model-mnl-hb-mh::finalize\"]]\nrun_dir = \"./runs/hb\"\nrun_name = \"hbmh_run3\"\nburnin = 0.2"
+    }
+  ],
+  "fields": [
+    {
+      "name": "run_dir",
+      "description": "Directory of a completed HB fit run (must contain spec.json + manifest.postcard + chunks/).",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "burnin",
+      "description": "Burnin fraction to discard from saved draws. Default: 0.2.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "export_dir",
+      "description": "Where to write the CSV exports. Defaults to {run_dir}/exports.",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

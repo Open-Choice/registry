@@ -1,0 +1,85 @@
+{
+  "command": "finalize",
+  "title": "Re-summarise a completed LC run and emit user-facing CSV exports",
+  "summary": "Recompute the fit summary from a completed run and write the user-facing artifacts: summary.json with class-level coefficients, segment sizes, log-likelihood, and information criteria; plus a CSV exports directory containing IC.csv, coefficients.csv, and related per-segment outputs. Idempotent — safe to re-run.",
+  "description": "Reads the persisted state from a completed LC `fit` run and writes the user-facing artifacts: a `summary.json` containing per-class coefficients, segment sizes, log-likelihood, and information criteria, plus a CSV exports directory with `IC.csv`, `coefficients.csv`, and related per-segment outputs. Does not refit anything — purely a post-processing step that re-derives the summary from the saved checkpoint. Safe to re-run any number of times.",
+  "usage": "[[\"model-lc::finalize\"]]\nrun_dir = \"<existing run dir>\"\nrun_name = \"lc_run\"\n# optional:\nexport_dir = \"<dir>\"",
+  "arguments": [
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Directory of a completed LC fit run. Must contain `spec.json` and `checkpoint.postcard` — the persisted state written by `fit`."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "export_dir",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Where to write the CSV exports. Defaults to `{run_dir}/exports`. Override only if you want to keep multiple finalisations side-by-side."
+    }
+  ],
+  "details": "`finalize` is the post-processing step that turns a raw LC fit checkpoint into a stakeholder-ready summary. It reads `checkpoint.postcard` and computes:\n\n- Per-class coefficient tables (one row per attribute, one column per class).\n- Segment sizes (mean posterior membership probability per class).\n- In-sample log-likelihood and information criteria (BIC, AIC, AIC3, CAIC).\n- Per-segment fit statistics.\n\nThe persisted state itself is left untouched. `fit` calls `finalize` automatically at the end of a successful run with the default `export_dir`, so you don't normally need to invoke this command explicitly. Use it directly when you want to write exports to a different directory or regenerate them after manual edits to the spec.\n\nUnlike the HB `finalize`, there is no burnin parameter — LC is a point-estimate method, not a posterior sampler, so the checkpoint already contains a single fit state.",
+  "value": "On success, `export_dir` (defaulting to `{run_dir}/exports`) contains:\n\n- `summary.json` — class coefficients, segment sizes, log-likelihood, information criteria.\n- `IC.csv` — per-segment information criteria in tabular form.\n- `coefficients.csv` — per-class coefficient table for direct ingestion by `choice-wrangling::expand-coefficients`.\n- Related per-segment outputs.\n\nIn protocol mode the plugin emits `event.run.started`, then `event.run.finished` (or `event.run.failed`).",
+  "notes": [
+    "`finalize` does not refit — it only re-summarises the persisted checkpoint.",
+    "Use `export_dir` to keep multiple finalisations side-by-side (e.g., one per spec variant).",
+    "The `coefficients.csv` output is the file you pass to `choice-wrangling::expand-coefficients` to translate the per-class coefficients back into attribute / level form."
+  ],
+  "see_also": [
+    {
+      "command": "model-lc::fit",
+      "description": "Initial LC fit — calls `finalize` automatically at the end."
+    },
+    {
+      "command": "model-lc::cv-finalize",
+      "description": "Cross-validation counterpart — finalises every fold of a `cv-fit` run."
+    },
+    {
+      "command": "choice-wrangling::expand-coefficients",
+      "description": "Translate per-class coefficients back into attribute / level form for reporting."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Re-finalise an existing run",
+      "body": "[[\"model-lc::finalize\"]]\nrun_dir = \"./runs/lc\"\nrun_name = \"lc_run1\""
+    },
+    {
+      "title": "Write exports to a side-by-side directory",
+      "body": "[[\"model-lc::finalize\"]]\nrun_dir = \"./runs/lc\"\nrun_name = \"lc_run2\"\nexport_dir = \"./runs/lc/exports_v2\""
+    },
+    {
+      "title": "Re-finalise after moving the run directory",
+      "body": "[[\"model-lc::finalize\"]]\nrun_dir = \"./archive/lc_study_2024\"\nrun_name = \"lc_run3\"\nexport_dir = \"./outputs/lc_coefficients\""
+    }
+  ],
+  "fields": [
+    {
+      "name": "run_dir",
+      "description": "Directory of a completed fit run (must contain spec.json + checkpoint.postcard).",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "export_dir",
+      "description": "Where to write the CSV exports. Defaults to {run_dir}/exports.",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

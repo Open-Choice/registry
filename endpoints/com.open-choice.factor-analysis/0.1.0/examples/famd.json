@@ -1,0 +1,17 @@
+{
+  "minimal": {
+    "input": "./data.csv",
+    "meta": "./meta.csv",
+    "run_dir": "./runs",
+    "run_name": "famd1"
+  },
+  "two_to_five_dims_one_batch": {
+    "input": "./data.csv",
+    "meta": "./meta.csv",
+    "run_dir": "./runs",
+    "run_name": "famd_demo",
+    "batches": ["demographics"],
+    "min_count": 2,
+    "max_count": 5
+  }
+}

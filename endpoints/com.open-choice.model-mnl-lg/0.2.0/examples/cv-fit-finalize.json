@@ -1,0 +1,12 @@
+[
+  {
+    "template_id": "lg-cv-fit-finalize-basic",
+    "title": "Logit: cross-validated fit and finalize in one call",
+    "summary": "Run CV fits across all folds and write per-fold exports plus the aggregate CV summary in one call.",
+    "category": "starter",
+    "oce_text": "[[\"model-mnl-lg::cv-fit-finalize\"]]\nfolds_dir = \"./cv-folds\"\nrun_dir = \"./runs\"\nrun_name = \"pilot_cv\"\n",
+    "folds_dir": "./cv-folds",
+    "run_dir": "./runs",
+    "run_name": "pilot_cv"
+  }
+]

@@ -1,0 +1,25 @@
+[
+  {
+    "template_id": "dfa-cv-search-finalize-basic",
+    "title": "DFA: CV search-finalize (ladder-beam + base-var groups)",
+    "summary": "Ladder-beam variable selection scored by pooled test log-likelihood across pre-split folds. Columns sharing a prefix before `_._` are treated as at-most-one.",
+    "category": "starter",
+    "oce_text": "[[\"model-dfa::cv-search-finalize\"]]\nfolds_dir = \"./folds\"\nrun_dir = \"./runs\"\nrun_name = \"pilot_cv_search\"\ny_col = \"y\"\n",
+    "folds_dir": "./folds",
+    "run_dir": "./runs",
+    "run_name": "pilot_cv_search",
+    "y_col": "y"
+  },
+  {
+    "template_id": "dfa-cv-search-finalize-no-groups",
+    "title": "DFA: CV search-finalize without base-var groups",
+    "summary": "Opt out of the `_._` at-most-one rule (useful when column names don't follow the convention).",
+    "category": "advanced",
+    "oce_text": "[[\"model-dfa::cv-search-finalize\"]]\nfolds_dir = \"./folds\"\nrun_dir = \"./runs\"\nrun_name = \"pilot_cv_search_flat\"\ny_col = \"y\"\nuse_exclusion_groups = false\n",
+    "folds_dir": "./folds",
+    "run_dir": "./runs",
+    "run_name": "pilot_cv_search_flat",
+    "y_col": "y",
+    "use_exclusion_groups": false
+  }
+]

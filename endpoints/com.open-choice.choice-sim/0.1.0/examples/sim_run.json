@@ -1,0 +1,41 @@
+[
+  {
+    "template_id": "sim-run-basic",
+    "title": "Sim: basic market share run",
+    "summary": "Run the base scenario and return share and revenue per product.",
+    "category": "starter",
+    "oce_text": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_run\"]]\nscenarios = [\"base\"]\nmeasures = \"share|revenue\"\n",
+    "scenarios": ["base"],
+    "measures": "share|revenue"
+  },
+  {
+    "template_id": "sim-run-all-scenarios",
+    "title": "Sim: all scenarios, all subgroups",
+    "summary": "Run every scenario and subgroup, with net rows.",
+    "category": "starter",
+    "oce_text": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_run\"]]\nscenarios = [\"__all__\"]\nsubgroups = [\"__all__\"]\nmeasures = \"share|volume|revenue\"\ninclude_nets = true\n",
+    "scenarios": ["__all__"],
+    "subgroups": ["__all__"],
+    "measures": "share|volume|revenue",
+    "include_nets": true
+  },
+  {
+    "template_id": "sim-run-with-override",
+    "title": "Sim: run with price override",
+    "summary": "Run the base scenario with a fixed price override on one product.",
+    "category": "advanced",
+    "oce_text": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_run\"]]\nscenarios = [\"base\"]\nmeasures = \"share|revenue\"\n\n[\"cs::sim_run\".scenario_chgs.ProductA]\nprice = 9.99\n",
+    "scenarios": ["base"],
+    "measures": "share|revenue"
+  },
+  {
+    "template_id": "sim-run-first-choice",
+    "title": "Sim: first-choice model",
+    "summary": "Run using first-choice (FC) probabilities instead of share of preference.",
+    "category": "advanced",
+    "oce_text": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_run\"]]\nscenarios = [\"base\"]\nprob_methods = \"fc\"\nmeasures = \"share\"\n",
+    "scenarios": ["base"],
+    "prob_methods": "fc",
+    "measures": "share"
+  }
+]

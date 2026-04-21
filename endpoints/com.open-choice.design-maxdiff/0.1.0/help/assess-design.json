@@ -1,0 +1,34 @@
+{
+  "command": "assess-design",
+  "title": "Assess an existing MaxDiff design",
+  "summary": "Computes all balance and coverage metrics for a previously generated or externally constructed MaxDiff design.",
+  "arguments": [
+    {
+      "name": "design_path",
+      "type": "string",
+      "required": true,
+      "description": "Path to the wide-format design CSV. Must have columns Version, Task followed by one column per item slot (Item1, Item2, ...) containing 1-based item indices."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "description": "Workspace directory where assessment artifacts will be written."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "description": "Run identifier; output files are written to {run_dir}/ocinfo/{run_name}_design/."
+    }
+  ],
+  "value": "Produces a unified assessment with item-exposure balance, pair-coverage, within-version and total SSE metrics for any MaxDiff design, regardless of the objective used to generate it.",
+  "notes": [
+    "The spec (n_items, items_per_task, tasks_per_version, versions) is inferred from the CSV header and data.",
+    "Metrics include per-version and total exposure counts, pair co-occurrence counts, SSE for item and pair balance within versions, and SSE for total item and pair balance across all versions.",
+    "pair_counts_nonzero reports how many of the possible item pairs appear at least once."
+  ],
+  "see_also": [
+    { "command": "design-maxdiff::design", "description": "Generate the MaxDiff design that assess-design scores." }
+  ]
+}

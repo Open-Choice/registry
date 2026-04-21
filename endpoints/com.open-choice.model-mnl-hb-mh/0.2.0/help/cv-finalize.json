@@ -1,0 +1,94 @@
+{
+  "command": "cv-finalize",
+  "title": "Re-summarise every fold of a completed cv-fit run with a chosen burnin",
+  "summary": "Finalize every per-fold HB run produced by cv-fit. Walks the fold subdirectories under run_dir, runs finalize on each, and writes aggregate cross-validation metrics (mean and standard deviation of train and holdout log-likelihood) to cv_summary.json and cv_summary.csv at the top level of run_dir.",
+  "description": "The cross-validation counterpart of `finalize`. Walks every per-fold subdirectory under an existing `cv-fit` `run_dir`, re-runs `finalize` on each with the requested burnin, and rewrites the aggregate `cv_summary.csv` and `cv_summary.json` at the top level. Pure post-processing — no sampling, no chain modification.",
+  "usage": "[[\"model-mnl-hb-mh::cv-finalize\"]]\nrun_dir = \"<existing cv run dir>\"\nrun_name = \"hbmh_run\"\n# optional:\nburnin = 0.2\nexport_dir = \"exports\"",
+  "arguments": [
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Top-level CV run directory containing per-fold subdirectories. Each fold subdirectory must contain a completed HB chain (the layout `cv-fit` produces)."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "burnin",
+      "type": "number",
+      "required": false,
+      "default": 0.2,
+      "description": "Burnin fraction to discard from each fold's saved draws. Default `0.2`. Applied uniformly to every fold. The per-fold persisted chains are unaffected, so re-running `cv-finalize` with a different burnin gives a different aggregate summary without re-sampling."
+    },
+    {
+      "name": "export_dir",
+      "type": "string",
+      "required": false,
+      "default": "exports",
+      "description": "Per-fold export subdirectory name. Resolved as `{fold_dir}/{export_dir}`. Default `exports`. Override only if you want to keep multiple finalisations of the same CV run side-by-side (e.g., one per burnin value)."
+    }
+  ],
+  "details": "`cv-finalize` is a thin wrapper around per-fold `finalize` calls plus aggregation. For each fold subdirectory under `run_dir`, it re-derives the per-fold summary at the requested burnin, then computes the aggregate train and holdout log-likelihood (mean ± standard deviation across folds) and rewrites the top-level `cv_summary.csv` and `cv_summary.json`.\n\nLike its single-run counterpart, this command is idempotent and cheap. The persisted per-fold chains are not modified. To re-evaluate the cross-validation metrics with a different burnin value, just call `cv-finalize` again with the new value — there's no need to re-fit anything.\n\n`cv-fit` and `cv-fit-extend` both call `cv-finalize` automatically at the end of a successful run with the burnin originally supplied, so you only need to invoke this command directly when you want to change the burnin or export to a side-by-side directory.",
+  "value": "On success:\n\n- Each per-fold subdirectory has its `exports/` (or `{export_dir}/`) regenerated with `summary.json` and the per-respondent point-estimates CSV.\n- The top-level `run_dir` contains updated `cv_summary.csv` and `cv_summary.json` with per-fold and aggregate train / holdout log-likelihood under the requested burnin.\n\nIn protocol mode the plugin emits `event.run.started`, then per-fold finalize events, then `event.run.finished` (or `event.run.failed`) carrying the updated aggregate summary.",
+  "notes": [
+    "`cv-finalize` does not sample anything — it only re-summarises existing chains. To sample more iterations, use `cv-fit-extend`.",
+    "The aggregate metrics are mean ± standard deviation across folds; if you need per-fold detail, read the per-fold `summary.json` files directly.",
+    "Use `export_dir` to keep multiple finalisations side-by-side without overwriting each other (e.g., `exports_burnin20` vs `exports_burnin50`)."
+  ],
+  "see_also": [
+    {
+      "command": "model-mnl-hb-mh::cv-fit",
+      "description": "Initial CV run — calls `cv-finalize` automatically at the end."
+    },
+    {
+      "command": "model-mnl-hb-mh::cv-fit-extend",
+      "description": "Add more iterations to every fold."
+    },
+    {
+      "command": "model-mnl-hb-mh::finalize",
+      "description": "Single-run counterpart."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Re-summarise a CV run with a higher burnin",
+      "body": "[[\"model-mnl-hb-mh::cv-finalize\"]]\nrun_dir = \"./runs/hb-cv\"\nrun_name = \"hbmh_run1\"\nburnin = 0.5"
+    },
+    {
+      "title": "Write the per-fold exports to a side-by-side subdirectory",
+      "body": "[[\"model-mnl-hb-mh::cv-finalize\"]]\nrun_dir = \"./runs/hb-cv\"\nrun_name = \"hbmh_run2\"\nburnin = 0.5\nexport_dir = \"exports_burnin50\""
+    }
+  ],
+  "fields": [
+    {
+      "name": "run_dir",
+      "description": "Top-level CV run directory containing per-fold subdirectories.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "burnin",
+      "description": "Burnin fraction to discard from saved draws (applied to each fold). Default: 0.2.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "export_dir",
+      "description": "Per-fold export subdirectory name. Resolved as {fold_dir}/{export_dir}. Default: \"exports\".",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

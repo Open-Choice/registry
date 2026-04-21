@@ -1,0 +1,48 @@
+[
+  {
+    "template_id": "design-cbc-de-basic",
+    "title": "Basic CBC (DE) — uniform priors, 4 versions",
+    "summary": "D-efficient CBC design under effects coding, uniform choice probabilities (no beta).",
+    "category": "starter",
+    "oce_text": "[[\"design-cbc::design-de\"]]\nrun_dir = \"./runs/design-de\"\nrun_name = \"pilot\"\n\n[design-cbc.design-de.spec]\nversions = 4\ntasks_per_version = 12\nconcepts_per_task = 3\n\n[[design-cbc.design-de.spec.attributes]]\nname = \"Brand\"\nmax_level = 3\n\n[[design-cbc.design-de.spec.attributes]]\nname = \"Price\"\nmax_level = 4\n",
+    "run_dir": "./runs/design-de",
+    "run_name": "pilot",
+    "spec": {
+      "versions": 4,
+      "tasks_per_version": 12,
+      "concepts_per_task": 3,
+      "attributes": [
+        { "name": "Brand", "max_level": 3 },
+        { "name": "Price", "max_level": 4 }
+      ]
+    }
+  },
+  {
+    "template_id": "design-cbc-de-bayesian",
+    "title": "Bayesian DE with multi-draw priors",
+    "summary": "Bayesian D-efficiency: average information across multiple beta draws.",
+    "category": "advanced",
+    "oce_text": "[[\"design-cbc::design-de\"]]\nrun_dir = \"./runs/design-de\"\nrun_name = \"bayes\"\nseed = 7\nn_steps = 300000\n",
+    "run_dir": "./runs/design-de",
+    "run_name": "bayes",
+    "seed": 7,
+    "n_steps": 300000,
+    "weights": {
+      "alpha": 0.5,
+      "ridge": 1e-6,
+      "beta": [
+        [-0.4, -0.1,  0.3,  0.6, -0.2, -0.5, -0.8],
+        [ 0.1, -0.3,  0.2,  0.4, -0.4, -0.6, -0.9]
+      ]
+    },
+    "spec": {
+      "versions": 4,
+      "tasks_per_version": 12,
+      "concepts_per_task": 3,
+      "attributes": [
+        { "name": "Brand", "max_level": 3 },
+        { "name": "Price", "max_level": 4 }
+      ]
+    }
+  }
+]

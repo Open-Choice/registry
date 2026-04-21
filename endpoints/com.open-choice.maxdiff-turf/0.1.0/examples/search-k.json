@@ -1,0 +1,27 @@
+[
+  {
+    "template_id": "maxdiff-turf-search-k-basic",
+    "title": "TURF: search at fixed k",
+    "summary": "Search for the top-scoring subset of size 5 using weighted reach.",
+    "category": "starter",
+    "oce_text": "[[\"maxdiff-turf::search-k\"]]\nutilities = \"./utilities.csv\"\nout_dir = \"./runs/search-k\"\nk = 5\nreach_method = \"weighted-by-probability\"\nnon_utility_cols = \"1,2\"\n",
+    "utilities": "./utilities.csv",
+    "out_dir": "./runs/search-k",
+    "k": 5,
+    "reach_method": "weighted-by-probability",
+    "non_utility_cols": "1,2"
+  },
+  {
+    "template_id": "maxdiff-turf-search-k-firstchoice",
+    "title": "TURF: search at fixed k (first-choice)",
+    "summary": "Search for the top subset of size 6 using first-choice reach.",
+    "category": "starter",
+    "oce_text": "[[\"maxdiff-turf::search-k\"]]\nutilities = \"./utilities.csv\"\nout_dir = \"./runs/search-k-fc\"\nk = 6\nreach_method = \"first-choice\"\nsearch_method = \"auto\"\nnon_utility_cols = \"1,2\"\n",
+    "utilities": "./utilities.csv",
+    "out_dir": "./runs/search-k-fc",
+    "k": 6,
+    "reach_method": "first-choice",
+    "search_method": "auto",
+    "non_utility_cols": "1,2"
+  }
+]

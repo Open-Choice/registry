@@ -1,0 +1,18 @@
+{
+  "plugin_id": "com.open-choice.design-maxdiff",
+  "display_name": "MaxDiff / Best-Worst Design",
+  "description": "Generates balanced MaxDiff / best-worst experimental designs using simulated annealing.",
+  "publisher": "Open Choice",
+  "categories": [
+    "design",
+    "maxdiff"
+  ],
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/design-maxdiff-v0.1.0/design-maxdiff-0.1.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "3df978b5c838082f358844e7df3f0a6b69db675b480d15f7418f4a275baf5f5c",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:28:37Z",
+  "release_notes": "Initial release.",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/design-maxdiff-v0.1.0"
+}

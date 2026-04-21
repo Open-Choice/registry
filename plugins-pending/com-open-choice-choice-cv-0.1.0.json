@@ -1,0 +1,17 @@
+{
+  "plugin_id": "com.open-choice.choice-cv",
+  "display_name": "Choice CV Splitter",
+  "description": "Cross-validation fold splitter for choice data. Splits respondent-level data into balanced train/test folds.",
+  "publisher": "Open Choice",
+  "categories": [
+    "cross-validation"
+  ],
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/choice-cv-v0.1.0/choice-cv-0.1.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "ef1e1dc6e4f2d2d6adcf4b623c2847680849ba72f17100bc9e4792db27364696",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:28:05Z",
+  "release_notes": "Initial release.",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/choice-cv-v0.1.0"
+}

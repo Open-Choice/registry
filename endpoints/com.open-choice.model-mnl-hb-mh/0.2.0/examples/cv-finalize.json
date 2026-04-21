@@ -1,0 +1,12 @@
+[
+  {
+    "template_id": "hb-cv-finalize",
+    "title": "HB: finalize a CV run",
+    "summary": "Aggregate per-fold metrics and write cv_summary.json/csv from a completed cv-fit run.",
+    "category": "starter",
+    "oce_text": "[[\"model-mnl-hb-mh::cv-finalize\"]]\nrun_dir = \"./runs/hb\"\nrun_name = \"pilot_cv\"\nburnin = 0.2\n",
+    "run_dir": "./runs/hb",
+    "run_name": "pilot_cv",
+    "burnin": 0.2
+  }
+]

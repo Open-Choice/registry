@@ -1,0 +1,18 @@
+{
+  "plugin_id": "com.open-choice.design-cbc",
+  "display_name": "CBC Design (BO + DE)",
+  "description": "Generates Choice-Based Conjoint experimental designs using simulated annealing. Two objectives: design-bo (balance / minimum overlap) and design-de (D-efficiency under effects coding, with optional Bayesian priors).",
+  "publisher": "Open Choice",
+  "categories": [
+    "design",
+    "cbc"
+  ],
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/design-cbc-v0.1.0/design-cbc-0.1.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "b4b8d071760f5121474ab7cf8939d37e1e52e42ef1fbc4663cd6eeef1ab5913c",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:28:33Z",
+  "release_notes": "Initial release.",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/design-cbc-v0.1.0"
+}

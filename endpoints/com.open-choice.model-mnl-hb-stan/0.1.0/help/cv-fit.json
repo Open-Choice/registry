@@ -1,0 +1,229 @@
+{
+  "command": "cv-fit",
+  "title": "Run HB-Stan sampling across all folds in a cross-validation directory",
+  "summary": "Run HB-MNL sampling across all folds in a folds directory. For each fold subdirectory containing a train.csv, runs the full fit pipeline (CSV import → Stan JSON → CmdStan sampling) and writes output to run_dir/<fold_name>/. Seeds are offset per fold for independence while preserving reproducibility. Follow with cv-finalize to compute per-fold diagnostics and a pooled CV summary.",
+  "description": "Walks a cross-validation directory produced by `choice-cv::split` (one subdirectory per fold, each containing train.csv) and runs a full HB-Stan fit on every fold. The fold-level outputs are written under matching subdirectories of run_dir. A single base seed is offset per fold so chains remain independent while the whole run is reproducible from one value. Follow with `cv-finalize` to compute per-fold diagnostics and a pooled CV summary, or use `cv-fit-finalize` to do both steps at once.",
+  "usage": "[[\"hb-stan::cv-fit\"]]\nfolds_dir = \"<cv-folds dir>\"\nrun_dir = \"<dir>\"\nrun_name = \"stan_run\"\n# optional:\nheaders = true\nnum_samples = 1000\nnum_warmup = 500\nnum_chains = 4\nseed = <int>\nthin = <int>\nparallel_chains = true\nprior_lkj_eta = 1.0\nsigma_scale = 1.0\nridge_scale = 1e-6",
+  "arguments": [
+    {
+      "name": "folds_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Directory containing fold subdirectories. Each subdirectory must contain a train.csv in coded-long format (resp_id, task_id, alt_id, x1, ..., xP, y). Folds are processed in alphabetical order."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory. A subdirectory per fold (e.g. run_dir/fold_01/) is created here, each containing stan_data.json and hb_fit_chain_*.csv files."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether train.csv files have a header row. Default true."
+    },
+    {
+      "name": "num_samples",
+      "type": "integer",
+      "required": false,
+      "default": 1000,
+      "description": "Post-warmup draws per chain per fold. Default 1000."
+    },
+    {
+      "name": "num_warmup",
+      "type": "integer",
+      "required": false,
+      "default": 500,
+      "description": "Warmup iterations per chain per fold. Default 500."
+    },
+    {
+      "name": "num_chains",
+      "type": "integer",
+      "required": false,
+      "default": 4,
+      "description": "Number of independent chains per fold. At least 4 recommended. Default 4."
+    },
+    {
+      "name": "seed",
+      "type": "integer",
+      "required": false,
+      "default": null,
+      "description": "Base RNG seed. Each fold receives seed + fold_index × 1000 to keep folds independent while remaining reproducible from a single value. Omit for a non-deterministic seed."
+    },
+    {
+      "name": "thin",
+      "type": "integer",
+      "required": false,
+      "default": null,
+      "description": "Thinning factor applied across all folds. Omit to keep all draws."
+    },
+    {
+      "name": "parallel_chains",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Run chains in parallel within each fold. Folds themselves are processed sequentially. Default true."
+    },
+    {
+      "name": "prior_lkj_eta",
+      "type": "number",
+      "required": false,
+      "default": 1,
+      "description": "LKJ prior shape parameter η applied to all folds. Default 1.0."
+    },
+    {
+      "name": "sigma_scale",
+      "type": "number",
+      "required": false,
+      "default": 1,
+      "description": "Prior scale for individual standard deviations σ, applied to all folds. Default 1.0."
+    },
+    {
+      "name": "ridge_scale",
+      "type": "number",
+      "required": false,
+      "default": 0.000001,
+      "description": "Ridge scale for the covariance prior, applied to all folds. Default 1e-6."
+    }
+  ],
+  "details": "`cv-fit` is the cross-validation entry point for HB-Stan. It assumes you have already run `choice-cv::split` to produce a directory of per-fold train CSVs. This command then runs the full fit pipeline (`fit` equivalent) against each fold using a shared hyperparameter set.\n\nFolds are processed sequentially; within each fold, `parallel_chains` controls whether the chains run in parallel. Total wall-clock time scales linearly with fold count and per-fold sampling cost.\n\nThe base seed is offset per fold (seed + fold_index × 1000) so each fold's chains are seeded independently but the entire run is reproducible from a single base seed. Omit the seed to draw a fresh non-deterministic one each call.\n\nAfter all folds complete, run `cv-finalize` to compute per-fold diagnostics and the pooled CV summary, or use `cv-fit-finalize` to run both steps at once.",
+  "value": "On success, run_dir contains:\n\n- One subdirectory per fold named to match the input fold directory, each containing stan_data.json and hb_fit_chain_*.csv files.\n\nIn protocol mode the plugin emits event.run.started, then per-fold progress events, then event.run.finished (or event.run.failed).",
+  "notes": [
+    "Folds are processed sequentially — total wall time scales with K × single-fold-time.",
+    "The shared hyperparameters apply uniformly to all folds; to explore different priors, run cv-fit against a fresh run_dir.",
+    "CmdStan must be installed and on PATH."
+  ],
+  "see_also": [
+    {
+      "command": "choice-cv::split",
+      "description": "Produces the per-fold directory layout this command consumes."
+    },
+    {
+      "command": "hb-stan::cv-finalize",
+      "description": "Finalize every fold and produce the pooled CV summary."
+    },
+    {
+      "command": "hb-stan::cv-fit-finalize",
+      "description": "Runs cv-fit then cv-finalize in a single call."
+    },
+    {
+      "command": "hb-stan::fit",
+      "description": "Single-fold fit — use for non-CV runs."
+    },
+    {
+      "command": "model-hb-mh::cv-fit",
+      "description": "MH-based HB cross-validation alternative."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic 5-fold CV run",
+      "body": "[[\"hb-stan::cv-fit\"]]\nfolds_dir = \"./cv-folds\"\nrun_dir = \"./runs/hb-stan-cv\"\nrun_name = \"stan_run1\""
+    },
+    {
+      "title": "CV run with more sampling and reproducible seed",
+      "body": "[[\"hb-stan::cv-fit\"]]\nfolds_dir = \"./cv-folds\"\nrun_dir = \"./runs/hb-stan-cv-long\"\nrun_name = \"stan_run2\"\nnum_samples = 2000\nnum_warmup = 1000\nseed = 42"
+    },
+    {
+      "title": "CV run with conservative prior",
+      "body": "[[\"hb-stan::cv-fit\"]]\nfolds_dir = \"./cv-folds\"\nrun_dir = \"./runs/hb-stan-cv-tight\"\nrun_name = \"stan_run3\"\nprior_lkj_eta = 2.0\nsigma_scale = 0.5\nseed = 7"
+    }
+  ],
+  "fields": [
+    {
+      "name": "folds_dir",
+      "description": "Directory of fold subdirs, each containing train.csv.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Output directory; one subdir per fold.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "headers",
+      "description": "Whether train.csv files have a header row. Default: true.",
+      "required": false,
+      "accepted_values": [
+        "true",
+        "false"
+      ]
+    },
+    {
+      "name": "num_samples",
+      "description": "Post-warmup draws per chain per fold. Default: 1000.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "num_warmup",
+      "description": "Warmup iterations per chain per fold. Default: 500.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "num_chains",
+      "description": "Chains per fold. Default: 4.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "seed",
+      "description": "Base RNG seed. Each fold gets seed + fold_index × 1000.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "thin",
+      "description": "Thinning factor. Omit to keep all draws.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "parallel_chains",
+      "description": "Run chains in parallel within each fold. Default: true.",
+      "required": false,
+      "accepted_values": [
+        "true",
+        "false"
+      ]
+    },
+    {
+      "name": "prior_lkj_eta",
+      "description": "LKJ prior η, all folds. Default: 1.0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "sigma_scale",
+      "description": "Half-normal σ prior scale, all folds. Default: 1.0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "ridge_scale",
+      "description": "Covariance prior ridge scale, all folds. Default: 1e-6.",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

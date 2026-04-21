@@ -1,0 +1,31 @@
+[
+  {
+    "template_id": "maxdiff-turf-curve-family-basic",
+    "title": "TURF: curve family across anchors",
+    "summary": "Run anchored ladders for sizes 1-4 in parallel and combine into a curve family.",
+    "category": "starter",
+    "oce_text": "[[\"maxdiff-turf::curve-family\"]]\nutilities = \"./utilities.csv\"\nout_dir = \"./runs/curve-family\"\nanchor_ks = [1, 2, 3, 4]\nreach_method = \"first-choice\"\nsearch_method = \"auto\"\nladder_mode = \"repair\"\nparallel_jobs = 4\nnon_utility_cols = \"1,2\"\n",
+    "utilities": "./utilities.csv",
+    "out_dir": "./runs/curve-family",
+    "anchor_ks": [1, 2, 3, 4],
+    "reach_method": "first-choice",
+    "search_method": "auto",
+    "ladder_mode": "repair",
+    "parallel_jobs": 4,
+    "non_utility_cols": "1,2"
+  },
+  {
+    "template_id": "maxdiff-turf-curve-family-all",
+    "title": "TURF: curve family (all anchors)",
+    "summary": "Sweep all feasible anchor sizes with weighted reach and four parallel jobs.",
+    "category": "advanced",
+    "oce_text": "[[\"maxdiff-turf::curve-family\"]]\nutilities = \"./utilities.csv\"\nout_dir = \"./runs/curve-family-all\"\nreach_method = \"weighted-by-probability\"\nsearch_method = \"auto\"\nladder_mode = \"repair\"\nparallel_jobs = 4\nnon_utility_cols = \"1,2\"\n",
+    "utilities": "./utilities.csv",
+    "out_dir": "./runs/curve-family-all",
+    "reach_method": "weighted-by-probability",
+    "search_method": "auto",
+    "ladder_mode": "repair",
+    "parallel_jobs": 4,
+    "non_utility_cols": "1,2"
+  }
+]

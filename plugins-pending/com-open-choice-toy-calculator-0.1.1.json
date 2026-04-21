@@ -7,11 +7,11 @@
     "demo"
   ],
   "version": "0.1.1",
-  "download_url": "https://github.com/Open-Choice/open-choice-plugins/releases/download/toy-calculator-v0.1.1/toy-calculator-0.1.1-windows-x86_64.ocplugin",
-  "artifact_sha256": "039b8f50466bc060420712138413e91e1cc7757a4460716141ebd91b2cc0b826",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/toy-calculator-v0.1.1/toy-calculator-0.1.1-windows-x86_64.ocplugin",
+  "artifact_sha256": "c0a958e079f33469e92e7538aa6da742432bb54628242b82f5a35f684994b183",
   "signer_key_id": "open-choice-2026",
   "min_app_version": "0.1.0",
-  "released_at": "2026-04-18T19:14:01Z",
+  "released_at": "2026-04-21T13:29:16Z",
   "release_notes": "First public release via the Open Choice plugin registry.",
-  "release_url": "https://github.com/Open-Choice/open-choice-plugins/releases/tag/toy-calculator-v0.1.1"
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/toy-calculator-v0.1.1"
 }

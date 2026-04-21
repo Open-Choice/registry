@@ -1,0 +1,19 @@
+{
+  "command": "apply-cleaning-map",
+  "title": "Apply an edited cleaning-map workbook to produce a cleaned .sav",
+  "summary": "Reads the input data file and the edited cleaning-map .xlsx, applies the requested renames/recodes/missing marks, and writes a cleaned .sav to the output directory.",
+  "description": "Each row in the cleaning map that has a non-empty `new value`, `new label`, or `mark-missing` cell is applied to the corresponding (variable, value) pair: value recodes rewrite the underlying integer code, new labels replace the value label, mark-missing adds the value to the variable's declared-missing range. Rows left blank are no-ops. When `include_vars` is supplied, only those variables are cleaned and the rest pass through unchanged.",
+  "usage": "[[\"spss-reader::apply-cleaning-map\"]]\ninput_path = \"./data/survey.sav\"\ncleaning_map_path = \"./cleaning/survey_cleaning_map.xlsx\"\noutput_dir = \"./cleaned\"",
+  "arguments": [
+    { "name": "input_path",        "type": "string", "required": true,  "description": "Input data file (.sav/.zsav, .csv/.tsv, or .xlsx)." },
+    { "name": "cleaning_map_path", "type": "string", "required": true,  "description": "Path to the edited cleaning-map .xlsx." },
+    { "name": "output_dir",        "type": "string", "required": true,  "description": "Directory for the cleaned .sav; created if missing." },
+    { "name": "include_vars",      "type": "array",  "required": false, "default": [], "description": "Restrict cleaning to this subset of variable names. Empty = apply to every variable present in the map." },
+    { "name": "prefix",            "type": "string", "required": false, "description": "Optional filename prefix for the cleaned output." },
+    { "name": "suffix",            "type": "string", "required": false, "description": "Optional filename suffix (before the extension) for the cleaned output." }
+  ],
+  "notes": [
+    "The cleaning map is the single source of truth — value collisions (e.g. two source codes mapping to the same target) are reported as errors, not silently merged.",
+    "When applying to CSV/Excel input, string columns participate in rename-only cleaning (no numeric recoding or missing-code declarations)."
+  ]
+}

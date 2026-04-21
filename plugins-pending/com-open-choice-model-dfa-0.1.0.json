@@ -1,0 +1,18 @@
+{
+  "plugin_id": "com.open-choice.model-dfa",
+  "display_name": "Discriminant Function Analysis (DFA)",
+  "description": "Linear discriminant analysis on wide-format data with class labels.",
+  "publisher": "Open Choice",
+  "categories": [
+    "estimation",
+    "classification",
+    "lda"
+  ],
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/model-dfa-v0.1.0/model-dfa-0.1.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "cfaa255722b6fcb4a88f0d1bb8aefad724beef71554799a17f4546138c71de3f",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:28:46Z",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-dfa-v0.1.0"
+}

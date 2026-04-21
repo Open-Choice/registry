@@ -1,0 +1,89 @@
+{
+  "command": "run_script",
+  "title": "Execute a Julia script",
+  "summary": "Execute a Julia script via julia. Stdout is captured line-by-line as Progress events and written to run.log. Stderr is captured line-by-line as Warning events and written to stderr.log. A non-zero exit code produces Finished { success: false }. Use the 'project' field to activate a local Julia environment (Project.toml / Manifest.toml) so package imports resolve without requiring a globally installed environment.",
+  "description": "Runs a Julia script and streams its output back to the Open Choice protocol. Provide a path to a `.jl` file via `script`. Positional and named arguments can be forwarded to the script via `args` and `kwargs`. All output files (run.log, stderr.log) are written to `output_dir`.\n\nThe `project` field activates a local Julia environment by passing `--project=<path>` to the julia command, so package imports resolve against that environment's `Project.toml` and `Manifest.toml`. The environment must already be instantiated (`Pkg.instantiate()`) before running.\n\nThe `trust_acknowledged` field must be set to `true`. This is an explicit safety gate: the plugin executes arbitrary Julia code with the same OS permissions as the Open Choice process.",
+  "usage": "[[\"julia-wrapper::run_script\"]]\nscript = \"<path/to/script.jl>\"\noutput_dir = \"<dir>\"\ntrust_acknowledged = true\n# optional:\nargs = [\"arg1\", \"arg2\"]\nkwargs = { key = \"value\" }\nproject = \".\"",
+  "arguments": [
+    {
+      "name": "script",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the .jl file to execute. Relative paths are resolved from the directory containing the .oce file. Absolute paths are used as-is."
+    },
+    {
+      "name": "args",
+      "type": "array",
+      "required": false,
+      "default": null,
+      "description": "Positional arguments appended to the julia command after the script path. Accessed in Julia via ARGS."
+    },
+    {
+      "name": "kwargs",
+      "type": "object",
+      "required": false,
+      "default": null,
+      "description": "Named arguments passed as --key value pairs after positional args. Accessed in Julia via ARGS or an arg-parser package such as ArgParse.jl."
+    },
+    {
+      "name": "project",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Julia project directory to activate. Passed as --project=<path> before the script, so Julia loads the Project.toml and Manifest.toml in that directory. Relative paths are resolved from the .oce file directory. Common values: '.' to use the project co-located with the .oce file; a subdirectory name to point at a nested project; an absolute path for a shared environment. The project must already have been instantiated (Pkg.instantiate()) — this flag selects the environment but does not install missing packages."
+    },
+    {
+      "name": "output_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Directory where run.log and stderr.log are written. Created if it does not exist."
+    },
+    {
+      "name": "trust_acknowledged",
+      "type": "boolean",
+      "required": true,
+      "default": null,
+      "description": "Must be true. Explicitly acknowledges that this plugin executes arbitrary Julia code with the same OS permissions as the Open Choice process, and that the script source is trusted."
+    }
+  ],
+  "details": "`run_script` is a thin execution wrapper: it invokes `julia` on the provided script, streams stdout line-by-line as Progress events, and writes all output to `output_dir/run.log`. Stderr lines are captured as Warning events and written to `output_dir/stderr.log`.\n\nThe `trust_acknowledged = true` field is required and intentional — it prevents accidental execution of untrusted code by requiring the caller to explicitly opt in.\n\nArgument forwarding:\n- `args` becomes positional arguments after the script path on the command line\n- `kwargs` becomes `--key value` pairs following the positional args\nIn Julia, retrieve them with `ARGS`. For structured parsing, use `ArgParse.jl`.\n\nThe `project` field is the recommended way to use Julia packages: point it at a directory containing a `Project.toml` (typically the same directory as your script or the `.oce` file) to use that project's exact package versions. The project must already be instantiated.",
+  "value": "On success, `output_dir` contains:\n\n- `run.log` — all stdout lines from the Julia process.\n- `stderr.log` — all stderr lines from the Julia process.\n\nThe plugin emits `event.run.started`, per-line Progress events, and `event.run.finished` (or `event.run.failed` on non-zero exit).",
+  "notes": [
+    "The `trust_acknowledged` field must be `true`; any other value (including omitting it) causes the command to reject immediately.",
+    "Non-zero exit codes from Julia produce `event.run.failed`; the log files are still written.",
+    "The `project` path must contain a valid Project.toml and Manifest.toml — run `Pkg.instantiate()` first if needed.",
+    "Julia's first-run JIT compilation can make initial execution slow; subsequent runs on the same DEPOT are faster."
+  ],
+  "see_also": [
+    { "command": "r-wrapper::run_script", "description": "R equivalent — run a .R file or inline R code." },
+    { "command": "python-wrapper::run_script", "description": "Python equivalent — run a .py file and optionally use a virtualenv." }
+  ],
+  "examples": [
+    {
+      "title": "Run a Julia script with the global environment",
+      "body": "[[\"julia-wrapper::run_script\"]]\nscript = \"./analysis/run_analysis.jl\"\noutput_dir = \"./runs/julia-analysis\"\ntrust_acknowledged = true"
+    },
+    {
+      "title": "Run a script using a local Julia project environment",
+      "body": "[[\"julia-wrapper::run_script\"]]\nscript = \"./analysis/run_model.jl\"\nproject = \".\"\noutput_dir = \"./runs/julia-project\"\ntrust_acknowledged = true"
+    },
+    {
+      "title": "Pass kwargs to the script using ArgParse.jl",
+      "body": "[[\"julia-wrapper::run_script\"]]\nscript = \"./analysis/export.jl\"\nproject = \".\"\nkwargs = { input = \"./data/part_worths.csv\", output = \"./outputs/summary.csv\" }\noutput_dir = \"./runs/julia-export\"\ntrust_acknowledged = true"
+    },
+    {
+      "title": "Run a script with positional args and a nested project",
+      "body": "[[\"julia-wrapper::run_script\"]]\nscript = \"./analysis/simulate.jl\"\nproject = \"./analysis\"\nargs = [\"1000\", \"42\"]\noutput_dir = \"./runs/julia-simulate\"\ntrust_acknowledged = true"
+    }
+  ],
+  "fields": [
+    { "name": "script",             "description": "Path to the .jl file to execute.",                                         "required": true,  "accepted_values": [] },
+    { "name": "args",               "description": "Positional args forwarded to the script via ARGS.",                       "required": false, "accepted_values": [] },
+    { "name": "kwargs",             "description": "Named args forwarded as --key value pairs.",                               "required": false, "accepted_values": [] },
+    { "name": "project",            "description": "Julia project dir to activate via --project. Must be pre-instantiated.",  "required": false, "accepted_values": [] },
+    { "name": "output_dir",         "description": "Directory for run.log and stderr.log.",                                    "required": true,  "accepted_values": [] },
+    { "name": "trust_acknowledged", "description": "Must be true. Safety gate for arbitrary code execution.",                  "required": true,  "accepted_values": ["true"] }
+  ]
+}

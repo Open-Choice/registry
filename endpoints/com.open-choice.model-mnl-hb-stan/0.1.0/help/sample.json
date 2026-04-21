@@ -1,0 +1,166 @@
+{
+  "command": "sample",
+  "title": "Run HB-MNL NUTS sampling from a pre-built Stan JSON data file",
+  "summary": "Run Hierarchical Bayes MNL conjoint sampling via the CmdStan NUTS sampler. Accepts a pre-built Stan JSON data file and writes one CmdStan CSV per chain to run_dir. Use fit instead if you want automatic CSV-to-Stan-JSON conversion. Follow with finalize to compute diagnostics and part-worth exports.",
+  "description": "Low-level sampling entry point that invokes CmdStan directly on a pre-built Stan JSON data file. All Stan model parameters (design matrix, respondent indicators, task indicators, choice indicators, prior hyperparameters) must already be present in the data file. Use `fit` instead for the higher-level workflow that converts a coded-long CSV automatically. `sample` is useful when you need to experiment with different prior settings or data subsets without redoing the CSV conversion step.",
+  "usage": "[[\"hb-stan::sample\"]]\ndata = \"<stan_data.json>\"\nrun_dir = \"<dir>\"\nrun_name = \"stan_run\"\n# optional:\nnum_samples = 1000\nnum_warmup = 500\nnum_chains = 4\nseed = <int>\nthin = <int>\nparallel_chains = true",
+  "arguments": [
+    {
+      "name": "data",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the Stan JSON data file. Must contain all fields required by the HB-MNL model: design matrix (x_matrix, N×P), respondent indicators (unit_indicator), task indicators (task_indicator), chosen-row indices (positive_util_rows, positive_util_wgt), prior hyperparameters (prior_lkj_eta, sigma_scale, ridge_scale), and per-unit index arrays (row_start, row_len, pos_start, pos_len). The stan_data.json written by `fit` always satisfies these requirements."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory. Chain CSV files are written as hb_fit_chain_1.csv, hb_fit_chain_2.csv, etc. Created if it does not exist."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "num_samples",
+      "type": "integer",
+      "required": false,
+      "default": 1000,
+      "description": "Post-warmup draws per chain. Total posterior draws = num_samples × num_chains. Default 1000."
+    },
+    {
+      "name": "num_warmup",
+      "type": "integer",
+      "required": false,
+      "default": 500,
+      "description": "Warmup (adaptation) iterations per chain. NUTS tunes its step size and mass matrix during warmup; these draws are discarded. Default 500."
+    },
+    {
+      "name": "num_chains",
+      "type": "integer",
+      "required": false,
+      "default": 4,
+      "description": "Number of independent chains. At least 4 is recommended for reliable Rhat and ESS diagnostics. Default 4."
+    },
+    {
+      "name": "seed",
+      "type": "integer",
+      "required": false,
+      "default": null,
+      "description": "RNG seed. Each chain receives seed + (chain_index − 1) for independence with reproducibility. Omit for a non-deterministic seed."
+    },
+    {
+      "name": "thin",
+      "type": "integer",
+      "required": false,
+      "default": null,
+      "description": "Thinning factor: keep every Nth draw. Reduces output file size at the cost of effective sample size. Omit to keep all draws."
+    },
+    {
+      "name": "parallel_chains",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Run chains in parallel using available CPU threads up to num_chains. Set false for serial execution to reduce peak memory. Default true."
+    }
+  ],
+  "details": "`sample` is the low-level CmdStan invocation layer. Unlike `fit`, it does not perform any data conversion — it expects a fully-prepared Stan JSON file and directly invokes the CmdStan NUTS sampler. This is the right command when you already have stan_data.json (from a previous `fit` call) and want to re-run sampling with different sampler settings (different seed, more warmup, thinning) without redoing the conversion.\n\nThe NUTS sampler adapts its step size and Euclidean metric during warmup (the dual-averaging / windowed adaptation scheme) and then draws independent samples during the post-warmup phase. With 4 chains you can diagnose convergence via Rhat and ESS in `finalize`.\n\nFor the common workflow where you start from a CSV, use `fit` instead — it calls this command internally after converting the CSV.",
+  "value": "On success, run_dir contains:\n\n- hb_fit_chain_1.csv, hb_fit_chain_2.csv, ... — one CmdStan CSV file per chain, containing the raw posterior draws.\n\nIn protocol mode the plugin emits event.run.started, periodic event.run.progress events as chains complete, and a final event.run.finished (or event.run.failed).",
+  "notes": [
+    "The stan_data.json file must contain all required fields — use `fit` to generate it from a CSV if you don't have it already.",
+    "CmdStan must be installed and on PATH.",
+    "Follow with finalize to compute Rhat, ESS, posterior summaries, and part-worths."
+  ],
+  "see_also": [
+    {
+      "command": "hb-stan::fit",
+      "description": "Higher-level entry point that converts a coded-long CSV to Stan JSON and then calls sample."
+    },
+    {
+      "command": "hb-stan::finalize",
+      "description": "Compute diagnostics and part-worth exports from the chain CSVs written here."
+    },
+    {
+      "command": "hb-stan::fit-finalize",
+      "description": "Convenience wrapper: CSV → sampling → finalization in one call."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Re-sample from an existing stan_data.json with a different seed",
+      "body": "[[\"hb-stan::sample\"]]\ndata = \"./runs/hb-stan/stan_data.json\"\nrun_dir = \"./runs/hb-stan-reseed\"\nrun_name = \"stan_run1\"\nseed = 99"
+    },
+    {
+      "title": "Longer sampling run with extra warmup",
+      "body": "[[\"hb-stan::sample\"]]\ndata = \"./runs/hb-stan/stan_data.json\"\nrun_dir = \"./runs/hb-stan-long\"\nrun_name = \"stan_run2\"\nnum_samples = 2000\nnum_warmup = 1000\nseed = 42"
+    },
+    {
+      "title": "Serial chains with thinning to reduce output size",
+      "body": "[[\"hb-stan::sample\"]]\ndata = \"./runs/hb-stan/stan_data.json\"\nrun_dir = \"./runs/hb-stan-thin\"\nrun_name = \"stan_run3\"\nnum_chains = 4\nthin = 2\nparallel_chains = false"
+    }
+  ],
+  "fields": [
+    {
+      "name": "data",
+      "description": "Path to the Stan JSON data file.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Output directory for chain CSV files.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "num_samples",
+      "description": "Post-warmup draws per chain. Default: 1000.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "num_warmup",
+      "description": "Warmup iterations per chain. Default: 500.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "num_chains",
+      "description": "Number of independent chains. Default: 4.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "seed",
+      "description": "RNG seed. Omit for non-deterministic.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "thin",
+      "description": "Keep every Nth draw. Omit to keep all.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "parallel_chains",
+      "description": "Run chains in parallel. Default: true.",
+      "required": false,
+      "accepted_values": [
+        "true",
+        "false"
+      ]
+    }
+  ]
+}

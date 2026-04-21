@@ -1,0 +1,41 @@
+{
+  "command": "generate-fake-respondents",
+  "title": "Generate a synthetic respondent CSV from a design file",
+  "summary": "Reads a MaxDiff (wide) or CBC (long) design CSV, samples a version per fake respondent, and fills task responses under the chosen response format. MaxDiff pick always writes best and worst columns; CBC pick uses one of three modes (standard / none / dual); either design may be written in share (constant-sum) format.",
+  "description": "The design file is inspected to build a version \u2192 task \u2192 alternative-labels map. For MaxDiff (wide) the parser auto-detects item columns named 'Item1','Item2',... or purely numeric column headers; supply --design-item-cols to override. For CBC (long) the parser auto-detects an alternative column (alt/alternative/option/concept/profile); if none is found, alternatives are numbered sequentially within each (version, task) pair in row order. Each synthetic respondent is assigned a uniformly random version, then for every task in that version one of the response fillers runs: fill_maxdiff_pick (best + worst, always distinct), fill_cbc_pick (standard/none/dual — 'none' chooses K+1 with probability 0.20, 'dual' adds a _dual column with 50/50 yes/no), or fill_share (integer allocation across K slots summing exactly to share_points; rounding drift corrected on the largest slot). Output columns are: `{respondent_id}`, `{version_col}`, then per-task columns — `{prefix}_{t}_b` + `{prefix}_{t}_w` (MaxDiff pick), `{prefix}_{t}` (+ optional `{prefix}_{t}_dual` for CBC pick), or `{prefix}_{t}_a1`..`{prefix}_{t}_aK` (share). Tasks missing from a respondent's version are written as empty strings.",
+  "usage": "[[\"choice-wrangling::generate-fake-respondents\"]]\ndesign_csv = \"./data/maxdiff_design.csv\"\nout_csv = \"./data/fake_respondents.csv\"\nn_respondents = 200\ndesign_type = \"maxdiff\"\nresponse_format = \"pick\"\nseed = 42",
+  "arguments": [
+    { "name": "design_csv",        "type": "string",  "required": true,  "description": "Path to the design CSV." },
+    { "name": "out_csv",           "type": "string",  "required": true,  "description": "Output CSV path. Parent directories are created as needed." },
+    { "name": "n_respondents",     "type": "integer", "required": false, "default": 100,      "description": "Number of fake respondents to generate." },
+    { "name": "design_type",       "type": "string",  "required": false, "default": "maxdiff","description": "'maxdiff' (wide) or 'cbc' (long)." },
+    { "name": "response_format",   "type": "string",  "required": false, "default": "pick",   "description": "'pick' or 'share'." },
+    { "name": "cbc_mode",          "type": "string",  "required": false, "default": "standard","description": "CBC pick mode: 'standard' | 'none' | 'dual'. Ignored for MaxDiff and share." },
+    { "name": "share_points",      "type": "integer", "required": false, "default": 100,      "description": "Total points per task when response_format='share'." },
+    { "name": "prefix",            "type": "string",  "required": false, "default": "MaxDiff","description": "Column prefix for output (e.g. 'MaxDiff' \u2192 'MaxDiff_1_b')." },
+    { "name": "respondent_id",     "type": "string",  "required": false, "default": "sys_RespNum", "description": "Output column name for the respondent identifier." },
+    { "name": "version_col",       "type": "string",  "required": false, "description": "Output column name for the design version. Defaults to 'sys_MXDVersion_{prefix}'." },
+    { "name": "seed",              "type": "integer", "required": false, "description": "RNG seed for reproducible output." },
+    { "name": "design_version_col","type": "string",  "required": false, "description": "Design column holding the version. Auto-detected (case-insensitive 'version') when omitted." },
+    { "name": "design_task_col",   "type": "string",  "required": false, "description": "Design column holding the task/set. Auto-detected ('set' or 'task') when omitted." },
+    { "name": "design_item_cols",  "type": "array",   "required": false, "default": [],       "description": "[MaxDiff] Item columns per task row. Auto-detects 'Item1','Item2',... or numeric column names." },
+    { "name": "design_alt_col",    "type": "string",  "required": false, "description": "[CBC] Alternative column. Auto-detects 'alt'/'alternative'/'option'/'concept'/'profile'; otherwise alternatives are numbered by row order." }
+  ],
+  "output_columns": [
+    { "pattern": "{respondent_id}",                  "description": "Respondent identifier, 1..n_respondents." },
+    { "pattern": "{version_col}",                    "description": "Randomly assigned design version for that respondent." },
+    { "pattern": "{prefix}_{t}_b, {prefix}_{t}_w",   "description": "MaxDiff pick: best and worst item IDs for task t (always distinct)." },
+    { "pattern": "{prefix}_{t}",                     "description": "CBC pick: chosen alternative (1..K, or K+1 when cbc_mode='none')." },
+    { "pattern": "{prefix}_{t}_dual",                "description": "CBC pick + cbc_mode='dual': '1'=yes, '2'=no/prefers none (50/50)." },
+    { "pattern": "{prefix}_{t}_a1..{prefix}_{t}_aK", "description": "Share format: integer allocation summing exactly to share_points." }
+  ],
+  "notes": [
+    "design_type and response_format are validated up front; unknown combinations (e.g. maxdiff + dual) fail before generation begins.",
+    "MaxDiff pick requires at least 2 items per (version, task); the parser rejects designs where fewer than 2 item columns are non-empty for any task.",
+    "CBC parsing requires at least 2 alternatives per (version, task). Alternative labels are preserved as strings (so design label '001' stays '001').",
+    "The 'none' mode emits K+1 as the choice value ~20% of the time; downstream decoders must treat K+1 as the no-choice code.",
+    "The 'dual' mode always picks a real alternative for {prefix}_{t}; the accompanying _dual column is the yes/no indicator ('2' means the respondent would prefer none even though a pick was forced).",
+    "Share allocation uses uniform-random weights + rounding correction so the per-task row sums exactly to share_points even after integer rounding.",
+    "Tasks present in the union of all versions but absent from the respondent's assigned version are written as empty strings in the output row."
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "command": "cv-finalize",
+  "title": "Re-summarise every fold of a completed cv-fit run",
+  "summary": "Finalize every per-fold run produced by cv-fit. Walks the fold subdirectories under run_dir, runs finalize on each, and writes aggregate cross-validation metrics (mean and standard deviation of train and holdout log-likelihood) to cv_summary.json and cv_summary.csv at the top level of run_dir.",
+  "description": "The cross-validation counterpart of `finalize`. Walks every per-fold subdirectory under an existing `cv-fit` `run_dir`, re-runs `finalize` on each, and rewrites the aggregate `cv_summary.csv` and `cv_summary.json` at the top level. Pure post-processing — no refitting.",
+  "usage": "[[\"model-lc::cv-finalize\"]]\nrun_dir = \"<existing cv run dir>\"\nrun_name = \"lc_run\"\n# optional:\nexport_dir = \"exports\"",
+  "arguments": [
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Top-level CV run directory containing per-fold subdirectories. Each fold subdirectory must contain a completed LC fit checkpoint (the layout `cv-fit` produces)."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "export_dir",
+      "type": "string",
+      "required": false,
+      "default": "exports",
+      "description": "Per-fold export subdirectory name. Resolved as `{fold_dir}/{export_dir}`. Default `exports`. Override only if you want to keep multiple finalisations side-by-side."
+    }
+  ],
+  "details": "`cv-finalize` is a thin wrapper around per-fold `finalize` calls plus aggregation. For each fold subdirectory under `run_dir`, it re-derives the per-fold summary, then computes the aggregate train and holdout log-likelihood (mean ± standard deviation across folds) and rewrites the top-level `cv_summary.csv` and `cv_summary.json`.\n\nLike its single-run counterpart, this command is idempotent and cheap — it does not refit anything. `cv-fit` calls `cv-finalize` automatically at the end of a successful run, so you only need to invoke this command directly when you want to regenerate the exports or write them to a side-by-side directory.",
+  "value": "On success:\n\n- Each per-fold subdirectory has its `exports/` (or `{export_dir}/`) regenerated with `summary.json`, `IC.csv`, `coefficients.csv`, and related per-segment outputs.\n- The top-level `run_dir` contains updated `cv_summary.csv` and `cv_summary.json` with per-fold and aggregate train / holdout log-likelihood.\n\nIn protocol mode the plugin emits `event.run.started`, then per-fold finalize events, then `event.run.finished` (or `event.run.failed`).",
+  "notes": [
+    "`cv-finalize` does not refit — it only re-summarises existing checkpoints.",
+    "Use `export_dir` to keep multiple finalisations side-by-side without overwriting each other."
+  ],
+  "see_also": [
+    {
+      "command": "model-lc::cv-fit",
+      "description": "Initial CV run — calls `cv-finalize` automatically at the end."
+    },
+    {
+      "command": "model-lc::finalize",
+      "description": "Single-run counterpart."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Re-finalise an existing CV run",
+      "body": "[[\"model-lc::cv-finalize\"]]\nrun_dir = \"./runs/lc-cv\"\nrun_name = \"lc_run1\""
+    },
+    {
+      "title": "Write per-fold exports to a side-by-side subdirectory",
+      "body": "[[\"model-lc::cv-finalize\"]]\nrun_dir = \"./runs/lc-cv\"\nrun_name = \"lc_run2\"\nexport_dir = \"exports_v2\""
+    }
+  ],
+  "fields": [
+    {
+      "name": "run_dir",
+      "description": "Top-level CV run directory containing per-fold subdirectories.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "export_dir",
+      "description": "Per-fold export subdirectory name. Resolved as {fold_dir}/{export_dir}. Default: \"exports\".",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

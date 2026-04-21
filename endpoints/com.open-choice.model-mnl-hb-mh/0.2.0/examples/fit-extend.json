@@ -1,0 +1,13 @@
+[
+  {
+    "template_id": "hb-fit-extend",
+    "title": "HB: extend an existing fit by more iterations",
+    "summary": "Pick up where an existing HB chain left off and sample additional MCMC iterations on top of the existing draws. Useful when an initial fit did not converge.",
+    "category": "starter",
+    "oce_text": "[[\"model-mnl-hb-mh::fit-extend\"]]\nrun_dir = \"./runs/hb\"\nrun_name = \"pilot\"\nadditional_iterations = 5000\nburnin = 0.2\n",
+    "run_dir": "./runs/hb",
+    "run_name": "pilot",
+    "additional_iterations": 5000,
+    "burnin": 0.2
+  }
+]

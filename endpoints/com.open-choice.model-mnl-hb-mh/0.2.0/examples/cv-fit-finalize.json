@@ -1,0 +1,15 @@
+[
+  {
+    "template_id": "hb-mh-cv-fit-finalize-basic",
+    "title": "HB MH: cross-validated fit and finalize in one call",
+    "summary": "Run HB MCMC across all CV folds and write per-fold exports plus the aggregate CV summary in one call.",
+    "category": "starter",
+    "oce_text": "[[\"model-mnl-hb-mh::cv-fit-finalize\"]]\nfolds_dir = \"./folds\"\nrun_dir = \"./runs/hb\"\nrun_name = \"pilot_cv\"\nsegments = 1\niterations = 10000\nburnin = 0.2\n",
+    "folds_dir": "./folds",
+    "run_dir": "./runs/hb",
+    "run_name": "pilot_cv",
+    "segments": 1,
+    "iterations": 10000,
+    "burnin": 0.2
+  }
+]

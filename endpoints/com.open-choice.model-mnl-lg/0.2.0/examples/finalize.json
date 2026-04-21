@@ -1,0 +1,10 @@
+[
+  {
+    "template_id": "lg-finalize",
+    "title": "Logit: finalize a completed run",
+    "summary": "Recompute the FitSummary and write summary.json + CSV exports for an existing run.",
+    "category": "starter",
+    "oce_text": "[[\"model-mnl-lg::finalize\"]]\nrun_dir = \"./runs/lg\"\n",
+    "run_dir": "./runs/lg"
+  }
+]

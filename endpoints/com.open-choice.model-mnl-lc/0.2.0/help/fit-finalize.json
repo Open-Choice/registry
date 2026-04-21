@@ -1,0 +1,336 @@
+{
+  "command": "fit-finalize",
+  "title": "Fit a latent class model and write exports in one call",
+  "summary": "Combines `fit` and `finalize` into a single command: estimates the LC model via EM, then immediately writes the user-facing summary and CSV exports. Emits a single started / finished event pair.",
+  "description": "Reads a coded long-format choice CSV and fits a latent class logit model by the EM algorithm, then immediately finalises the run and writes the user-facing artifacts — `summary.json`, `IC.csv`, `coefficients.csv` — all in one protocol invocation. Equivalent to calling `fit` then `finalize` back-to-back, but with a single started / finished event pair instead of two. The raw EM state is persisted exactly as it would be from a standalone `fit` call, so you can still run `finalize` again separately.",
+  "usage": "[[\"model-mnl-lc::fit-finalize\"]]\ninput = \"<coded_long.csv>\"\nrun_dir = \"<dir>\"\nrun_name = \"lc_run\"\n# optional:\nsegments = 2\nem_iterations = 200\nrandom_seed = 0\nthreads = 1",
+  "arguments": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the coded long-format CSV file. Expected layout: one row per (respondent, task, alternative), with a `resp_id` column, a `task` column, a response column, and one numeric column per coded covariate."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory for results. Created if it does not exist. Receives `spec.json`, `checkpoint.postcard`, per-iteration metrics, and an `exports/` subdirectory."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "test_input",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Optional holdout CSV for out-of-sample evaluation."
+    },
+    {
+      "name": "export_dir",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Where to write the CSV exports. Defaults to `{run_dir}/exports`."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether the input CSVs have a header row. Default `true`."
+    },
+    {
+      "name": "segments",
+      "type": "integer",
+      "required": false,
+      "default": 2,
+      "description": "Number of latent classes. Default `2`."
+    },
+    {
+      "name": "em_iterations",
+      "type": "integer",
+      "required": false,
+      "default": 200,
+      "description": "Maximum EM iterations. Default `200`."
+    },
+    {
+      "name": "convergence_threshold",
+      "type": "number",
+      "required": false,
+      "default": 0.00001,
+      "description": "EM convergence tolerance. Default `1e-5`."
+    },
+    {
+      "name": "coefficient_iterations",
+      "type": "integer",
+      "required": false,
+      "default": 50,
+      "description": "Maximum iterations for the inner-loop coefficient fit. Default `50`."
+    },
+    {
+      "name": "coefficient_precision",
+      "type": "number",
+      "required": false,
+      "default": 1e-7,
+      "description": "Inner-loop convergence precision. Default `1e-7`."
+    },
+    {
+      "name": "start_method",
+      "type": "string",
+      "required": false,
+      "default": "smart_random",
+      "accepted_values": [
+        "smart_random",
+        "random_normal",
+        "random_hard_assignment",
+        "zero_start",
+        "user_provided"
+      ],
+      "description": "Initialisation strategy. Default `smart_random`."
+    },
+    {
+      "name": "use_soft_start",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Enable simulated-annealing soft start on segment assignments."
+    },
+    {
+      "name": "softness_start",
+      "type": "number",
+      "required": false,
+      "default": null,
+      "description": "Initial soft-start membership softness. Only used when `use_soft_start = true`."
+    },
+    {
+      "name": "softness_end",
+      "type": "number",
+      "required": false,
+      "default": null,
+      "description": "Final soft-start membership softness. Only used when `use_soft_start = true`."
+    },
+    {
+      "name": "soft_start_iterations",
+      "type": "integer",
+      "required": false,
+      "default": null,
+      "description": "Iterations over which softness decays. Only used when `use_soft_start = true`."
+    },
+    {
+      "name": "fit_error_variance",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Fit a per-respondent scale parameter."
+    },
+    {
+      "name": "error_variance_grid",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Comma-separated grid of scale values when `fit_error_variance = true`."
+    },
+    {
+      "name": "fixed_zero_effects",
+      "type": "array<object>",
+      "required": false,
+      "default": null,
+      "description": "Force specific segment-attribute coefficients to zero."
+    },
+    {
+      "name": "random_seed",
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "description": "Random seed. `0` (default) means non-deterministic."
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Number of threads. Default `1`."
+    }
+  ],
+  "details": "`fit-finalize` is the single-call entry point for LC estimation. It runs the EM algorithm as `fit` would, then immediately calls the same finalization logic as `finalize` — all within a single protocol event pair. The raw EM state is persisted to `run_dir`, so you can still re-run `finalize` later to write exports to a different directory or re-check the summary.",
+  "value": "On success, `run_dir` contains the full EM state plus `exports/` with:\n\n- `summary.json` — class coefficients, segment sizes, log-likelihood, information criteria.\n- `IC.csv` — information criteria table.\n- `coefficients.csv` — per-class coefficient table.\n\nIn protocol mode the plugin emits a single `event.run.started`, then `event.run.finished` (or `event.run.failed`) carrying the fit summary.",
+  "notes": [
+    "Equivalent to calling `fit` then `finalize` back-to-back with the same `run_dir`.",
+    "EM is sensitive to initialisation — for model selection across segment counts, still run several seeds.",
+    "Use `cv-fit-finalize` for cross-validated runs."
+  ],
+  "see_also": [
+    {
+      "command": "model-mnl-lc::fit",
+      "description": "Fit only — call `finalize` separately when needed."
+    },
+    {
+      "command": "model-mnl-lc::finalize",
+      "description": "Re-summarise a completed run without re-fitting."
+    },
+    {
+      "command": "model-mnl-lc::cv-fit-finalize",
+      "description": "Cross-validated fit and finalize in one call."
+    },
+    {
+      "command": "model-mnl-lg::fit-finalize",
+      "description": "Aggregate MNL single-class baseline."
+    },
+    {
+      "command": "model-mnl-hb-mh::fit-finalize",
+      "description": "Hierarchical Bayes counterpart."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic 2-class LC fit-finalize",
+      "body": "[[\"model-mnl-lc::fit-finalize\"]]\ninput = \"./estimation/coded_long.csv\"\nrun_dir = \"./runs/lc\"\nrun_name = \"lc_run1\""
+    },
+    {
+      "title": "3-class fit-finalize with soft start",
+      "body": "[[\"model-mnl-lc::fit-finalize\"]]\ninput = \"./estimation/coded_long.csv\"\nrun_dir = \"./runs/lc-3\"\nrun_name = \"lc_run2\"\nsegments = 3\nuse_soft_start = true\nsoftness_start = 5.0\nsoftness_end = 1.0\nsoft_start_iterations = 30\nrandom_seed = 42"
+    }
+  ],
+  "fields": [
+    {
+      "name": "input",
+      "description": "Path to the coded-long-format CSV file.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Output directory for results. Created if it does not exist.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "test_input",
+      "description": "Optional holdout CSV for out-of-sample evaluation.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "export_dir",
+      "description": "Where to write CSV exports. Defaults to {run_dir}/exports.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "headers",
+      "description": "Whether the CSV has a header row. Default: true.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "segments",
+      "description": "Number of latent classes. Default: 2.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "em_iterations",
+      "description": "Maximum EM iterations. Default: 200.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "convergence_threshold",
+      "description": "EM convergence tolerance. Default: 1e-5.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "coefficient_iterations",
+      "description": "Inner-loop iterations for coefficient fitting. Default: 50.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "coefficient_precision",
+      "description": "Inner-loop convergence precision. Default: 1e-7.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "start_method",
+      "description": "Initialisation strategy.",
+      "required": false,
+      "accepted_values": [
+        "smart_random",
+        "random_normal",
+        "random_hard_assignment",
+        "zero_start",
+        "user_provided"
+      ]
+    },
+    {
+      "name": "use_soft_start",
+      "description": "Enable simulated-annealing soft start.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "softness_start",
+      "description": "Initial soft-start membership softness.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "softness_end",
+      "description": "Final soft-start membership softness.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "soft_start_iterations",
+      "description": "Iterations over which softness decays.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "fit_error_variance",
+      "description": "Fit a per-respondent scale parameter.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "error_variance_grid",
+      "description": "Comma-separated grid of scale values to search over.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "fixed_zero_effects",
+      "description": "Force specific segment-attribute coefficients to zero.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "random_seed",
+      "description": "Random seed (0 = non-deterministic).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "threads",
+      "description": "Number of threads. Default: 1.",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

@@ -1,0 +1,234 @@
+{
+  "command": "fit-finalize",
+  "title": "Import a coded-long CSV, run HB-Stan sampling, and finalize in one call",
+  "summary": "Import a coded-long CSV, run HB-MNL sampling via CmdStan, and immediately finalize to produce diagnostics and part-worth exports — all in one call. Equivalent to running fit then finalize back-to-back with a single started/finished event pair.",
+  "description": "Convenience wrapper that runs the full `fit → finalize` sequence in a single command: converts the coded-long CSV to Stan JSON, runs NUTS sampling, then computes Rhat/ESS diagnostics, posterior summaries, and the part-worth matrix. All intermediate files (stan_data.json, chain CSVs, diagnostics.json, summary.json, part_worths.csv) are saved in run_dir. Use this when you want the complete deliverable in one step; use `fit` + `finalize` separately when you need to inspect raw chains.",
+  "usage": "[[\"hb-stan::fit-finalize\"]]\ninput = \"<coded_long.csv>\"\nrun_dir = \"<dir>\"\nrun_name = \"stan_run\"\n# optional:\nheaders = true\nnum_samples = 1000\nnum_warmup = 500\nnum_chains = 4\nseed = <int>\nthin = <int>\nparallel_chains = true\nprior_lkj_eta = 1.0\nsigma_scale = 1.0\nridge_scale = 1e-6",
+  "arguments": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the coded long-format CSV. Required columns: resp_id, task_id, alt_id, x1, ..., xP, y. Rows must be sorted ascending by (resp_id, task_id, alt_id)."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory. Receives stan_data.json, chain CSV files, diagnostics.json, summary.json, and part_worths.csv. Created if it does not exist."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether the CSV has a header row. Default true."
+    },
+    {
+      "name": "num_samples",
+      "type": "integer",
+      "required": false,
+      "default": 1000,
+      "description": "Post-warmup draws per chain. Default 1000."
+    },
+    {
+      "name": "num_warmup",
+      "type": "integer",
+      "required": false,
+      "default": 500,
+      "description": "Warmup iterations per chain. Default 500."
+    },
+    {
+      "name": "num_chains",
+      "type": "integer",
+      "required": false,
+      "default": 4,
+      "description": "Number of independent chains. Default 4."
+    },
+    {
+      "name": "seed",
+      "type": "integer",
+      "required": false,
+      "default": null,
+      "description": "RNG seed. Omit for non-deterministic."
+    },
+    {
+      "name": "thin",
+      "type": "integer",
+      "required": false,
+      "default": null,
+      "description": "Thinning factor. Omit to keep all draws."
+    },
+    {
+      "name": "parallel_chains",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Run chains in parallel. Default true."
+    },
+    {
+      "name": "prior_lkj_eta",
+      "type": "number",
+      "required": false,
+      "default": 1,
+      "description": "LKJ prior shape parameter η. Default 1.0."
+    },
+    {
+      "name": "sigma_scale",
+      "type": "number",
+      "required": false,
+      "default": 1,
+      "description": "Half-normal prior scale for individual σ. Default 1.0."
+    },
+    {
+      "name": "ridge_scale",
+      "type": "number",
+      "required": false,
+      "default": 0.000001,
+      "description": "Ridge scale for covariance prior. Default 1e-6."
+    },
+    {
+      "name": "covariate_input",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Path to a CSV file with respondent-level covariates. First column must be resp_id (case-insensitive) matching UIDs in the training CSV. Remaining columns are numeric covariates. An intercept column of 1s is prepended automatically. Omit for intercept-only model."
+    }
+  ],
+  "details": "`fit-finalize` is the one-shot workflow command. It converts the coded-long CSV to Stan JSON, runs NUTS sampling, then immediately computes diagnostics, posterior summaries, and part-worths — all within a single protocol envelope, producing one started/finished event pair. All intermediate files are preserved in run_dir.\n\nUse the two-step form (`fit` then `finalize`) when you want to inspect the raw chain CSVs first, or when you plan to re-run `finalize` multiple times.",
+  "value": "On success, run_dir contains the full set of fit and finalize outputs:\n\n- stan_data.json, hb_fit_chain_*.csv (from the fit step).\n- diagnostics.json, summary.json, part_worths.csv (from the finalize step).\n\nIn protocol mode the plugin emits event.run.started, progress events during sampling, then event.run.finished (or event.run.failed).",
+  "notes": [
+    "To re-finalize after the fact, run `finalize` directly on run_dir — the chain CSVs are preserved.",
+    "Rows in the input CSV must be sorted by (resp_id, task_id, alt_id).",
+    "CmdStan must be installed and on PATH."
+  ],
+  "see_also": [
+    {
+      "command": "hb-stan::fit",
+      "description": "Sampling-only step — use when you want to inspect chains before finalizing."
+    },
+    {
+      "command": "hb-stan::finalize",
+      "description": "Finalization-only step."
+    },
+    {
+      "command": "hb-stan::cv-fit-finalize",
+      "description": "Cross-validation counterpart — runs cv-fit then cv-finalize in one call."
+    }
+  ],
+  "examples": [
+    {
+      "title": "One-shot fit and finalize with defaults",
+      "body": "[[\"hb-stan::fit-finalize\"]]\ninput = \"./estimation/coded_long.csv\"\nrun_dir = \"./runs/hb-stan\"\nrun_name = \"stan_run1\""
+    },
+    {
+      "title": "Longer sampling run with reproducible seed",
+      "body": "[[\"hb-stan::fit-finalize\"]]\ninput = \"./estimation/coded_long.csv\"\nrun_dir = \"./runs/hb-stan-long\"\nrun_name = \"stan_run2\"\nnum_samples = 2000\nnum_warmup = 1000\nseed = 42"
+    },
+    {
+      "title": "Tight prior for a sparse study",
+      "body": "[[\"hb-stan::fit-finalize\"]]\ninput = \"./estimation/coded_long.csv\"\nrun_dir = \"./runs/hb-stan-tight\"\nrun_name = \"stan_run3\"\nprior_lkj_eta = 4.0\nsigma_scale = 0.5\nseed = 7"
+    }
+  ],
+  "fields": [
+    {
+      "name": "input",
+      "description": "Path to the coded-long CSV.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Output directory for all outputs.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "headers",
+      "description": "Whether the CSV has a header row. Default: true.",
+      "required": false,
+      "accepted_values": [
+        "true",
+        "false"
+      ]
+    },
+    {
+      "name": "num_samples",
+      "description": "Post-warmup draws per chain. Default: 1000.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "num_warmup",
+      "description": "Warmup iterations per chain. Default: 500.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "num_chains",
+      "description": "Number of independent chains. Default: 4.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "seed",
+      "description": "RNG seed. Omit for non-deterministic.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "thin",
+      "description": "Keep every Nth draw. Omit for no thinning.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "parallel_chains",
+      "description": "Run chains in parallel. Default: true.",
+      "required": false,
+      "accepted_values": [
+        "true",
+        "false"
+      ]
+    },
+    {
+      "name": "prior_lkj_eta",
+      "description": "LKJ prior shape parameter η. Default: 1.0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "sigma_scale",
+      "description": "Half-normal prior scale for individual σ. Default: 1.0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "ridge_scale",
+      "description": "Ridge scale for covariance prior. Default: 1e-6.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "covariate_input",
+      "description": "Path to respondent-level covariate CSV. Omit for intercept-only.",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

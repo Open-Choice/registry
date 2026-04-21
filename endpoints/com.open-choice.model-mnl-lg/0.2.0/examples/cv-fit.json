@@ -1,0 +1,11 @@
+[
+  {
+    "template_id": "lg-cv-fit",
+    "title": "Logit: cross-validated fit",
+    "summary": "Run logit fits across all folds in folds_dir produced by `choice-cv split`.",
+    "category": "starter",
+    "oce_text": "[[\"model-mnl-lg::cv-fit\"]]\nfolds_dir = \"./folds\"\nrun_dir = \"./runs/lg-cv\"\n",
+    "folds_dir": "./folds",
+    "run_dir": "./runs/lg-cv"
+  }
+]

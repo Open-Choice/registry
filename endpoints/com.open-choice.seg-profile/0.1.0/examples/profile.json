@@ -1,0 +1,25 @@
+{
+  "minimal": {
+    "memberships": "./memberships.csv",
+    "seg_inputs": "./seg_inputs.csv",
+    "seg_meta": "./seg_meta.csv",
+    "profile_inputs": "./profile_inputs.csv",
+    "profile_meta": "./profile_meta.csv",
+    "uuid_col": "resp_id",
+    "run_dir": "./runs",
+    "run_name": "p1"
+  },
+  "with_weights_and_subset": {
+    "memberships": "./memberships.csv",
+    "seg_inputs": "./seg_inputs.csv",
+    "seg_meta": "./seg_meta.csv",
+    "profile_inputs": "./profile_inputs.csv",
+    "profile_meta": "./profile_meta.csv",
+    "uuid_col": "resp_id",
+    "run_dir": "./runs",
+    "run_name": "p1_weighted",
+    "solution_cols": ["sol_3", "sol_4"],
+    "weight_col": "post_strat_wgt",
+    "weight_source": "memberships"
+  }
+}

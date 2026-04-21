@@ -1,0 +1,238 @@
+{
+  "command": "fit",
+  "title": "Import a coded-long CSV and fit HB-MNL via CmdStan NUTS sampling",
+  "summary": "Import a coded-long CSV, auto-generate a Stan JSON data file, and run HB-MNL sampling via CmdStan NUTS. Handles data conversion automatically and saves stan_data.json in run_dir for reproducibility. Follow with finalize to compute diagnostics and part-worth exports.",
+  "description": "Reads a coded long-format choice CSV (one row per respondent-task-alternative), converts it to the Stan JSON data layout expected by the HB-MNL model, and runs CmdStan NUTS sampling. This is the primary entry point for fitting the Stan-based hierarchical Bayes model: it saves both the intermediate stan_data.json and the per-chain CmdStan CSV output in run_dir, making the entire pipeline reproducible. Follow with finalize to compute Rhat, ESS diagnostics, and the posterior-mean part-worth matrix.",
+  "usage": "[[\"hb-stan::fit\"]]\ninput = \"<coded_long.csv>\"\nrun_dir = \"<dir>\"\nrun_name = \"stan_run\"\n# optional:\nheaders = true\nnum_samples = 1000\nnum_warmup = 500\nnum_chains = 4\nseed = <int>\nthin = <int>\nparallel_chains = true\nprior_lkj_eta = 1.0\nsigma_scale = 1.0\nridge_scale = 1e-6",
+  "arguments": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the coded long-format CSV. Required columns: resp_id, task_id, alt_id, x1, ..., xP, y. Rows must be sorted ascending by (resp_id, task_id, alt_id). y is the choice weight: positive for the chosen alternative(s), 0 for unchosen. Same column layout as model-hb-mh."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory. stan_data.json and chain CSV files (hb_fit_chain_1.csv, ...) are written here. Created if it does not exist."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether the CSV has a header row. When true, attribute names are read from the header and carried into stan_data.json and the finalize outputs. Default true."
+    },
+    {
+      "name": "num_samples",
+      "type": "integer",
+      "required": false,
+      "default": 1000,
+      "description": "Post-warmup draws per chain. Total posterior draws = num_samples × num_chains. Default 1000. Increase for better posterior precision at the cost of file size."
+    },
+    {
+      "name": "num_warmup",
+      "type": "integer",
+      "required": false,
+      "default": 500,
+      "description": "Warmup (adaptation) iterations per chain. CmdStan's NUTS sampler tunes the step size and mass matrix during warmup; these draws are discarded. Default 500."
+    },
+    {
+      "name": "num_chains",
+      "type": "integer",
+      "required": false,
+      "default": 4,
+      "description": "Number of independent chains. At least 4 is recommended for reliable Rhat and ESS diagnostics. Default 4."
+    },
+    {
+      "name": "seed",
+      "type": "integer",
+      "required": false,
+      "default": null,
+      "description": "RNG seed. Each chain receives seed + (chain_index − 1) so chains are independent but reproducible. Omit for a non-deterministic seed."
+    },
+    {
+      "name": "thin",
+      "type": "integer",
+      "required": false,
+      "default": null,
+      "description": "Thinning factor: keep every Nth draw. Reduces output file size at the cost of effective sample size. Omit to keep all draws."
+    },
+    {
+      "name": "parallel_chains",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Run chains in parallel using available CPU threads up to num_chains. Set false for serial execution to reduce peak memory at the cost of wall time. Default true."
+    },
+    {
+      "name": "prior_lkj_eta",
+      "type": "number",
+      "required": false,
+      "default": 1,
+      "description": "LKJ prior shape parameter η for the population-level correlation matrix. η = 1 is uniform over correlations; η > 1 shrinks toward identity (reduces implied between-attribute correlation). Default 1.0."
+    },
+    {
+      "name": "sigma_scale",
+      "type": "number",
+      "required": false,
+      "default": 1,
+      "description": "Prior scale for individual-level standard deviations σ (half-normal prior). Larger values allow wider spread of part-worths across respondents. Default 1.0."
+    },
+    {
+      "name": "ridge_scale",
+      "type": "number",
+      "required": false,
+      "default": 0.000001,
+      "description": "Ridge scale for the covariance prior. Small values (default 1e-6) keep the prior weakly informative without distorting the posterior."
+    }
+  ],
+  "details": "`fit` is the primary HB-Stan estimation entry point. It converts the coded-long CSV into the Stan JSON data format (saving stan_data.json for reproducibility), then invokes CmdStan's NUTS sampler on the HB-MNL model. The model places a multivariate normal prior on the population-level mean partworths with an LKJ prior on the correlation matrix, and per-respondent partworths are drawn from this population distribution.\n\nThe NUTS sampler adapts its step size and mass matrix during warmup and then draws from the posterior during the sampling phase. With the defaults (4 chains × 1000 post-warmup draws) you get 4000 total posterior draws, which is sufficient for most conjoint studies. Increase num_samples if the posterior summary shows low ESS values.\n\nAfter sampling completes, run `finalize` to compute per-parameter Rhat and ESS diagnostics, posterior summaries, and the U × P part-worth matrix. `fit-finalize` runs both steps in one call if you don't need to inspect the raw chains first.",
+  "value": "On success, run_dir contains:\n\n- stan_data.json — the converted Stan data file (reproducible input for `sample`).\n- hb_fit_chain_1.csv, hb_fit_chain_2.csv, ... — CmdStan CSV files, one per chain, containing the raw posterior draws.\n\nIn protocol mode the plugin emits event.run.started, periodic event.run.progress events as chains complete, and a final event.run.finished (or event.run.failed).",
+  "notes": [
+    "Rows must be sorted by (resp_id, task_id, alt_id) — the Stan data conversion assumes this ordering.",
+    "Use fit-finalize to run sampling and finalization in one step when you don't need to inspect raw chains.",
+    "For cross-validation, use cv-fit instead of calling fit once per fold — it walks a choice-cv split directory and manages fold-level seeds automatically.",
+    "CmdStan must be installed and on PATH for this command to work."
+  ],
+  "see_also": [
+    {
+      "command": "hb-stan::finalize",
+      "description": "Compute diagnostics and part-worth exports from the chain CSVs written here."
+    },
+    {
+      "command": "hb-stan::fit-finalize",
+      "description": "Convenience wrapper that runs fit then finalize in one call."
+    },
+    {
+      "command": "hb-stan::cv-fit",
+      "description": "Cross-validation entry point — runs fit across a choice-cv split directory."
+    },
+    {
+      "command": "hb-stan::sample",
+      "description": "Low-level entry point that accepts a pre-built Stan JSON data file."
+    },
+    {
+      "command": "choice-wrangling::build-estimation-long",
+      "description": "Produces the coded long-format CSV that this command consumes."
+    },
+    {
+      "command": "model-hb-mh::fit",
+      "description": "MH-based HB alternative — no CmdStan dependency, supports mixture segments and covariates."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic fit with defaults",
+      "body": "[[\"hb-stan::fit\"]]\ninput = \"./estimation/coded_long.csv\"\nrun_dir = \"./runs/hb-stan\"\nrun_name = \"stan_run1\""
+    },
+    {
+      "title": "Longer run with reproducible seed and more warmup",
+      "body": "[[\"hb-stan::fit\"]]\ninput = \"./estimation/coded_long.csv\"\nrun_dir = \"./runs/hb-stan-long\"\nrun_name = \"stan_run2\"\nnum_samples = 2000\nnum_warmup = 1000\nseed = 42"
+    },
+    {
+      "title": "Conservative prior with tighter LKJ and reduced sigma",
+      "body": "[[\"hb-stan::fit\"]]\ninput = \"./estimation/coded_long.csv\"\nrun_dir = \"./runs/hb-stan-conservative\"\nrun_name = \"stan_run3\"\nprior_lkj_eta = 2.0\nsigma_scale = 0.5\nseed = 1"
+    },
+    {
+      "title": "Serial chains to reduce peak memory on a large study",
+      "body": "[[\"hb-stan::fit\"]]\ninput = \"./estimation/coded_long.csv\"\nrun_dir = \"./runs/hb-stan-serial\"\nrun_name = \"stan_run4\"\nnum_chains = 4\nparallel_chains = false"
+    }
+  ],
+  "fields": [
+    {
+      "name": "input",
+      "description": "Path to the coded-long CSV (resp_id, task_id, alt_id, x1..xP, y).",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Output directory for stan_data.json and chain CSVs.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "headers",
+      "description": "Whether the CSV has a header row. Default: true.",
+      "required": false,
+      "accepted_values": [
+        "true",
+        "false"
+      ]
+    },
+    {
+      "name": "num_samples",
+      "description": "Post-warmup draws per chain. Default: 1000.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "num_warmup",
+      "description": "Warmup iterations per chain. Default: 500.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "num_chains",
+      "description": "Number of independent chains. Default: 4.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "seed",
+      "description": "RNG seed. Omit for non-deterministic.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "thin",
+      "description": "Keep every Nth draw. Omit to keep all.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "parallel_chains",
+      "description": "Run chains in parallel. Default: true.",
+      "required": false,
+      "accepted_values": [
+        "true",
+        "false"
+      ]
+    },
+    {
+      "name": "prior_lkj_eta",
+      "description": "LKJ prior shape parameter η. Default: 1.0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "sigma_scale",
+      "description": "Half-normal prior scale for individual σ. Default: 1.0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "ridge_scale",
+      "description": "Ridge scale for covariance prior. Default: 1e-6.",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

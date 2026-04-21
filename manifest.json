@@ -1,9 +1,514 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-19T01:32:11.242Z",
-  "signature": "FY4WeXQwrt+6ErRXoP1mn0hRvsU8hUHMlBUB36MIjswl+/QTHVxV1X36Ta4hr8H8sp4BLo/7zbXRtsAik8nFAA==",
+  "generated_at": "2026-04-21T19:29:33.952Z",
+  "signature": "E53AjxRKhWY9ibbh/MJ3MIUUrBKsmUd5DkGs4zqn2UIo53MBUPDIXyKoSwgMKOEHnj+Nn+ei1GHtjZq3CISoCQ==",
   "signer_key_id": "oc-registry-2026",
   "plugins": [
+    {
+      "plugin_id": "com.open-choice.choice-cv",
+      "display_name": "Choice CV Splitter",
+      "description": "Cross-validation fold splitter for choice data. Splits respondent-level data into balanced train/test folds.",
+      "publisher": "Open Choice",
+      "categories": [
+        "cross-validation"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.choice-cv/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/choice-cv-v0.1.0/choice-cv-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "ef1e1dc6e4f2d2d6adcf4b623c2847680849ba72f17100bc9e4792db27364696",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:28:05Z",
+          "release_notes": "Initial release.",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/choice-cv-v0.1.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.choice-sim",
+      "display_name": "Choice Simulator",
+      "description": "Hierarchical Bayes choice simulator. Runs market simulations from an Excel sim_db â€” share, volume, revenue, sensitivity, and exponent-search analyses.",
+      "publisher": "Open Choice",
+      "categories": [
+        "simulation",
+        "choice-modeling"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.choice-sim/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/choice-sim-v0.1.0/choice-sim-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "9e34ce55ff8f151845926de02d715bc09705085fe5a4141ea54c8e977871468a",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:28:08Z",
+          "release_notes": "Initial release of the Choice Simulator plugin for Open Choice.\n\n## Commands\n\n- **sim_run** â€” Standard market simulation. Returns shares, revenue, volume, cost, profit, and standard error per scenario Ã— subgroup Ã— product.\n- **sim_sensitivities** â€” Attribute sensitivity sweep. Runs one simulation per (product, attribute, value) triple, stacking all results for chart-ready sensitivity analysis.\n- **sim_combinations** â€” Multi-product attribute grid. Cartesian product (expand_grid = true) or zip (expand_grid = false) across value lists for two or more products.\n- **sim_take_rate** â€” Take-rate simulation. Identical engine to sim_run; intended for population-projected volume and revenue analyses.\n- **sim_exponent_search** â€” IIA exponent calibration. Bisection search over the beta scale factor to match stated market-share proportions.\n- **sim_lock_step** â€” Lock-step multi-product sweep. Moves all participating products through parallel value lists simultaneously, one position per simulation run.\n\n## Features\n\n- Reads HB utility draws directly from an Excel sim_db workbook (or pre-built JSON + binary snapshot).\n- Share of preference (SoP) and first-choice (FC) probability methods, with blending support.\n- Monte Carlo multi-trip simulation with seeded RNG for reproducibility.\n- Per-respondent subgroup cuts and multiple weight columns.\n- Throttle and consideration set support.\n- Eval-lang price formula expressions for derived pricing rules.\n- Product net (brand roll-up) rows via include_nets.\n- Monotonicity constraints on HB beta draws.\n- ocp-json/1 protocol: structured NDJSON event stream with run.started, artifact.created, and run.finished events.",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/choice-sim-v0.1.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.choice-wrangling",
+      "display_name": "Choice Wrangling",
+      "description": "Data wrangling pipeline for MaxDiff/best-worst choice studies: prepare raw survey data, build choice sets, and produce estimation-ready long-format CSV files.",
+      "publisher": "Open Choice",
+      "categories": [
+        "data-wrangling",
+        "maxdiff"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.choice-wrangling/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/choice-wrangling-v0.1.0/choice-wrangling-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "b538e9f42cc67cf8c00b0d9d195c7f2e265be732a964fc174df384c8e98f7fe0",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:28:11Z",
+          "release_notes": "Initial release.",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/choice-wrangling-v0.1.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.clustering",
+      "display_name": "Clustering",
+      "description": "Native segmentation toolkit: fourteen clustering methods (kmeans, hier, kmedoids, diana, pca_to_hier, hier_to_kmeans, fuzzy, spectral, hdbscan, archetypes, affinity, latent_class, gmm, ensemble) plus a cluster-quality evaluator.",
+      "publisher": "Open Choice",
+      "categories": [
+        "segmentation",
+        "clustering",
+        "unsupervised"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.clustering/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/clustering-v0.1.0/clustering-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "54bd5aaf4913b0d1c547aa50881826d6c3e2e043d0332cf64b72c09672625403",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:28:14Z",
+          "release_notes": "Initial release. Fourteen clustering methods ported from the R reference:\n\n- Partitional: `kmeans`, `kmedoids`.\n- Hierarchical: `hier`, `diana`, `pca_to_hier`, `hier_to_kmeans`.\n- Soft / density / kernel: `fuzzy`, `spectral`, `hdbscan`.\n- Model-based / latent: `archetypes`, `affinity`, `latent_class`, `gmm` (diagonal or full covariance via EM).\n- Ensemble: `ensemble` (consensus via co-association matrix with hier or pam engine).\n\n`segment` dispatches every method block and writes a unified `memberships.csv`.\n`evaluate` scores solutions via within/between dissimilarity, silhouette, and pearson Î³.",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/clustering-v0.1.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.data-wrangling",
+      "display_name": "Data Wrangling",
+      "description": "Polars-native data manipulation. Ops mode chains verbs (select / filter / with_columns / sort / group_by / join / distinct / rename / drop / slice / head / tail) against a named set of CSV / Parquet / SAV inputs; query mode runs SQL via polars_sql::SQLContext over the same inputs. Per-input pre-pipelines, SQL-flavoured expressions (polars-sql), and CSV / Parquet outputs.",
+      "publisher": "Open Choice",
+      "categories": [
+        "data-wrangling",
+        "transformation",
+        "sql",
+        "polars"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.data-wrangling/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/data-wrangling-v0.1.0/data-wrangling-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "7058767ffbc430f834186c5dee55e7b19d1f7a52e52b1fe5091269d87852bfdc",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:28:18Z",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/data-wrangling-v0.1.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.design-cbc",
+      "display_name": "CBC Design (BO + DE)",
+      "description": "Generates Choice-Based Conjoint experimental designs using simulated annealing. Two objectives: design-bo (balance / minimum overlap) and design-de (D-efficiency under effects coding, with optional Bayesian priors).",
+      "publisher": "Open Choice",
+      "categories": [
+        "design",
+        "cbc"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.design-cbc/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/design-cbc-v0.1.0/design-cbc-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "b4b8d071760f5121474ab7cf8939d37e1e52e42ef1fbc4663cd6eeef1ab5913c",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:28:33Z",
+          "release_notes": "Initial release.",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/design-cbc-v0.1.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.design-maxdiff",
+      "display_name": "MaxDiff / Best-Worst Design",
+      "description": "Generates balanced MaxDiff / best-worst experimental designs using simulated annealing.",
+      "publisher": "Open Choice",
+      "categories": [
+        "design",
+        "maxdiff"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.design-maxdiff/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/design-maxdiff-v0.1.0/design-maxdiff-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "3df978b5c838082f358844e7df3f0a6b69db675b480d15f7418f4a275baf5f5c",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:28:37Z",
+          "release_notes": "Initial release.",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/design-maxdiff-v0.1.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.factor-analysis",
+      "display_name": "Factor Analysis",
+      "description": "Rust port of psych::fa and FactoMineR::FAMD: exploratory factor analysis on numeric data, factor analysis of mixed data, and a standalone correlation-matrix builder covering the full psych::fa(cor=...) method surface.",
+      "publisher": "Open Choice",
+      "categories": [
+        "factor-analysis",
+        "psychometrics",
+        "correlation"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.factor-analysis/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/factor-analysis-v0.1.0/factor-analysis-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "c46e5b28244dc68813426f78fe6ca15ec662a99744e9c342e95439429f2f81be",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:28:40Z",
+          "release_notes": "Initial release. Rust port of `psych::fa` and `FactoMineR::FAMD` with three `ocp-json/1` commands:\n\n- `fa`: EFA on numeric data. Iterative principal-axis / minimum-residual factor extraction (SMC communality init, fallback to max-abs-off-diag on singular R), Kaiser-normalized analytic Varimax rotation (pairwise column rotation matching `stats::varimax`), per-variable rows sorted by dominant factor then |loading|. Iterates over meta `batch` groupings Ã— `[min_count, max_count]` factors.\n- `famd`: Factor analysis of mixed data. Standardises numerics (n-1 SD), disjunctively codes categoricals with `(indicator - proportion)/sqrt(proportion)`, thin SVD of the concatenated `X/sqrt(n)`. Emits coord / contrib / cosÂ² per dimension at both variable and level granularity.\n- `correlation`: Standalone correlation-matrix builder. Accepts the full `psych::fa(cor=...)` method enum; Phase 1 implements `pearson` and `covariance`. Writes a CSV plus a three-sheet xlsx (correlation, n_obs, meta).\n\nPhase 1 scope: `pearson` / `covariance` correlations, `minres` / `pa` extraction, `none` / `varimax` rotation, full FAMD. Other cor/fm/rotate values round-trip through validation and return `NotImplemented` at runtime pending Phases 2-3 (categorical correlations; remaining factoring methods and GPArotation rotations).",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/factor-analysis-v0.1.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.julia-wrapper",
+      "display_name": "Julia Wrapper",
+      "description": "Runs arbitrary Julia scripts via julia and streams stdout/stderr as ocp-json/1 events. Requires Julia to be installed and on PATH.",
+      "publisher": "Open Choice",
+      "categories": [
+        "scripting"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.julia-wrapper/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/julia-wrapper-v0.1.0/julia-wrapper-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "a53638d3e6b089ce32b30c5cf2f8a4ee9dac0674f9c0a81762bf1544e70c9df1",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:29:08Z",
+          "release_notes": "Initial release.",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/julia-wrapper-v0.1.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.maxdiff-turf",
+      "display_name": "MaxDiff TURF",
+      "description": "TURF reach analysis for MaxDiff utilities: search at fixed sizes, build anchored ladders, and sweep curve families across anchor sizes.",
+      "publisher": "Open Choice",
+      "categories": [
+        "maxdiff",
+        "turf"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.maxdiff-turf/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/maxdiff-turf-v0.1.0/maxdiff-turf-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "4a335327b58c52c3c2b38b16effc49c7a43641a96bfcfcdc2045e2e311023ccf",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:28:43Z",
+          "release_notes": "Initial release.",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/maxdiff-turf-v0.1.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.model-dfa",
+      "display_name": "Discriminant Function Analysis (DFA)",
+      "description": "Linear discriminant analysis on wide-format data with class labels.",
+      "publisher": "Open Choice",
+      "categories": [
+        "estimation",
+        "classification",
+        "lda"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.model-dfa/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/model-dfa-v0.1.0/model-dfa-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "cfaa255722b6fcb4a88f0d1bb8aefad724beef71554799a17f4546138c71de3f",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:28:46Z",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-dfa-v0.1.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.model-glmnet",
+      "display_name": "Model Glmnet",
+      "description": "Pure-Rust port of R's glmnet 4.1: elastic-net coordinate descent with k-fold cross-validation, covering all six glmnet families (gaussian, binomial, poisson, multinomial, mgaussian, cox). Emits lambda.min and lambda.1se for every run plus a full coefficient-matrix path.",
+      "publisher": "Open Choice",
+      "categories": [
+        "regression",
+        "regularization",
+        "machine-learning",
+        "survival"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.model-glmnet/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/model-glmnet-v0.1.0/model-glmnet-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "8f64b3776744f9efa65f3f004dfaab2a396646d03667f7b7d5188980cf830dc9",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:28:49Z",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-glmnet-v0.1.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.model-mnl-hb-mh",
+      "display_name": "Hierarchical Bayes MH",
+      "description": "Hierarchical Bayes (Metropolis-Hastings) model estimation from coded-long-format choice data.",
+      "publisher": "Open Choice",
+      "categories": [
+        "estimation",
+        "hierarchical-bayes"
+      ],
+      "latest_version": "0.2.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.model-mnl-hb-mh/",
+      "versions": [
+        {
+          "version": "0.2.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/model-mnl-hb-mh-v0.2.0/model-mnl-hb-mh-0.2.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "380adeefe51dfc13368869d268948d3f2e8adc2cfb88f49a618f4f41db4d5a8a",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:28:53Z",
+          "release_notes": "Initial release.",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-mnl-hb-mh-v0.2.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.model-mnl-hb-stan",
+      "display_name": "HB Stan (MNL)",
+      "description": "Hierarchical Bayes MNL conjoint model estimated via CmdStan (NUTS sampler). Accepts coded-long-format design matrices and respondent covariates; produces per-respondent part-worth utilities with full posterior diagnostics.",
+      "publisher": "Open Choice",
+      "categories": [
+        "estimation",
+        "hierarchical-bayes"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.model-mnl-hb-stan/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/model-mnl-hb-stan-v0.1.0/model-mnl-hb-stan-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "68c43dd2a056d1553f08722881d4eb2cf0eea67f0088fc91bc2b7e6323d603e5",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:28:56Z",
+          "release_notes": "Initial release.",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-mnl-hb-stan-v0.1.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.model-mnl-lc",
+      "display_name": "Latent Class (LC)",
+      "description": "Latent class logit model estimation via EM algorithm from coded-long-format choice data.",
+      "publisher": "Open Choice",
+      "categories": [
+        "estimation",
+        "latent-class"
+      ],
+      "latest_version": "0.2.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.model-mnl-lc/",
+      "versions": [
+        {
+          "version": "0.2.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/model-mnl-lc-v0.2.0/model-mnl-lc-0.2.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "38e70fa9fa26e0bd11707d30796a3f4a0c150465e42ec49328159edb173f6fc4",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:28:59Z",
+          "release_notes": "Initial release.",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-mnl-lc-v0.2.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.model-mnl-lg",
+      "display_name": "Logit (LG)",
+      "description": "Multinomial logit model estimation from coded-long-format choice data.",
+      "publisher": "Open Choice",
+      "categories": [
+        "estimation",
+        "logit"
+      ],
+      "latest_version": "0.2.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.model-mnl-lg/",
+      "versions": [
+        {
+          "version": "0.2.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/model-mnl-lg-v0.2.0/model-mnl-lg-0.2.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "5e2a66500a302ca0bc1569fdf1606173fc08bb23ba4bf8e6b5e47bec3a39b578",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:29:02Z",
+          "release_notes": "Initial release.",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-mnl-lg-v0.2.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.model-shapley",
+      "display_name": "Model Shapley",
+      "description": "Rust port of R's `relaimpo::calc.relimp(type=\"lmg\")` (exact Shapley), `iopsych::relWt` (Johnson's ε), plus a Castro–Gómez–Tejada sampled Shapley for medium-p. Auto-detects categorical predictors and one-hot expands them; Shapley enumerates over original variable groups, not dummies. Outputs per-variable ε summing to R².",
+      "publisher": "Open Choice",
+      "categories": [
+        "regression",
+        "importance",
+        "statistics",
+        "machine-learning"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.model-shapley/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/model-shapley-v0.1.0/model-shapley-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "445d6531bbb4072058e9252b863ae03dd08613e40257f231f6b6ae068c243eab",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:29:05Z",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-shapley-v0.1.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.python-wrapper",
+      "display_name": "Python Wrapper",
+      "description": "Runs arbitrary Python scripts and streams stdout/stderr as ocp-json/1 events. Requires Python to be installed and on PATH.",
+      "publisher": "Open Choice",
+      "categories": [
+        "scripting"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.python-wrapper/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/python-wrapper-v0.1.0/python-wrapper-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "c65bd7bf6a7352ba9a20391c5342fb2879e210e926bf94414397b5823d2ea1eb",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:29:11Z",
+          "release_notes": "Initial release.",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/python-wrapper-v0.1.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.r-wrapper",
+      "display_name": "R Wrapper",
+      "description": "Runs R scripts (via file or inline code) using Rscript or R, streaming stdout/stderr as ocp-json/1 events. Requires R to be installed and on PATH.",
+      "publisher": "Open Choice",
+      "categories": [
+        "scripting"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.r-wrapper/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/r-wrapper-v0.1.0/r-wrapper-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "ba41193bdce32465844661386517486fdcd1680b8d8b12e1c31808281d1fbd79",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:29:13Z",
+          "release_notes": "Initial release.",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/r-wrapper-v0.1.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.seg-profile",
+      "display_name": "Segment Profiler",
+      "description": "Profile segment membership against numeric variables with per-segment means, Welch t-scores, standardised differences, indices, and counts; cross-tabulate segment migration across solutions.",
+      "publisher": "Open Choice",
+      "categories": [
+        "segmentation",
+        "profiling"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.seg-profile/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/seg-profile-v0.1.0/seg-profile-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "b21b1aa7545c7cdd9a7c665b9564dffab67850fb9072584eee720ed43cce839d",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:29:19Z",
+          "release_notes": "Initial release. Ports the R `profile_fast` and `migration_table` pipelines:\n\n- `profile`: per-segment weighted means, Welch t-scores, standardised differences, indices, and counts, with xlsx output matching the R reference layout (threshold cells, per-segment header block, conditional formatting, freeze panes) plus CSV sidecars.\n- `migration`: stacked cross-tabulation of multi-solution memberships, with xlsx merged-header layout, 3-colour scale, freeze panes, and a CSV sidecar.",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/seg-profile-v0.1.0"
+        }
+      ]
+    },
+    {
+      "plugin_id": "com.open-choice.spss-reader",
+      "display_name": "SPSS Reader",
+      "description": "Reads SPSS .sav, CSV, and Excel files. Produces Excel exports, data dictionaries (with frequency tables), cleaning maps, and cross-tabulation banner tables with pairwise significance tests (proportion z-test and weighted t-test).",
+      "publisher": "Open Choice",
+      "categories": [
+        "data",
+        "spss"
+      ],
+      "latest_version": "0.1.0",
+      "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.spss-reader/",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/spss-reader-v0.1.0/spss-reader-0.1.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "f27944745c0b68557b8c14e3317c553a50e0fbc70df2d4d0dd42775f3b46d8e3",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T13:29:22Z",
+          "release_notes": "Initial release.",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/spss-reader-v0.1.0"
+        }
+      ]
+    },
     {
       "plugin_id": "com.open-choice.toy-calculator",
       "display_name": "Toy Calculator",
@@ -17,13 +522,13 @@
       "versions": [
         {
           "version": "0.1.1",
-          "download_url": "https://github.com/Open-Choice/open-choice-plugins/releases/download/toy-calculator-v0.1.1/toy-calculator-0.1.1-windows-x86_64.ocplugin",
-          "artifact_sha256": "039b8f50466bc060420712138413e91e1cc7757a4460716141ebd91b2cc0b826",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/toy-calculator-v0.1.1/toy-calculator-0.1.1-windows-x86_64.ocplugin",
+          "artifact_sha256": "c0a958e079f33469e92e7538aa6da742432bb54628242b82f5a35f684994b183",
           "signer_key_id": "open-choice-2026",
           "min_app_version": "0.1.0",
-          "released_at": "2026-04-18T19:14:01Z",
+          "released_at": "2026-04-21T13:29:16Z",
           "release_notes": "First public release via the Open Choice plugin registry.",
-          "release_url": "https://github.com/Open-Choice/open-choice-plugins/releases/tag/toy-calculator-v0.1.1"
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/toy-calculator-v0.1.1"
         }
       ]
     }

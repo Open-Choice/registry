@@ -1,0 +1,25 @@
+[
+  {
+    "template_id": "dfa-fit-finalize-basic",
+    "title": "DFA: fit and finalize in one call",
+    "summary": "Fit LDA on a wide-format CSV with a class label column and write coefficient + hit-rate reports.",
+    "category": "starter",
+    "oce_text": "[[\"model-dfa::fit-finalize\"]]\ninput = \"wide.csv\"\nrun_dir = \"./runs\"\nrun_name = \"pilot\"\ny_col = \"y\"\n",
+    "input": "wide.csv",
+    "run_dir": "./runs",
+    "run_name": "pilot",
+    "y_col": "y"
+  },
+  {
+    "template_id": "dfa-fit-finalize-with-holdout",
+    "title": "DFA: fit-finalize with holdout evaluation",
+    "summary": "Fit LDA on training CSV and score a separate holdout CSV in one call.",
+    "category": "advanced",
+    "oce_text": "[[\"model-dfa::fit-finalize\"]]\ninput = \"wide_train.csv\"\ntest_input = \"wide_holdout.csv\"\nrun_dir = \"./runs\"\nrun_name = \"pilot_holdout\"\ny_col = \"y\"\n",
+    "input": "wide_train.csv",
+    "test_input": "wide_holdout.csv",
+    "run_dir": "./runs",
+    "run_name": "pilot_holdout",
+    "y_col": "y"
+  }
+]

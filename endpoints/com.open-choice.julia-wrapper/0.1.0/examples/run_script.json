@@ -1,0 +1,39 @@
+[
+  {
+    "template_id": "run-julia-script-basic",
+    "title": "Run Julia Script",
+    "summary": "Run a Julia script with no extra arguments.",
+    "category": "starter",
+    "oce_text": "[[\"julia-wrapper::run_script\"]]\nscript = \"./analysis.jl\"\noutput_dir = \"./outputs/jl-run\"\ntrust_acknowledged = true\n",
+    "script": "./analysis.jl",
+    "args": [],
+    "kwargs": {},
+    "output_dir": "./outputs/jl-run",
+    "trust_acknowledged": true
+  },
+  {
+    "template_id": "run-julia-script-with-args",
+    "title": "Run Julia Script with Arguments",
+    "summary": "Run a Julia script passing positional args and named --key value pairs.",
+    "category": "starter",
+    "oce_text": "[[\"julia-wrapper::run_script\"]]\nscript = \"./simulate.jl\"\nargs = [\"config.toml\"]\n\n[\"julia-wrapper::run_script\".kwargs]\niterations = \"1000\"\nverbose = \"true\"\n\noutput_dir = \"./outputs/jl-run\"\ntrust_acknowledged = true\n",
+    "script": "./simulate.jl",
+    "args": ["config.toml"],
+    "kwargs": { "iterations": "1000", "verbose": "true" },
+    "output_dir": "./outputs/jl-run",
+    "trust_acknowledged": true
+  },
+  {
+    "template_id": "run-julia-script-with-project",
+    "title": "Run Julia Script with Project Environment",
+    "summary": "Run a Julia script activating a local Project.toml so package imports resolve from the project's manifest.",
+    "category": "starter",
+    "oce_text": "[[\"julia-wrapper::run_script\"]]\nscript = \"./model.jl\"\nproject = \".\"\noutput_dir = \"./outputs/jl-run\"\ntrust_acknowledged = true\n",
+    "script": "./model.jl",
+    "project": ".",
+    "args": [],
+    "kwargs": {},
+    "output_dir": "./outputs/jl-run",
+    "trust_acknowledged": true
+  }
+]

@@ -1,0 +1,358 @@
+{
+  "command": "fit",
+  "title": "Fit a Hierarchical Bayes mixture model via Metropolis-Hastings MCMC",
+  "summary": "Estimate a Hierarchical Bayes model via Metropolis-Hastings MCMC from coded-long-format choice data. Produces individual-level (respondent) preference estimates, segment-level summaries, and fit statistics. Supports multi-segment mixture models, holdout evaluation, and respondent-level covariates.",
+  "description": "Reads a coded long-format choice CSV (the output of `choice-wrangling::build-estimation-long`) and fits a Hierarchical Bayes (HB) mixture model by Metropolis-Hastings MCMC. The model treats each respondent as having their own utility vector, drawn from a population-level normal mixture with `segments` components. The result is a per-respondent posterior over partworths plus segment-level summaries — the standard HB output for choice modelling. Optional features include an out-of-sample holdout (`test_input`), respondent-level covariates (`covariate_input`), sign constraints, and chain checkpointing.",
+  "usage": "[[\"model-mnl-hb-mh::fit\"]]\ninput = \"<coded_long.csv>\"\nrun_dir = \"<dir>\"\nrun_name = \"hbmh_run\"\n# optional:\ntest_input = \"<holdout.csv>\"\ncovariate_input = \"<covariates.csv>\"\nsegments = 2\niterations = 10000\nsave_every = 10\nthreads = 4\nrandom_seed = 0\nburnin = 0.2\nattribute_signs = [{ name = \"price\", rule = \"non_pos\" }]",
+  "arguments": [
+    {
+      "name": "input",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the coded long-format CSV file. Expected layout: one row per (respondent, task, alternative), with a `resp_id` column, a `task` column, a response column, and one numeric column per coded covariate. This is exactly what `choice-wrangling::build-estimation-long` produces."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory for results. Created if it does not exist. Receives the persisted chain (chunks of saved draws), `spec.json` recording the run configuration, `manifest.postcard` and `status.postcard` for chain bookkeeping, and the `exports/` subdirectory with user-facing CSVs after `finalize` is run (or automatically at end of fit)."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'."
+    },
+    {
+      "name": "test_input",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Optional holdout CSV for out-of-sample evaluation. Must have the same column layout as `input`. When supplied, the run records the holdout log-likelihood under the post-burnin draws as part of the fit summary. Use this when you want a single train / test split; for K-fold cross-validation, use `cv-fit` instead."
+    },
+    {
+      "name": "covariate_input",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Optional respondent-level covariate CSV: a `resp_id` column plus one numeric column per covariate. When supplied, the population-level mean is regressed on these covariates (one regression coefficient per covariate per partworth). Use this to capture demographic effects on preferences when you have respondent metadata."
+    },
+    {
+      "name": "segments",
+      "type": "integer",
+      "required": false,
+      "default": 2,
+      "description": "Number of mixture components in the population-level normal mixture. Default `2`. With `segments = 1` the model is a standard single-population HB; with `segments > 1` it is a normal-mixture HB, useful when the population is meaningfully multi-modal. Increasing `segments` adds parameters and slows convergence, so start small."
+    },
+    {
+      "name": "iterations",
+      "type": "integer",
+      "required": false,
+      "default": 10000,
+      "description": "Total MCMC iterations to run. Default `10000`. The chain after burnin is what `finalize` summarises; run more iterations if the trace plots or fit statistics suggest the chain hasn't mixed. If a run undershoots, use `fit-extend` to add more iterations on top of the existing chain rather than starting over."
+    },
+    {
+      "name": "save_every",
+      "type": "integer",
+      "required": false,
+      "default": 10,
+      "description": "Save draws every N iterations. Default `10` — i.e., save 1 in 10 iterations. Larger values save fewer draws but produce a thinner chain in the persisted output, which keeps disk usage manageable on long runs. Holdout evaluation and final summaries operate on saved draws only."
+    },
+    {
+      "name": "show_every",
+      "type": "integer",
+      "required": false,
+      "default": 50,
+      "description": "Print progress every N iterations. Default `50`. Has no effect on results — purely a console-output knob."
+    },
+    {
+      "name": "checkpoint_every",
+      "type": "integer",
+      "required": false,
+      "default": 100,
+      "description": "Write a chain checkpoint every N saved draws. Default `100`. Checkpoints make `fit-extend` resumption robust to mid-run interruptions."
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 4,
+      "description": "Number of threads used for the per-respondent likelihood evaluations inside each MCMC step. Default `4`. Set to roughly the number of cores you can spare. Speedup is sub-linear past about 8 threads on most respondent counts."
+    },
+    {
+      "name": "random_seed",
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "description": "Random seed. `0` (default) means non-deterministic — a fresh seed is drawn each call. Provide a positive integer for reproducibility; the same seed and the same input give bit-identical chains."
+    },
+    {
+      "name": "chains",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Number of independent MCMC chains to run in parallel. Default `1`. Each chain uses a seed derived from `random_seed` and its chain index. Chains run concurrently; their draws are pooled at finalize time to form the final point estimates and summaries. Use `chains > 1` to assess convergence across independent starting points or to increase effective posterior sample size."
+    },
+    {
+      "name": "report_thin",
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "description": "Convergence-report snapshot interval in saved draws. Default `0` (same as `checkpoint_every`, giving one snapshot per chunk). A snapshot of the running cumulative mean is written to `process_data.json` every N saved draws, producing one data point on the convergence chart. Lower values (e.g. `10`) give a finer trace at the cost of more frequent file writes; higher values give a coarser trace with fewer data points. Has no effect on the MCMC chain itself."
+    },
+    {
+      "name": "burnin",
+      "type": "number",
+      "required": false,
+      "default": 0.2,
+      "description": "Burnin fraction discarded from the saved draws when computing the holdout log-likelihood and the final summary. Default `0.2` (discard the first 20% of saved draws). The burnin can be changed retroactively by re-running `finalize` with a different value — the persisted chain itself is unaffected."
+    },
+    {
+      "name": "amu",
+      "type": "number",
+      "required": false,
+      "default": 0.01,
+      "description": "Precision of the normal prior on each segment's mean partworth vector. Default `0.01` is very weak (sd ≈ 10); use a tighter value if your data is sparse and the chain wanders."
+    },
+    {
+      "name": "nu_inc",
+      "type": "integer",
+      "required": false,
+      "default": 3,
+      "description": "Degrees-of-freedom increment for the inverse-Wishart prior on each segment's covariance matrix. The actual prior degrees of freedom are `n_attributes + nu_inc`. Default `3` is the conventional weak choice."
+    },
+    {
+      "name": "a",
+      "type": "array<number>",
+      "required": false,
+      "default": null,
+      "description": "Dirichlet concentration parameters for the segment mixture weights. Length must equal `segments`. When omitted, defaults to a symmetric Dirichlet (all entries equal) consistent with a weak prior."
+    },
+    {
+      "name": "covariate_prior_scale",
+      "type": "number",
+      "required": false,
+      "default": 0.01,
+      "description": "Prior scale for the regression coefficients on `covariate_input`. Default `0.01` is weak; tighten if you have many covariates and few respondents."
+    },
+    {
+      "name": "step_size",
+      "type": "number",
+      "required": false,
+      "default": null,
+      "description": "Metropolis-Hastings proposal step size for the per-respondent partworth updates. Omit (the default) for automatic tuning during burnin — the kernel adapts the step size to target a reasonable acceptance rate. Provide an explicit value only if automatic tuning misbehaves."
+    },
+    {
+      "name": "init_ridge",
+      "type": "number",
+      "required": false,
+      "default": 1e-8,
+      "description": "Numerical ridge added to the Hessian diagonal during the MAP initialisation step. Default `1e-8`. Raise if MAP init fails on a near-singular Hessian (e.g., a near-collinear coding scheme)."
+    },
+    {
+      "name": "init_iterations",
+      "type": "integer",
+      "required": false,
+      "default": 250,
+      "description": "Maximum iterations for the MAP initialisation routine that seeds the chain. Default `250`. The chain converges much faster from a good MAP start than from a random one, so this is worth doing even on long runs."
+    },
+    {
+      "name": "attribute_signs",
+      "type": "array<object>",
+      "required": false,
+      "default": null,
+      "description": "Sign constraints on individual attributes, formatted as a list of `{ name, rule }` objects where `rule` is `\"non_neg\"` (the partworth must be non-negative) or `\"non_pos\"` (must be non-positive). Use `non_pos` for price-like attributes you want to force downward-sloping. Sign constraints are enforced via rejection at the proposal stage."
+    }
+  ],
+  "details": "`fit` is the primary HB estimation entry point. It runs Metropolis-Hastings MCMC over a hierarchical normal-mixture model: each respondent has their own partworth vector drawn from a population-level normal mixture with `segments` components, and each task is a multinomial choice over alternatives whose linear utilities use that respondent's partworths.\n\nThe sampler is multi-threaded across respondents inside each MCMC step. Step size is adaptively tuned during burnin unless `step_size` is supplied explicitly. A MAP initialisation routine seeds the chain from a good starting point so the warm-up phase doesn't waste iterations wandering.\n\nThe persisted output is split into two layers. The *raw chain* (chunks of saved draws plus `spec.json`, `manifest.postcard`, `status.postcard`) lives in `run_dir` and is the durable record of the run. The *user-facing summary* (segment means, mixture probabilities, per-respondent point estimates) is produced by `finalize`, which can be re-run with different burnin values without re-running the chain. `fit` calls `finalize` automatically at the end of a successful run, so you get both layers in one call.\n\nIf the run undershoots (trace plots haven't settled, holdout LL is still climbing), use `fit-extend` to add more iterations on top of the existing chain rather than starting over.",
+  "value": "On success, `run_dir` contains:\n\n- The persisted chain (`chunks/`, `spec.json`, `manifest.postcard`, `status.postcard`).\n- An `exports/` subdirectory with `summary.json` (segment means, mixture probabilities, log-likelihood) and the per-respondent point-estimates CSV — these are produced by the auto-`finalize` step at the end of the run.\n\nIn protocol mode the plugin emits `event.run.started`, periodic `event.run.progress` events with iteration counts, then `event.run.finished` (or `event.run.failed`) carrying the final fit summary.",
+  "notes": [
+    "Use `cv-fit` for K-fold cross-validation rather than calling `fit` once per fold — it walks a `choice-cv split` directory and writes a single aggregate summary.",
+    "If a run hasn't converged, prefer `fit-extend` over re-running. Extending preserves the warm-up work and is much cheaper.",
+    "The holdout evaluation is computed against the post-burnin saved draws. To re-evaluate with a different burnin without re-running the chain, re-run `finalize`.",
+    "Sign constraints (`attribute_signs`) are enforced at the proposal stage; expect a slower acceptance rate when many constraints are active."
+  ],
+  "see_also": [
+    {
+      "command": "model-mnl-hb-mh::fit-extend",
+      "description": "Add more iterations on top of an existing chain (use this when a fit hasn't converged)."
+    },
+    {
+      "command": "model-mnl-hb-mh::cv-fit",
+      "description": "K-fold cross-validation entry point — runs fit per fold against a `choice-cv split` directory."
+    },
+    {
+      "command": "model-mnl-hb-mh::finalize",
+      "description": "Re-summarise a completed run with a different burnin value."
+    },
+    {
+      "command": "choice-wrangling::build-estimation-long",
+      "description": "Produces the coded long-format CSV that this command consumes."
+    },
+    {
+      "command": "model-mnl-lg::fit",
+      "description": "Aggregate MNL fit — much faster but ignores respondent-level heterogeneity."
+    },
+    {
+      "command": "model-mnl-lc::fit",
+      "description": "Latent class fit — segments respondents but assigns each to a single class rather than a continuous individual posterior."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Basic 2-segment HB fit",
+      "body": "[[\"model-mnl-hb-mh::fit\"]]\ninput = \"./estimation/coded_long.csv\"\nrun_dir = \"./runs/hb\"\nrun_name = \"hbmh_run1\""
+    },
+    {
+      "title": "1-segment HB with sign constraint on price",
+      "body": "[[\"model-mnl-hb-mh::fit\"]]\ninput = \"./estimation/coded_long.csv\"\nrun_dir = \"./runs/hb-1seg\"\nrun_name = \"hbmh_run2\"\nsegments = 1\niterations = 20000\nattribute_signs = [{ name = \"price\", rule = \"non_pos\" }]\nrandom_seed = 42"
+    },
+    {
+      "title": "HB with respondent covariates and a holdout",
+      "body": "[[\"model-mnl-hb-mh::fit\"]]\ninput = \"./estimation/coded_long_train.csv\"\ntest_input = \"./estimation/coded_long_holdout.csv\"\ncovariate_input = \"./estimation/respondent_covariates.csv\"\nrun_dir = \"./runs/hb-cov\"\nrun_name = \"hbmh_run3\"\nsegments = 2\niterations = 15000"
+    }
+  ],
+  "fields": [
+    {
+      "name": "input",
+      "description": "Path to the coded-long-format CSV file.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Output directory for results. Created if it does not exist.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Used to name output artifacts and subdirectories so multiple runs under the same run_dir do not collide. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "test_input",
+      "description": "Optional holdout CSV for out-of-sample evaluation.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "covariate_input",
+      "description": "Optional covariate CSV (resp_id + numeric columns).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "segments",
+      "description": "Number of mixture segments. Default: 2.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "iterations",
+      "description": "Total MCMC iterations. Default: 10000.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "save_every",
+      "description": "Save draws every N iterations. Default: 10.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "show_every",
+      "description": "Print progress every N iterations. Default: 50.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "checkpoint_every",
+      "description": "Write checkpoint every N saved draws. Default: 100.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "threads",
+      "description": "Number of threads. Default: 4.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "random_seed",
+      "description": "Random seed (0 = non-deterministic). Default: 0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "chains",
+      "description": "Number of independent MCMC chains. Default: 1.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "report_thin",
+      "description": "Snapshot every N saved draws (0 = checkpoint_every). Default: 0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "burnin",
+      "description": "Burnin fraction for holdout evaluation. Default: 0.2.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "amu",
+      "description": "Precision of normal prior on segment means. Default: 0.01.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "nu_inc",
+      "description": "Degrees-of-freedom increment for covariance prior. Default: 3.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "a",
+      "description": "Dirichlet concentration per segment (length = segments).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "covariate_prior_scale",
+      "description": "Prior scale for covariate regression coefficients. Default: 0.01.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "step_size",
+      "description": "MH proposal step size. Omit for automatic tuning.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "init_ridge",
+      "description": "Numerical ridge for Hessian during MAP init. Default: 1e-8.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "init_iterations",
+      "description": "Max iterations for MAP initialisation. Default: 250.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "attribute_signs",
+      "description": "Sign constraints: [{name, rule}] where rule is non_neg or non_pos.",
+      "required": false,
+      "accepted_values": []
+    }
+  ]
+}

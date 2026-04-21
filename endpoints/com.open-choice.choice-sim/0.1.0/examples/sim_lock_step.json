@@ -1,0 +1,21 @@
+[
+  {
+    "template_id": "sim-lock-step-basic",
+    "title": "Sim: industry-wide price movement",
+    "summary": "Move three products together through three price points in lock-step.",
+    "category": "starter",
+    "oce_text": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_lock_step\"]]\nscenarios = [\"base\"]\nmeasures = \"share|revenue\"\n\n[\"cs::sim_lock_step\".scenario_chgs.ProductA]\nprice = [9.0, 10.0, 11.0]\n\n[\"cs::sim_lock_step\".scenario_chgs.ProductB]\nprice = [14.0, 15.0, 16.0]\n\n[\"cs::sim_lock_step\".scenario_chgs.ProductC]\nprice = [12.0, 13.0, 14.0]\n",
+    "scenarios": ["base"],
+    "measures": "share|revenue"
+  },
+  {
+    "template_id": "sim-lock-step-filtered",
+    "title": "Sim: lock-step filtered to a product subset",
+    "summary": "Move only two of three products; the third stays at baseline.",
+    "category": "advanced",
+    "oce_text": "[sim_db]\nexcel = \"model.xlsx\"\n\n[[\"cs::sim_lock_step\"]]\nscenarios = [\"base\"]\nmeasures = \"share|revenue\"\nproduct_names = [\"ProductA\", \"ProductB\"]\n\n[\"cs::sim_lock_step\".scenario_chgs.ProductA]\nprice = [9.0, 10.0, 11.0]\n\n[\"cs::sim_lock_step\".scenario_chgs.ProductB]\nprice = [14.0, 15.0, 16.0]\n\n[\"cs::sim_lock_step\".scenario_chgs.ProductC]\nprice = [5.0, 6.0, 7.0]\n",
+    "scenarios": ["base"],
+    "measures": "share|revenue",
+    "product_names": ["ProductA", "ProductB"]
+  }
+]

@@ -1,0 +1,10 @@
+[
+  {
+    "template_id": "lc-finalize",
+    "title": "LC: finalize a completed run",
+    "summary": "Recompute the FitSummary and write summary.json + IC.csv + coefficients.csv for an existing run.",
+    "category": "starter",
+    "oce_text": "[[\"model-mnl-lc::finalize\"]]\nrun_dir = \"./runs/lc-k2\"\n",
+    "run_dir": "./runs/lc-k2"
+  }
+]

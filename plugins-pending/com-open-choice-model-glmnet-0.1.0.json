@@ -1,0 +1,19 @@
+{
+  "plugin_id": "com.open-choice.model-glmnet",
+  "display_name": "Model Glmnet",
+  "description": "Pure-Rust port of R's glmnet 4.1: elastic-net coordinate descent with k-fold cross-validation, covering all six glmnet families (gaussian, binomial, poisson, multinomial, mgaussian, cox). Emits lambda.min and lambda.1se for every run plus a full coefficient-matrix path.",
+  "publisher": "Open Choice",
+  "categories": [
+    "regression",
+    "regularization",
+    "machine-learning",
+    "survival"
+  ],
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/model-glmnet-v0.1.0/model-glmnet-0.1.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "8f64b3776744f9efa65f3f004dfaab2a396646d03667f7b7d5188980cf830dc9",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:28:49Z",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-glmnet-v0.1.0"
+}

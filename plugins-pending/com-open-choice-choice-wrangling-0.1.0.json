@@ -1,0 +1,18 @@
+{
+  "plugin_id": "com.open-choice.choice-wrangling",
+  "display_name": "Choice Wrangling",
+  "description": "Data wrangling pipeline for MaxDiff/best-worst choice studies: prepare raw survey data, build choice sets, and produce estimation-ready long-format CSV files.",
+  "publisher": "Open Choice",
+  "categories": [
+    "data-wrangling",
+    "maxdiff"
+  ],
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/choice-wrangling-v0.1.0/choice-wrangling-0.1.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "b538e9f42cc67cf8c00b0d9d195c7f2e265be732a964fc174df384c8e98f7fe0",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:28:11Z",
+  "release_notes": "Initial release.",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/choice-wrangling-v0.1.0"
+}

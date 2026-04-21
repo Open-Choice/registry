@@ -1,0 +1,51 @@
+[
+  {
+    "template_id": "design-cbc-bo-basic",
+    "title": "Basic CBC (BO) — 3 attributes, 4 versions",
+    "summary": "Generate a balanced 12-task × 4-version CBC design over Brand, Pack, Price using minimum-overlap balance.",
+    "category": "starter",
+    "oce_text": "[[\"design-cbc::design-bo\"]]\nrun_dir = \"./runs/design-bo\"\nrun_name = \"pilot\"\n\n[design-cbc.design-bo.spec]\nversions = 4\ntasks_per_version = 12\nconcepts_per_task = 3\n\n[[design-cbc.design-bo.spec.attributes]]\nname = \"Brand\"\nmax_level = 3\n\n[[design-cbc.design-bo.spec.attributes]]\nname = \"Pack\"\nmax_level = 2\n\n[[design-cbc.design-bo.spec.attributes]]\nname = \"Price\"\nmax_level = 4\n",
+    "run_dir": "./runs/design-bo",
+    "run_name": "pilot",
+    "spec": {
+      "versions": 4,
+      "tasks_per_version": 12,
+      "concepts_per_task": 3,
+      "attributes": [
+        { "name": "Brand", "max_level": 3 },
+        { "name": "Pack",  "max_level": 2 },
+        { "name": "Price", "max_level": 4 }
+      ]
+    }
+  },
+  {
+    "template_id": "design-cbc-bo-restricted",
+    "title": "BO with pairwise restrictions and gating",
+    "summary": "Forbid (Brand=0, Pack=2) and gate Color on Brand=2; multi-start search.",
+    "category": "advanced",
+    "oce_text": "[[\"design-cbc::design-bo\"]]\nrun_dir = \"./runs/design-bo\"\nrun_name = \"restricted\"\nseed = 42\nn_starts = 4\nthreads = 4\nn_steps = 300000\n",
+    "run_dir": "./runs/design-bo",
+    "run_name": "restricted",
+    "seed": 42,
+    "n_starts": 4,
+    "threads": 4,
+    "n_steps": 300000,
+    "spec": {
+      "versions": 6,
+      "tasks_per_version": 10,
+      "concepts_per_task": 3,
+      "attributes": [
+        { "name": "Brand", "max_level": 3 },
+        { "name": "Pack",  "max_level": 2 },
+        { "name": "Price", "max_level": 4 },
+        { "name": "Color", "max_level": 2 }
+      ],
+      "pairwise_restrictions": [
+        { "att1": "Brand", "lvl1": 0, "att2": "Pack", "lvl2": 2 }
+      ],
+      "gating_rules": [
+        { "parent_att": "Brand", "level": 2, "child_att": "Color" }
+      ]
+    }
+  }
+]

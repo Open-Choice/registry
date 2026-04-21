@@ -1,0 +1,13 @@
+[
+  {
+    "template_id": "prepare-maxdiff-basic",
+    "title": "Prepare: raw MaxDiff survey",
+    "summary": "Join respondent selections with the experimental design.",
+    "category": "starter",
+    "oce_text": "[[\"choice-wrangling::prepare-maxdiff\"]]\ndesign_csv = \"design.csv\"\nrespondent_csv = \"respondents.csv\"\nrun_dir = \"./workspace\"\nrun_name = \"pilot\"\n",
+    "design_csv": "design.csv",
+    "respondent_csv": "respondents.csv",
+    "run_dir": "./workspace",
+    "run_name": "pilot"
+  }
+]

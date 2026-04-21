@@ -1,0 +1,18 @@
+{
+  "plugin_id": "com.open-choice.spss-reader",
+  "display_name": "SPSS Reader",
+  "description": "Reads SPSS .sav, CSV, and Excel files. Produces Excel exports, data dictionaries (with frequency tables), cleaning maps, and cross-tabulation banner tables with pairwise significance tests (proportion z-test and weighted t-test).",
+  "publisher": "Open Choice",
+  "categories": [
+    "data",
+    "spss"
+  ],
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/spss-reader-v0.1.0/spss-reader-0.1.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "f27944745c0b68557b8c14e3317c553a50e0fbc70df2d4d0dd42775f3b46d8e3",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:29:22Z",
+  "release_notes": "Initial release.",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/spss-reader-v0.1.0"
+}

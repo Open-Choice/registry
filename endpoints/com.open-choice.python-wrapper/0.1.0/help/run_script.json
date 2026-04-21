@@ -1,0 +1,89 @@
+{
+  "command": "run_script",
+  "title": "Execute a Python script",
+  "summary": "Execute a Python script. Stdout is captured line-by-line as Progress events and written to run.log. Stderr is captured line-by-line as Warning events and written to stderr.log. A non-zero exit code produces Finished { success: false }. Use the 'executable' field to select a virtualenv interpreter or a specific Python version.",
+  "description": "Runs a Python script and streams its output back to the Open Choice protocol. Provide a path to a `.py` file via `script`. Positional and named arguments can be forwarded to the script via `args` and `kwargs`. All output files (run.log, stderr.log) are written to `output_dir`.\n\nThe `executable` field selects the Python interpreter: a bare name resolved via PATH (`python`, `python3`, `python3.11`), a relative path to a virtualenv interpreter (`.venv/Scripts/python.exe` on Windows), or an absolute path. Using a virtualenv executable automatically activates that environment's site-packages.\n\nThe `trust_acknowledged` field must be set to `true`. This is an explicit safety gate: the plugin executes arbitrary Python code with the same OS permissions as the Open Choice process.",
+  "usage": "[[\"python-wrapper::run_script\"]]\nscript = \"<path/to/script.py>\"\noutput_dir = \"<dir>\"\ntrust_acknowledged = true\n# optional:\nargs = [\"arg1\", \"arg2\"]\nkwargs = { key = \"value\" }\nexecutable = \".venv/Scripts/python.exe\"",
+  "arguments": [
+    {
+      "name": "script",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the .py file to execute. Relative paths are resolved from the directory containing the .oce file. Absolute paths are used as-is."
+    },
+    {
+      "name": "args",
+      "type": "array",
+      "required": false,
+      "default": null,
+      "description": "Positional arguments appended to the python command after the script path. Accessed in Python via sys.argv[1:]."
+    },
+    {
+      "name": "kwargs",
+      "type": "object",
+      "required": false,
+      "default": null,
+      "description": "Named arguments passed as --key value pairs after positional args. Accessed in Python via sys.argv or an arg-parser library such as argparse."
+    },
+    {
+      "name": "executable",
+      "type": "string",
+      "required": false,
+      "default": "python",
+      "description": "Python executable to invoke. Defaults to 'python' when omitted. Accepts: (1) a bare name resolved via PATH ('python3', 'python3.11'); (2) a relative path to a virtualenv binary ('.venv/Scripts/python.exe' on Windows, '.venv/bin/python' on macOS/Linux) — relative paths are resolved from the .oce file directory; (3) an absolute path."
+    },
+    {
+      "name": "output_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Directory where run.log and stderr.log are written. Created if it does not exist."
+    },
+    {
+      "name": "trust_acknowledged",
+      "type": "boolean",
+      "required": true,
+      "default": null,
+      "description": "Must be true. Explicitly acknowledges that this plugin executes arbitrary Python code with the same OS permissions as the Open Choice process, and that the script source is trusted."
+    }
+  ],
+  "details": "`run_script` is a thin execution wrapper: it invokes the Python interpreter on the provided script, streams stdout line-by-line as Progress events, and writes all output to `output_dir/run.log`. Stderr lines are captured as Warning events and written to `output_dir/stderr.log`.\n\nThe `trust_acknowledged = true` field is required and intentional — it prevents accidental execution of untrusted code by requiring the caller to explicitly opt in.\n\nArgument forwarding:\n- `args` becomes positional arguments after the script path on the command line\n- `kwargs` becomes `--key value` pairs following the positional args\nIn Python, retrieve them with `sys.argv[1:]`. For structured parsing, use `argparse` from the standard library.\n\nFor virtualenv usage, point `executable` at the venv's `python` binary — this activates that environment's site-packages automatically without needing to source `activate`.",
+  "value": "On success, `output_dir` contains:\n\n- `run.log` — all stdout lines from the Python process.\n- `stderr.log` — all stderr lines from the Python process.\n\nThe plugin emits `event.run.started`, per-line Progress events, and `event.run.finished` (or `event.run.failed` on non-zero exit).",
+  "notes": [
+    "The `trust_acknowledged` field must be `true`; any other value (including omitting it) causes the command to reject immediately.",
+    "Non-zero exit codes from Python produce `event.run.failed`; the log files are still written.",
+    "Relative `executable` paths are resolved from the .oce file's directory, not the working directory.",
+    "The virtualenv must already exist and have its packages installed — the wrapper does not create or install into the environment."
+  ],
+  "see_also": [
+    { "command": "r-wrapper::run_script", "description": "R equivalent — run a .R file or inline R code." },
+    { "command": "julia-wrapper::run_script", "description": "Julia equivalent — run a .jl file and optionally activate a Julia project environment." }
+  ],
+  "examples": [
+    {
+      "title": "Run a Python script with the system interpreter",
+      "body": "[[\"python-wrapper::run_script\"]]\nscript = \"./analysis/summarize.py\"\noutput_dir = \"./runs/py-analysis\"\ntrust_acknowledged = true"
+    },
+    {
+      "title": "Run a script inside a virtualenv",
+      "body": "[[\"python-wrapper::run_script\"]]\nscript = \"./analysis/run_model.py\"\nexecutable = \".venv/Scripts/python.exe\"\noutput_dir = \"./runs/py-venv\"\ntrust_acknowledged = true"
+    },
+    {
+      "title": "Pass kwargs to the script using argparse",
+      "body": "[[\"python-wrapper::run_script\"]]\nscript = \"./analysis/export.py\"\nkwargs = { input = \"./data/part_worths.csv\", output = \"./outputs/summary.csv\", n_top = \"10\" }\noutput_dir = \"./runs/py-export\"\ntrust_acknowledged = true"
+    },
+    {
+      "title": "Run with a specific Python version",
+      "body": "[[\"python-wrapper::run_script\"]]\nscript = \"./analysis/simulate.py\"\nexecutable = \"python3.11\"\nargs = [\"1000\"]\noutput_dir = \"./runs/py-simulate\"\ntrust_acknowledged = true"
+    }
+  ],
+  "fields": [
+    { "name": "script",             "description": "Path to the .py file to execute.",                                         "required": true,  "accepted_values": [] },
+    { "name": "args",               "description": "Positional args forwarded to the script via sys.argv.",                   "required": false, "accepted_values": [] },
+    { "name": "kwargs",             "description": "Named args forwarded as --key value pairs.",                               "required": false, "accepted_values": [] },
+    { "name": "executable",         "description": "Python executable. Default: python. Accepts PATH name, venv path, or absolute path.", "required": false, "accepted_values": [] },
+    { "name": "output_dir",         "description": "Directory for run.log and stderr.log.",                                    "required": true,  "accepted_values": [] },
+    { "name": "trust_acknowledged", "description": "Must be true. Safety gate for arbitrary code execution.",                  "required": true,  "accepted_values": ["true"] }
+  ]
+}

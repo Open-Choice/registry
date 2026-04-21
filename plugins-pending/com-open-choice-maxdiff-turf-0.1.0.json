@@ -1,0 +1,18 @@
+{
+  "plugin_id": "com.open-choice.maxdiff-turf",
+  "display_name": "MaxDiff TURF",
+  "description": "TURF reach analysis for MaxDiff utilities: search at fixed sizes, build anchored ladders, and sweep curve families across anchor sizes.",
+  "publisher": "Open Choice",
+  "categories": [
+    "maxdiff",
+    "turf"
+  ],
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/maxdiff-turf-v0.1.0/maxdiff-turf-0.1.0-windows-x86_64.ocplugin",
+  "artifact_sha256": "4a335327b58c52c3c2b38b16effc49c7a43641a96bfcfcdc2045e2e311023ccf",
+  "signer_key_id": "open-choice-2026",
+  "min_app_version": "0.1.0",
+  "released_at": "2026-04-21T13:28:43Z",
+  "release_notes": "Initial release.",
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/maxdiff-turf-v0.1.0"
+}
