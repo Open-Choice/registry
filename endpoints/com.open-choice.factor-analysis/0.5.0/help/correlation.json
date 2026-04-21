@@ -1,0 +1,86 @@
+{
+  "command": "correlation",
+  "title": "Correlation Matrix",
+  "summary": "Build a variable-by-variable correlation matrix from survey data and save it as a CSV plus a three-sheet Excel workbook. Supports Pearson and all the specialty methods for binary, ordinal, and mixed item types.",
+  "description": "A correlation matrix is the simplest map of how items move together: one row and one column per variable, with the cells showing how strongly each pair is related. It's the standard first step before factor analysis (the extraction works on the correlation matrix, not the raw data), but it's also useful as a standalone diagnostic — to spot items that behave suspiciously, to check that a new scale hangs together, or to export pairwise relationships for a different tool.\n\nReach for this endpoint when you want the matrix itself: either as a feeder for a downstream `fa` or `famd` run, or as something to share, plot, or compute on directly in Excel. Both a plain CSV (simple, any tool can read it) and a three-sheet Excel workbook (adds sample-size information and run metadata) are written in one pass.",
+  "usage": "[[\"factor-analysis::correlation\"]]\ninput = \"./data.csv\"\nrun_dir = \"./runs\"\nrun_name = \"cor1\"\nmethod = \"pearson\"\n# optional:\nmeta = \"./meta.csv\"\nvars = [\"q1\", \"q2\", \"q3\"]",
+  "arguments": [
+    { "name": "input",    "type": "string",  "required": true,  "description": "Path to your survey data. CSV, TSV, or SPSS `.sav` / `.zsav`." },
+    { "name": "run_dir",  "type": "string",  "required": true,  "description": "Folder where results are written. Files land in `<run_dir>/ocinfo/<run_name>_factor_analysis/`." },
+    { "name": "run_name", "type": "string",  "required": true,  "description": "A short label for this run (e.g. `wave3_cor` or `pilot_cor`). No slashes or `..`." },
+    { "name": "method",   "type": "string",  "required": false, "default": "pearson", "description": "How to measure the relationship between each pair of items. Pearson is the go-to for scaled ratings; tetrachoric/polychoric are designed for binary/ordinal items; covariance produces raw covariances rather than correlations. See the notes for the full list." },
+    { "name": "meta",     "type": "string",  "required": false, "description": "Optional variable metadata CSV. Required when method is `mixed`, `biserial`, or `polyserial` because the plugin needs to know each column's type (numeric vs. categorical)." },
+    { "name": "vars",     "type": "array",   "required": false, "default": [], "description": "Subset of columns to include. Empty (the default) uses every column in the input." },
+    { "name": "correct",  "type": "number",  "required": false, "default": 0.5, "description": "Continuity correction used when tetrachoric, polychoric, or Yule methods encounter zero counts in a contingency cell. The default (0.5) matches psych's behaviour and is almost always what you want." },
+    { "name": "na_action","type": "string",  "required": false, "default": "complete_cases", "description": "What to do with missing values. `complete_cases` computes each pairwise correlation from whatever respondents answered both items; `fail` aborts on any missing value." },
+    { "name": "headers",  "type": "boolean", "required": false, "default": true, "description": "Whether CSV inputs include a header row. Ignored for SPSS inputs." },
+    { "name": "threads",  "type": "integer", "required": false, "default": 1, "description": "Worker threads for per-pair parallelism. `1` runs serially. Results are identical regardless of thread count." },
+    { "name": "output_format", "type": "string", "required": false, "description": "Override the stdout format: `human`, `protocol`, or `quiet`. Normally set automatically by the app." }
+  ],
+  "details": "Correlations measure the strength and direction of a linear relationship: values near +1 mean two items move up together, near −1 mean they move in opposite directions, and near 0 mean they're unrelated. Different item types call for different measures. Pearson is the classic choice for continuous and scaled responses. Tetrachoric is built for two-category items (yes/no, agree/disagree) and recovers the correlation that would exist on an underlying latent scale. Polychoric does the same for ordered categorical items with more than two levels. Biserial and polyserial mix one numeric column with a categorical partner. Covariance is the only option here that is not normalised to −1/+1 — it's useful when you want raw covariances for a downstream computation.\n\nSample sizes can vary across cells when respondents skip items. That's why the Excel workbook includes an `n_obs` sheet: each cell mirrors the main matrix but shows how many respondents contributed to that pair. Inspecting `n_obs` is a fast way to spot items with unusually low coverage that might be distorting the factor structure.",
+  "artifacts": [
+    {
+      "path": "<run_name>.csv",
+      "title": "Correlation matrix (flat CSV)",
+      "description": "The correlation matrix in its simplest form — one row and one column per variable, ready to open in Excel, paste into R/Python, or visualise with any correlogram tool.",
+      "fields": [
+        { "name": "(header cell, row 1 column 1)", "description": "Blank — the top-left corner. Variable names run along the first row and the first column." },
+        { "name": "first column", "description": "Variable names, in the same order as the columns." },
+        { "name": "remaining cells", "description": "The full correlation matrix (both upper and lower triangles written — the matrix is symmetric). Values near ±1 indicate strong relationships; near 0, no linear relationship." }
+      ]
+    },
+    {
+      "path": "<run_name>.xlsx",
+      "title": "Correlation workbook (three sheets)",
+      "description": "The same matrix plus the extra context an Excel-using reviewer typically wants: sample sizes per cell and the run metadata.",
+      "fields": []
+    },
+    {
+      "path": "correlation sheet",
+      "title": "Correlations with formatted headers",
+      "description": "The same matrix as the CSV, but with bold headers and a four-decimal number format for easier reading on screen.",
+      "fields": [
+        { "name": "first column", "description": "Variable names." },
+        { "name": "remaining columns", "description": "Pairwise correlations (or covariances if method is `covariance`)." }
+      ]
+    },
+    {
+      "path": "n_obs sheet",
+      "title": "Pairwise sample sizes",
+      "description": "A cell-for-cell twin of the correlation sheet showing how many respondents contributed to each pair. Rows/columns where n_obs drops sharply signal items with heavy missingness — worth investigating before trusting the correlations involving them.",
+      "fields": [
+        { "name": "first column", "description": "Variable names." },
+        { "name": "remaining cells", "description": "Number of respondents with non-missing values on both the row and the column item." }
+      ]
+    },
+    {
+      "path": "meta sheet",
+      "title": "Run metadata",
+      "description": "A small key/value block recording the settings used, so a colleague opening the workbook can see what was run without re-reading the task file.",
+      "fields": [
+        { "name": "method", "description": "Correlation method used for this run (e.g. `pearson`, `polychoric`)." },
+        { "name": "n_vars", "description": "Number of variables included in the matrix." }
+      ]
+    }
+  ],
+  "see_also": [
+    { "command": "fa", "description": "Run a full exploratory factor analysis on numeric items. Uses the same correlation methods under the hood." },
+    { "command": "famd", "description": "Factor analysis for mixed numeric and categorical data — the right choice when your group contains both types." }
+  ],
+  "examples": [
+    {
+      "title": "Pearson correlations on all columns of a CSV",
+      "body": "[[\"factor-analysis::correlation\"]]\ninput = \"./data.csv\"\nrun_dir = \"./runs\"\nrun_name = \"cor1\"\nmethod = \"pearson\""
+    },
+    {
+      "title": "Polychoric correlations on a subset of ordinal items",
+      "body": "[[\"factor-analysis::correlation\"]]\ninput = \"./survey.sav\"\nrun_dir = \"./runs\"\nrun_name = \"poly\"\nmethod = \"polychoric\"\nmeta = \"./meta.csv\"\nvars = [\"q1\", \"q2\", \"q3\", \"q4\", \"q5\"]"
+    }
+  ],
+  "notes": [
+    "Correlation methods: pearson, covariance, tetrachoric, polychoric, mixed, biserial, polyserial, yuleb, yuleq, yuley. All methods are implemented, matching psych::fa(cor=...) conventions.",
+    "The `covariance` method produces the unnormalised sample covariance (divisor n-1), not a correlation.",
+    "Pairwise sample sizes on the `n_obs` sheet let downstream consumers weight the matrix appropriately.",
+    "Type vs. method compatibility: tetrachoric requires dichotomous columns; polychoric requires ordinal (or dichotomous); biserial/polyserial pair numeric with the categorical partner. If meta is omitted the default is numeric, which will fail for the categorical methods."
+  ]
+}

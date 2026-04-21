@@ -1,0 +1,95 @@
+{
+  "command": "famd",
+  "title": "Factor Analysis of Mixed Data",
+  "summary": "Exploratory factor analysis for item groups that mix numeric ratings and categorical variables (demographics, segment flags, ordered categories). Produces one Excel workbook per run with a summary sheet, a per-variable sheet, and — when categoricals are present — a per-level sheet for each group.",
+  "description": "Classical factor analysis assumes every item is numeric. FAMD relaxes that assumption: it handles numeric columns and categorical columns at the same time, placing both on a common set of dimensions. Use it when the group of items you want to summarise genuinely includes both types — for example, attitude ratings mixed with a segment label, or brand perceptions mixed with a usage-frequency ordinal.\n\nThe output mirrors what French-school software (FactoMineR) produces: dimensions instead of rotated factors, coordinates and contributions in place of loadings, and a separate `_cats` sheet that lists the individual levels of each categorical variable so you can see which levels are pulling each dimension. A numeric-only group run through FAMD is equivalent to a standard principal component analysis — the results match what you would get from PCA.",
+  "usage": "[[\"factor-analysis::famd\"]]\ninput = \"./data.sav\"\nrun_dir = \"./runs\"\nrun_name = \"famd1\"\nmin_count = 2\nmax_count = 5\n\nmeta = [\n  { match = \"^q\\\\d+$\", batch = \"attitudes\", type = \"ordinal\" },\n  { variable = \"gender\", batch = \"demographics\", type = \"categorical\" },\n]",
+  "arguments": [
+    { "name": "input",     "type": "string",  "required": true,  "description": "Path to your survey data. CSV/TSV files are read directly; SPSS `.sav` / `.zsav` files are read with their variable labels and value labels preserved." },
+    { "name": "meta",      "type": "string|array",  "required": true,  "description": "Tells the plugin which columns to analyse, how to group them, and what type each column is (numeric, ordinal, categorical, dichotomous). Either a path to a meta CSV, or an inline table using `variable = \"...\"` for individual columns and `match = \"<regex>\"` for patterns." },
+    { "name": "run_dir",   "type": "string",  "required": true,  "description": "Folder where results are written. The workbook lands in `<run_dir>/ocinfo/<run_name>_factor_analysis/`." },
+    { "name": "run_name",  "type": "string",  "required": true,  "description": "A short label for this run (e.g. `wave3_famd` or `pilot_mix`). No slashes or `..`." },
+    { "name": "batches",   "type": "array",   "required": false, "default": [], "description": "Optionally restrict the run to a subset of the groups defined in `meta`. Empty (the default) analyses every group." },
+    { "name": "min_count", "type": "integer", "required": false, "default": 2, "description": "Smallest number of dimensions to extract per group. Try a range and compare the summary sheet to decide how many you want to interpret." },
+    { "name": "max_count", "type": "integer", "required": false, "default": 5, "description": "Largest number of dimensions per group." },
+    { "name": "na_action", "type": "string",  "required": false, "default": "complete_cases", "description": "FAMD is always listwise per batch — a respondent with any missing value in the group's columns is dropped. `fail` aborts instead of dropping." },
+    { "name": "headers",   "type": "boolean", "required": false, "default": true, "description": "Whether CSV inputs include a header row. Ignored for SPSS inputs." },
+    { "name": "threads",   "type": "integer", "required": false, "default": 1, "description": "Worker threads. `1` runs serially. Results are identical regardless of thread count." },
+    { "name": "output_format", "type": "string", "required": false, "description": "Override the stdout format: `human`, `protocol`, or `quiet`. Normally set automatically by the app." }
+  ],
+  "details": "FAMD encodes the two column types on the same scale before extracting dimensions. Numeric columns are standardised (mean 0, unit variance). Categorical columns are expanded into one 0/1 indicator column per level, and each indicator is centred on the level's overall proportion and rescaled so that rarer levels carry weight comparable to common ones. After that, the numeric and coded-categorical blocks are stacked side-by-side and the dimensions are extracted from the combined matrix by singular value decomposition. The first few dimensions summarise the strongest joint patterns across both types of column.\n\nFor interpretation, coordinates (on the `_vars` sheet) say where a variable sits on each dimension — numeric columns get a single coordinate per dimension while categorical columns get one row per level on the `_cats` sheet, because different levels of the same variable typically sit in different places. Contributions tell you which variables most strongly define each dimension (higher = more important). Cos² tells you how well each variable's position is captured by the dimensions you extracted — a variable with low cos² on every dimension is essentially off the map and will not figure in your interpretation.\n\nCommon gotchas: because FAMD is always listwise, a single column with heavy missingness can drop a lot of respondents from the analysis — check the sample size on the summary sheet. Numeric columns with zero variance and categorical columns with a single level are dropped with a warning. If a group has only numeric variables, FAMD degenerates to PCA; if it has only categoricals, it degenerates to multiple correspondence analysis.",
+  "artifacts": [
+    {
+      "path": "<run_name>.xlsx",
+      "title": "Results workbook (one file, two or three sheets per group)",
+      "description": "Every group produces a summary sheet of eigenvalues and variance explained, plus a per-variable sheet of coordinates and contributions. Groups that contain any categorical columns also get a per-level sheet showing how each individual level of each categorical variable sits on the dimensions.",
+      "fields": []
+    },
+    {
+      "path": "<batch>_sum sheet",
+      "title": "Eigenvalue summary (one per group)",
+      "description": "Like the corresponding FA sheet: one block of rows per factor-count solution. Compare eigenvalues across solutions to decide how many dimensions to keep.",
+      "fields": [
+        { "name": "n_factors", "description": "How many dimensions were extracted for this block. The sheet contains blocks for every value from `min_count` to `max_count`." },
+        { "name": "n_obs", "description": "Sample size after listwise dropping for this group (respondents with any missing value in the group's columns are excluded)." },
+        { "name": "dim", "description": "The dimension index within this block (1 = first dimension, 2 = second, …). There are `n_factors` rows per block." },
+        { "name": "eigenvalue", "description": "How much of the total variance this dimension captures, in raw units. Larger = more important." },
+        { "name": "prop", "description": "Proportion of total variance explained by this dimension." },
+        { "name": "cumulative", "description": "Running total of `prop` down the block. Tells you how much variance your top-k dimensions explain jointly." }
+      ]
+    },
+    {
+      "path": "<batch>_vars sheet",
+      "title": "Per-variable coordinates, contributions, and cos² (one per group)",
+      "description": "One row per (factor-count solution, variable). This is the main interpretive sheet: each variable's coordinate on each dimension (where it sits), its contribution (how much it defines the dimension), and its cos² (how well the dimensions capture it). Numeric variables get a single row; categorical variables also appear here, but their level-by-level detail is on the `_cats` sheet.",
+      "fields": [
+        { "name": "n_factors", "description": "The factor-count block this row belongs to." },
+        { "name": "variable", "description": "The column name in the input data." },
+        { "name": "label", "description": "Human-readable label from SPSS, the meta file, or the column name as a fallback." },
+        { "name": "is_categorical", "description": "`true` if the variable is categorical (indicator-coded) or `false` if it is numeric (standardised)." },
+        { "name": "coord_dim1 … coord_dim<max_k>", "description": "Coordinate on each dimension — where the variable sits along that axis. Values far from zero (positive or negative) mean the variable is strongly associated with that dimension. Columns widen to the largest factor count in the sheet; rows from smaller solutions leave higher-dim columns blank." },
+        { "name": "contrib_dim1 … contrib_dim<max_k>", "description": "Contribution to each dimension, as a percentage. Sums to 100% down each dimension column within a block. A handful of high-contribution variables 'define' the dimension." },
+        { "name": "cos2_dim1 … cos2_dim<max_k>", "description": "Quality of representation — how well each dimension captures this variable. Range 0–1; a variable with low cos² on every extracted dimension is poorly placed and its coordinates should be read with caution." },
+        { "name": "strongest_dim", "description": "The dimension index on which this variable loads most strongly (by absolute coordinate). Useful as a secondary sort when exploring the sheet." },
+        { "name": "strongest_abs_coord", "description": "The absolute coordinate value on that strongest dimension. Quick gauge of how prominent the variable is anywhere in the solution." }
+      ]
+    },
+    {
+      "path": "<batch>_cats sheet (only when the group contains categoricals)",
+      "title": "Per-level detail for categorical variables",
+      "description": "One row per (factor-count solution, variable, level). This is where you answer 'which levels of which categoricals are pulling which dimension?'. Numeric variables do not appear on this sheet. Use this alongside `_vars` when naming the dimensions.",
+      "fields": [
+        { "name": "n_factors", "description": "The factor-count block this row belongs to." },
+        { "name": "variable", "description": "The categorical variable's column name." },
+        { "name": "label", "description": "Human-readable label for the variable." },
+        { "name": "level", "description": "The specific level (category value) this row is about — e.g. `Male`, `High purchaser`, `Agree strongly`." },
+        { "name": "coord_dim1 … coord_dim<max_k>", "description": "Where this specific level sits on each dimension. Levels of the same variable can sit very differently — that's the whole point of analysing them separately." },
+        { "name": "contrib_dim1 … contrib_dim<max_k>", "description": "Contribution of this specific level to each dimension, as a percentage." },
+        { "name": "cos2_dim1 … cos2_dim<max_k>", "description": "Quality of representation for this level. Low cos² = this level is not well captured by the extracted dimensions." },
+        { "name": "strongest_dim", "description": "The dimension this level loads most strongly on." },
+        { "name": "strongest_abs_coord", "description": "Absolute coordinate on that strongest dimension." }
+      ]
+    }
+  ],
+  "see_also": [
+    { "command": "fa", "description": "Exploratory factor analysis for purely numeric item groups. Use `fa` when your group is all scaled/ordinal ratings." },
+    { "command": "correlation", "description": "Build a correlation matrix — a useful preliminary diagnostic before running FAMD." }
+  ],
+  "examples": [
+    {
+      "title": "CSV input with an external meta file",
+      "body": "[[\"factor-analysis::famd\"]]\ninput = \"./data.csv\"\nmeta = \"./meta.csv\"\nrun_dir = \"./runs\"\nrun_name = \"famd1\"\nmin_count = 2\nmax_count = 5"
+    },
+    {
+      "title": "Inline meta mixing ordinal ratings with a categorical demographic",
+      "body": "[[\"factor-analysis::famd\"]]\ninput = \"./survey.sav\"\nrun_dir = \"./runs\"\nrun_name = \"mix1\"\nmin_count = 2\nmax_count = 4\n\nmeta = [\n  { match = \"^att_\", batch = \"attitudes_plus_seg\", type = \"ordinal\" },\n  { variable = \"segment\", batch = \"attitudes_plus_seg\", type = \"categorical\" },\n]"
+    }
+  ],
+  "notes": [
+    "Inline meta semantics: entries are evaluated in order, all-matches-apply. A column hit by multiple pattern entries is added once per entry, so one column can belong to multiple batches. Unmatched columns are silently dropped. Row entries use `variable = \"...\"`; pattern entries use `match = \"<regex>\"`.",
+    "Label templates (pattern entries): `label_template = \"Satisfaction: ${1}\"` expands `${name}` (whole column name), `${0}` (whole regex match), and `${1}`, `${2}`, ... (positional captures). Omitted template → SPSS variable label (`.sav`) or column name (CSV).",
+    "Column `type` drives the encoding: numeric is standardised; dichotomous, ordinal, and categorical are disjunctively coded. Mixed batches (numeric + categorical) are the main use case.",
+    "Variables with zero variance (numeric) or a single level (categorical) are dropped from a batch with a warning.",
+    "`strongest_dim` / `strongest_abs_coord` identify the axis on which each variable or level loads most heavily — useful as a secondary sort when exploring results."
+  ]
+}

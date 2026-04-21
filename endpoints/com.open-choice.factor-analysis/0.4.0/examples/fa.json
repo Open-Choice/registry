@@ -1,0 +1,28 @@
+{
+  "minimal": {
+    "input": "./data.csv",
+    "meta": "./meta.csv",
+    "run_dir": "./runs",
+    "run_name": "fa1"
+  },
+  "scan_two_to_six_factors": {
+    "input": "./data.csv",
+    "meta": "./meta.csv",
+    "run_dir": "./runs",
+    "run_name": "fa_scan",
+    "min_count": 2,
+    "max_count": 6,
+    "cor": "pearson",
+    "fm": "minres",
+    "rotate": "varimax"
+  },
+  "one_batch_only": {
+    "input": "./data.csv",
+    "meta": "./meta.csv",
+    "run_dir": "./runs",
+    "run_name": "fa_b1",
+    "batches": ["brand_equity"],
+    "min_count": 3,
+    "max_count": 3
+  }
+}

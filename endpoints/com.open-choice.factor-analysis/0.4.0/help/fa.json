@@ -1,0 +1,53 @@
+{
+  "command": "fa",
+  "title": "Exploratory factor analysis on numeric data",
+  "summary": "Rust port of psych::fa. For each batch defined in meta, fit one factor model per n_factors in [min_count, max_count] and emit a single .xlsx workbook. Each batch gets two sheets — `<batch>_sum` (eigenvalues across k) and `<batch>_load` (per-variable loadings across k) — with results for every k stacked vertically under a shared header.",
+  "description": "Pipeline per (batch, k): build the correlation matrix with the selected `cor` method, extract k factors with the selected `fm` method (SMC communality init; fallback to max-abs-off-diag on singular R), rotate with the selected `rotate` method, and record eigenvalues, per-variable loadings MR1..MRk, communality h², uniqueness u², Hoffman complexity, and dominant factor index. Loading rows within a sheet are sorted by dominant factor ascending then |loading| descending (matching psych's fa.sort).",
+  "usage": "[[\"factor-analysis::fa\"]]\ninput = \"./data.sav\"\nrun_dir = \"./runs\"\nrun_name = \"fa1\"\nmin_count = 2\nmax_count = 5\ncor = \"pearson\"\nfm = \"minres\"\nrotate = \"varimax\"\n\nmeta = [\n  { match = \"^att_\", batch = \"attitudes\", type = \"ordinal\" },\n  { match = \"^sat_(.+)\", batch = \"satisfaction\", label_template = \"Satisfaction: ${1}\" },\n  { variable = \"nps\", batch = \"outcomes\", label = \"Net Promoter Score\" },\n]",
+  "arguments": [
+    { "name": "input",     "type": "string",  "required": true,  "description": "Path to the input file. `.csv` / `.tsv` use the CSV reader; `.sav` / `.zsav` use the SPSS reader." },
+    { "name": "meta",      "type": "string|array",  "required": true,  "description": "Variable metadata: either a path to a meta CSV, or an inline TOML list of row (`variable = ...`) and pattern (`match = ...`) entries. See the Inline meta notes below." },
+    { "name": "run_dir",   "type": "string",  "required": true,  "description": "Base directory for outputs. Files land in `<run_dir>/ocinfo/<run_name>_factor_analysis/`." },
+    { "name": "run_name",  "type": "string",  "required": true,  "description": "Short identifier for this run; no `..`, `/`, or `\\`." },
+    { "name": "batches",   "type": "array",   "required": false, "default": [], "description": "Subset of batch names to analyse. Empty = all batches from meta (or a single `all` batch if meta has no batch column)." },
+    { "name": "min_count", "type": "integer", "required": false, "default": 2, "description": "Smallest n_factors to extract per batch." },
+    { "name": "max_count", "type": "integer", "required": false, "default": 5, "description": "Largest n_factors to extract per batch. Clamped to (n_vars - 1)." },
+    { "name": "cor",       "type": "string",  "required": false, "default": "pearson", "description": "Correlation method used to build R. See the Correlation methods note for the full list." },
+    { "name": "fm",        "type": "string",  "required": false, "default": "minres", "description": "Factoring method used to extract loadings. See the Factoring methods note for the full list." },
+    { "name": "rotate",    "type": "string",  "required": false, "default": "varimax", "description": "Rotation applied to the loading matrix. See the Rotation methods note for the full list." },
+    { "name": "correct",   "type": "number",  "required": false, "default": 0.5, "description": "Continuity correction for zero cells in tetrachoric/polychoric contingency tables (matches psych defaults)." },
+    { "name": "na_action", "type": "string",  "required": false, "default": "complete_cases", "description": "`complete_cases` (pairwise deletion per correlation cell) or `fail` (abort on NA)." },
+    { "name": "headers",   "type": "boolean", "required": false, "default": true, "description": "Whether CSV inputs have a header row. Ignored for `.sav` inputs." },
+    { "name": "threads",   "type": "integer", "required": false, "default": 1, "description": "Worker thread count. `1` runs serially. Results are deterministic regardless of thread count." },
+    { "name": "output_format", "type": "string", "required": false, "description": "Override stdout format: `human`, `protocol`, or `quiet`." }
+  ],
+  "examples": [
+    {
+      "title": "CSV with external meta CSV",
+      "body": "[[\"factor-analysis::fa\"]]\ninput = \"./data.csv\"\nmeta = \"./meta.csv\"\nrun_dir = \"./runs\"\nrun_name = \"fa1\"\nmin_count = 2\nmax_count = 5\ncor = \"pearson\"\nrotate = \"varimax\""
+    },
+    {
+      "title": "Dichotomous items with tetrachoric correlations",
+      "body": "[[\"factor-analysis::fa\"]]\ninput = \"./items.sav\"\nrun_dir = \"./runs\"\nrun_name = \"tetra\"\ncor = \"tetrachoric\"\nrotate = \"varimax\"\n\n# type = dichotomous is required for tetrachoric correlations.\nmeta = [\n  { match = \"^P1_\", batch = \"attitudes\", type = \"dichotomous\" },\n]"
+    },
+    {
+      "title": "Output: <batch>_sum sheet",
+      "body": "One row per (n_factors, eigenvalue dim). Header cells:\n  batch, cor, fm, rotate, n_obs  -- shared metadata block\n  n_factors | iterations | converged | dim | eigenvalue | diff | prop | cumulative"
+    },
+    {
+      "title": "Output: <batch>_load sheet",
+      "body": "One row per (n_factors, variable). MR columns widen to the largest k in the batch; rows with smaller k leave higher MR columns blank.\n  n_factors | variable | label | MR1 .. MR<max_k> | h2 | u2 | com | dominant"
+    }
+  ],
+  "notes": [
+    "Inline meta semantics: entries are evaluated in order, all-matches-apply. A column hit by multiple pattern entries is added once per entry, so one column can belong to multiple batches. Unmatched columns are silently dropped. Row entries use `variable = \"...\"`; pattern entries use `match = \"<regex>\"` (Rust regex crate; no backrefs or lookaround).",
+    "Label templates (pattern entries): `label_template = \"Satisfaction: ${1}\"` expands `${name}` (whole column name), `${0}` (whole regex match), and `${1}`, `${2}`, ... (positional captures). Omitted template → SPSS variable label (`.sav`) or column name (CSV).",
+    "SPSS inputs: user-defined missing values coerce to NA on read. Empty meta fields fill in from SPSS metadata — label ← variable label; type ← value-labels present → ordinal, plain numeric → numeric, string → categorical.",
+    "Correlation methods (cor): pearson, covariance, tetrachoric, polychoric, mixed, biserial, polyserial, yuleb, yuleq, yuley. All implemented (Phases 1–2).",
+    "Factoring methods (fm): minres, pa, uls, ols, wls, gls, ml, minchi, minrank, alpha. Currently minres and pa are implemented (both route to iterative principal-axis); other values validate but return NotImplemented at runtime (Phase 3).",
+    "Rotation methods (rotate): none, varimax, quartimax, bentler_t, equamax, varimin, geomin_t, bifactor, promax, oblimin, simplimax, bentler_q, geomin_q, biquartimin, cluster. Currently none and varimax are implemented (Kaiser-normalised analytic Varimax matching stats::varimax); other values validate but return NotImplemented at runtime (Phase 3).",
+    "Type vs. cor compatibility: tetrachoric requires dichotomous columns, polychoric requires ordinal (or dichotomous), biserial/polyserial mix numeric with the categorical partner. If meta leaves type blank the default is numeric, which will cause those correlation methods to fail with an explicit per-pair error.",
+    "Sample size per batch is the minimum non-zero n_obs across all pairs in R — a conservative choice matching psych::fa's default pairwise behaviour.",
+    "`com` is Hoffman's complexity: 1.0 means a variable loads on one factor; values approach n_factors as loadings are spread evenly."
+  ]
+}

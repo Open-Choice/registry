@@ -1,0 +1,36 @@
+{
+  "command": "correlation",
+  "title": "Build a correlation matrix with any psych::fa(cor=...) method",
+  "summary": "Compute a variable × variable correlation (or covariance) matrix and write it as both a CSV and a three-sheet .xlsx workbook. Intended as the matrix feeding a downstream `fa` run, or as a standalone diagnostic.",
+  "description": "Loads the chosen subset of columns, optionally consulting `meta` to resolve per-column types for mixed/biserial/polyserial dispatch, and computes pairwise correlations using the selected method. Writes two artifacts: a plain CSV (blank leading header cell, variable names in the first column) and a three-sheet xlsx with a `correlation` sheet (R), an `n_obs` sheet (pairwise sample sizes), and a `meta` sheet (method + variable count).",
+  "usage": "[[\"factor-analysis::correlation\"]]\ninput = \"./data.csv\"\nrun_dir = \"./runs\"\nrun_name = \"cor1\"\nmethod = \"pearson\"\n# optional:\nmeta = \"./meta.csv\"\nvars = [\"q1\", \"q2\", \"q3\"]",
+  "arguments": [
+    { "name": "input",    "type": "string",  "required": true,  "description": "Path to the input file. CSV or SPSS `.sav`/`.zsav`." },
+    { "name": "run_dir",  "type": "string",  "required": true,  "description": "Base directory for outputs. Files land in `<run_dir>/ocinfo/<run_name>_factor_analysis/`." },
+    { "name": "run_name", "type": "string",  "required": true,  "description": "Short identifier for this run; no `..`, `/`, or `\\`." },
+    { "name": "method",   "type": "string",  "required": false, "default": "pearson", "description": "Correlation method. See the Correlation methods note for the full list." },
+    { "name": "meta",     "type": "string",  "required": false, "description": "Optional variable metadata CSV. Required for `mixed` / `biserial` / `polyserial` to determine per-column types." },
+    { "name": "vars",     "type": "array",   "required": false, "default": [], "description": "Subset of input columns to include. Empty = all columns." },
+    { "name": "correct",  "type": "number",  "required": false, "default": 0.5, "description": "Continuity correction for zero cells in contingency tables used by tetrachoric/polychoric/yule. Matches psych defaults." },
+    { "name": "na_action","type": "string",  "required": false, "default": "complete_cases", "description": "`complete_cases` (pairwise deletion per cell) or `fail`." },
+    { "name": "headers",  "type": "boolean", "required": false, "default": true, "description": "Whether CSV inputs have a header row. Ignored for `.sav` inputs." },
+    { "name": "threads",  "type": "integer", "required": false, "default": 1, "description": "Worker thread count for per-pair correlation parallelism. `1` runs serially. Results are deterministic regardless of thread count." },
+    { "name": "output_format", "type": "string", "required": false, "description": "Override stdout format: `human`, `protocol`, or `quiet`." }
+  ],
+  "examples": [
+    {
+      "title": "Output: <run_name>.csv",
+      "body": "Plain CSV. First column is variable names (header cell blank); remaining columns are the upper+lower triangle of R in variable order."
+    },
+    {
+      "title": "Output: <run_name>.xlsx",
+      "body": "Three sheets:\n  correlation — R with bold headers and 0.0000 numeric format\n  n_obs       — pairwise sample sizes matching the correlation layout\n  meta        — method and variable count"
+    }
+  ],
+  "notes": [
+    "Correlation methods: pearson, covariance, tetrachoric, polychoric, mixed, biserial, polyserial, yuleb, yuleq, yuley. All methods are implemented (Phases 1–2), matching psych::fa(cor=...) conventions.",
+    "The `covariance` method produces the unnormalised sample covariance (divisor n-1), not a correlation.",
+    "Pairwise sample sizes on the `n_obs` sheet let downstream consumers weight the matrix appropriately.",
+    "Type vs. method compatibility: tetrachoric requires dichotomous columns; polychoric requires ordinal (or dichotomous); biserial/polyserial pair numeric with the categorical partner. If meta is omitted the default is numeric, which will fail for the categorical methods."
+  ]
+}

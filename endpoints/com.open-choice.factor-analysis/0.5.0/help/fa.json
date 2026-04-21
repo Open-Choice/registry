@@ -1,0 +1,91 @@
+{
+  "command": "fa",
+  "title": "Exploratory Factor Analysis",
+  "summary": "Uncover the small number of underlying themes that drive a larger set of numeric survey items. Produces one Excel workbook per run with a summary sheet and a loadings sheet for every group of items you analyse.",
+  "description": "Factor analysis asks a simple question: when respondents answer a long battery of related items (say, twenty attitude statements or a dozen brand-image ratings), can we describe most of their answers using a much smaller number of underlying ideas? Each underlying idea is called a factor. The output tells you how many factors you probably need, which items belong to which factor, and how strongly each item ties to each factor.\n\nUse this endpoint when you have numeric, continuous, or ordinal items and you want to reduce them to a short list of interpretable themes — for example, collapsing 25 attitude statements into four brand-personality dimensions, or summarising a 15-item satisfaction battery into three value drivers.\n\nThe run produces results for a range of factor counts (from `min_count` to `max_count`). You compare the summary sheets across counts to decide how many factors best describe the data — the classic scree-plot judgement call, but with the numbers laid out side-by-side for easy comparison.",
+  "usage": "[[\"factor-analysis::fa\"]]\ninput = \"./data.sav\"\nrun_dir = \"./runs\"\nrun_name = \"fa1\"\nmin_count = 2\nmax_count = 5\ncor = \"pearson\"\nfm = \"minres\"\nrotate = \"varimax\"\n\nmeta = [\n  { match = \"^att_\", batch = \"attitudes\", type = \"ordinal\" },\n  { match = \"^sat_(.+)\", batch = \"satisfaction\", label_template = \"Satisfaction: ${1}\" },\n  { variable = \"nps\", batch = \"outcomes\", label = \"Net Promoter Score\" },\n]",
+  "arguments": [
+    { "name": "input",     "type": "string",  "required": true,  "description": "Path to your survey data. CSV/TSV files are read directly; SPSS `.sav` / `.zsav` files are read with their variable labels and value labels preserved." },
+    { "name": "meta",      "type": "string|array",  "required": true,  "description": "Tells the plugin which columns to analyse and how to group them. Either a path to a meta CSV, or an inline table listing columns by name (`variable = \"...\"`) and/or by pattern (`match = \"<regex>\"`). The `batch` key groups items that belong together — one group of attitude items, another group of satisfaction items, etc." },
+    { "name": "run_dir",   "type": "string",  "required": true,  "description": "Folder where results are written. The workbook lands in `<run_dir>/ocinfo/<run_name>_factor_analysis/`." },
+    { "name": "run_name",  "type": "string",  "required": true,  "description": "A short label for this run (e.g. `wave3_brand` or `pilot_fa`). No slashes or `..`." },
+    { "name": "batches",   "type": "array",   "required": false, "default": [], "description": "Optionally restrict the run to a subset of the groups defined in `meta`. Empty (the default) analyses every group." },
+    { "name": "min_count", "type": "integer", "required": false, "default": 2, "description": "Smallest number of factors to extract. The standard workflow is to try a range (say 2 to 6) and pick the best solution by inspecting the summary sheet." },
+    { "name": "max_count", "type": "integer", "required": false, "default": 5, "description": "Largest number of factors to extract. Automatically capped at one less than the number of items in the group." },
+    { "name": "cor",       "type": "string",  "required": false, "default": "pearson", "description": "How to measure the relationship between each pair of items. Pearson is the classic choice for scaled ratings; tetrachoric/polychoric are designed for binary/ordinal items and tend to recover cleaner factors from short categorical scales. See the notes below for the full list." },
+    { "name": "fm",        "type": "string",  "required": false, "default": "minres", "description": "How the factors are extracted from the correlation matrix. `minres` (the default) and `pa` (principal axis) give similar results; use the default unless you have a specific methodological reason to change it." },
+    { "name": "rotate",    "type": "string",  "required": false, "default": "varimax", "description": "How the factor axes are rotated to make the loadings more interpretable. Varimax is the standard go-to: it produces factors where each item tends to load strongly on one factor and weakly on the others, which makes the solution easier to name." },
+    { "name": "correct",   "type": "number",  "required": false, "default": 0.5, "description": "Continuity correction used when tetrachoric or polychoric correlations encounter zero counts in a contingency cell. The default (0.5) matches psych's behaviour and is almost always what you want." },
+    { "name": "na_action", "type": "string",  "required": false, "default": "complete_cases", "description": "What to do with missing values. `complete_cases` computes each pairwise correlation from whatever respondents answered both items (the default and usually right); `fail` aborts if any value is missing." },
+    { "name": "headers",   "type": "boolean", "required": false, "default": true, "description": "Whether CSV inputs include a header row. Ignored for SPSS inputs (which always have variable names)." },
+    { "name": "threads",   "type": "integer", "required": false, "default": 1, "description": "Worker threads. `1` runs one batch at a time; higher values parallelise across batches. Results are identical regardless of thread count." },
+    { "name": "output_format", "type": "string", "required": false, "description": "Override the stdout format: `human`, `protocol`, or `quiet`. Normally set automatically by the app." }
+  ],
+  "details": "For each combination of (item group, number of factors) the plugin runs a full factor-analysis pipeline: compute the correlation matrix with the chosen method, extract the requested number of factors, rotate the loading matrix to improve interpretability, and record the per-factor eigenvalues and per-item loadings. Within each loadings sheet, rows are sorted so that items on the same dominant factor appear together and the strongest loading appears first — the same ordering R's `psych::fa.sort` produces.\n\nSample size is reported per item group as the smallest pairwise n across the correlation matrix. This is conservative — if you have a lot of missing data it will reflect the weakest overlap, not an average. Factor loadings are deterministic: the same input data and settings always produce the same numbers, even across thread counts.\n\nA few common gotchas: tetrachoric correlations require binary items (two values) and polychoric correlations require ordered categorical items, so mark the `type` correctly in your meta. Items with zero variance (e.g. everyone answered the same value) are silently dropped. If you request more factors than the group can support, the max is clamped down automatically and a notice is emitted.",
+  "artifacts": [
+    {
+      "path": "<run_name>.xlsx",
+      "title": "Results workbook (one file, two sheets per group)",
+      "description": "Every item group produces two sheets: a summary sheet of eigenvalues and variance explained, and a loadings sheet of the per-item results. Both sheets stack the results for every factor count you requested (from `min_count` to `max_count`) in a single table so you can compare them side-by-side.",
+      "fields": []
+    },
+    {
+      "path": "<batch>_sum sheet",
+      "title": "Eigenvalue summary (one per item group)",
+      "description": "The diagnostic table for deciding how many factors to keep. Reading left to right: the metadata columns identify the run; the remaining columns give you one row per (n_factors, factor). Compare eigenvalues across factor counts to find the knee in the scree plot — the point after which additional factors add little variance.",
+      "fields": [
+        { "name": "batch", "description": "The item-group label (e.g. `attitudes`, `satisfaction`). Constant within the sheet." },
+        { "name": "cor", "description": "The correlation method used (e.g. `pearson`). Constant within the sheet." },
+        { "name": "fm", "description": "The factoring method used (e.g. `minres`). Constant within the sheet." },
+        { "name": "rotate", "description": "The rotation applied (e.g. `varimax`). Constant within the sheet." },
+        { "name": "n_obs", "description": "Sample size used — the smallest pairwise n across the correlation matrix for this group." },
+        { "name": "n_factors", "description": "How many factors were extracted for this block of rows. The sheet contains blocks for every value from `min_count` to `max_count`." },
+        { "name": "iterations", "description": "How many iterations the extraction took to converge. Very high counts (near the internal cap) can signal an unstable solution." },
+        { "name": "converged", "description": "`true` if the extraction converged cleanly. `false` means the solution may be unreliable — inspect the loadings before trusting it." },
+        { "name": "dim", "description": "The factor index within this block (1 = first factor, 2 = second factor, …). There are `n_factors` rows per block." },
+        { "name": "eigenvalue", "description": "How much of the total variance this factor captures, in raw units. Larger = more important. The classic Kaiser rule drops factors below 1.0." },
+        { "name": "diff", "description": "The gap between this eigenvalue and the next. A large drop followed by small drops is the 'elbow' of the scree plot." },
+        { "name": "prop", "description": "Proportion of the total variance explained by this factor (eigenvalue / total). A quick read on how much signal the factor carries." },
+        { "name": "cumulative", "description": "Running total of `prop` down the block. Useful for answering 'how much of the variance do my top k factors jointly explain?'." }
+      ]
+    },
+    {
+      "path": "<batch>_load sheet",
+      "title": "Factor loadings (one per item group)",
+      "description": "The interpretive table — this is where you decide what each factor means. Each row is one item within one factor-count solution. The MR columns hold the rotated loadings. Items are sorted so that everything loading on Factor 1 appears first (strongest first), then everything loading on Factor 2, and so on — the same ordering as R's `psych::fa.sort`.",
+      "fields": [
+        { "name": "n_factors", "description": "How many factors were extracted for this block. The sheet contains blocks for every value from `min_count` to `max_count`." },
+        { "name": "variable", "description": "The item's column name in the input data." },
+        { "name": "label", "description": "The human-readable label. Taken from the SPSS variable label, the `label` or `label_template` in meta, or the column name as a fallback." },
+        { "name": "MR1 … MR<max_k>", "description": "The rotated loading of this item on each factor. Values range roughly from −1 to 1. Loadings above 0.4 (or below −0.4) are generally strong enough to matter; loadings below 0.3 are typically ignored when naming a factor. Columns widen to the largest factor count in the sheet; rows for smaller counts leave higher-numbered MR columns blank." },
+        { "name": "h2", "description": "Communality — the share of this item's variance explained by all the factors together. Values from 0 to 1; higher is better. An item with h² below 0.3 isn't really part of the factor structure and may be a candidate for removal." },
+        { "name": "u2", "description": "Uniqueness — the share of this item's variance not explained by the factors (1 − h²). The item's 'personality', unrelated to the shared themes." },
+        { "name": "com", "description": "Hoffman's complexity. 1.0 means the item loads cleanly on one factor (the ideal); values near `n_factors` mean the item is spread evenly across every factor (the worst case). A tidy solution has most items near 1.0." },
+        { "name": "dominant", "description": "The index (1, 2, 3, …) of the factor this item loads on most strongly. Useful as a quick sort key and as the glue that holds the 'items on this factor' story together." }
+      ]
+    }
+  ],
+  "see_also": [
+    { "command": "correlation", "description": "Build just the correlation matrix without running the factor extraction — handy for preliminary diagnostics or feeding into a downstream tool." },
+    { "command": "famd", "description": "The mixed-data cousin. Use FAMD when your item group contains both numeric and categorical variables (e.g. attitudinal items plus demographic segments)." }
+  ],
+  "examples": [
+    {
+      "title": "CSV input with an external meta file",
+      "body": "[[\"factor-analysis::fa\"]]\ninput = \"./data.csv\"\nmeta = \"./meta.csv\"\nrun_dir = \"./runs\"\nrun_name = \"fa1\"\nmin_count = 2\nmax_count = 5\ncor = \"pearson\"\nrotate = \"varimax\""
+    },
+    {
+      "title": "Dichotomous items with tetrachoric correlations",
+      "body": "[[\"factor-analysis::fa\"]]\ninput = \"./items.sav\"\nrun_dir = \"./runs\"\nrun_name = \"tetra\"\ncor = \"tetrachoric\"\nrotate = \"varimax\"\n\n# type = dichotomous is required for tetrachoric correlations.\nmeta = [\n  { match = \"^P1_\", batch = \"attitudes\", type = \"dichotomous\" },\n]"
+    }
+  ],
+  "notes": [
+    "Inline meta semantics: entries are evaluated in order, all-matches-apply. A column hit by multiple pattern entries is added once per entry, so one column can belong to multiple batches. Unmatched columns are silently dropped. Row entries use `variable = \"...\"`; pattern entries use `match = \"<regex>\"` (Rust regex crate; no backrefs or lookaround).",
+    "Label templates (pattern entries): `label_template = \"Satisfaction: ${1}\"` expands `${name}` (whole column name), `${0}` (whole regex match), and `${1}`, `${2}`, ... (positional captures). Omitted template → SPSS variable label (`.sav`) or column name (CSV).",
+    "SPSS inputs: user-defined missing values coerce to NA on read. Empty meta fields fill in from SPSS metadata — label ← variable label; type ← value-labels present → ordinal, plain numeric → numeric, string → categorical.",
+    "Correlation methods (cor): pearson, covariance, tetrachoric, polychoric, mixed, biserial, polyserial, yuleb, yuleq, yuley.",
+    "Factoring methods (fm): minres, pa, uls, ols, wls, gls, ml, minchi, minrank, alpha. Currently minres and pa are implemented (both route to iterative principal-axis); other values validate but return NotImplemented at runtime.",
+    "Rotation methods (rotate): none, varimax, quartimax, bentler_t, equamax, varimin, geomin_t, bifactor, promax, oblimin, simplimax, bentler_q, geomin_q, biquartimin, cluster. Currently none and varimax are implemented; other values validate but return NotImplemented at runtime.",
+    "Type vs. cor compatibility: tetrachoric requires dichotomous columns, polychoric requires ordinal (or dichotomous), biserial/polyserial mix numeric with the categorical partner. If meta leaves type blank the default is numeric, which will cause those correlation methods to fail with an explicit per-pair error."
+  ]
+}

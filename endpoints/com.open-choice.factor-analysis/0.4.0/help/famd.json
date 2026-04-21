@@ -1,0 +1,45 @@
+{
+  "command": "famd",
+  "title": "Factor analysis of mixed (numeric + categorical) data",
+  "summary": "FAMD in the FactoMineR tradition. For each batch defined in meta, fit one mixed-data model per n_factors in [min_count, max_count] and emit a single .xlsx workbook. Each batch gets a `<batch>_sum` sheet (eigenvalues across k), a `<batch>_vars` sheet (per-variable coord/contrib/cos² across k), and — when the batch contains categorical variables — a `<batch>_cats` sheet (per-level detail across k).",
+  "description": "Pipeline per (batch, k): complete-case filter; split into numeric and qualitative columns; drop zero-variance numerics and single-level factors; standardise numerics with n-1 SD; disjunctively code categoricals as (indicator - proportion)/sqrt(proportion); concatenate and take the thin SVD of X/√n. Dimension coordinates are σ·V, contributions are V²·100 (%), cos² is coord²/total per item.",
+  "usage": "[[\"factor-analysis::famd\"]]\ninput = \"./data.sav\"\nrun_dir = \"./runs\"\nrun_name = \"famd1\"\nmin_count = 2\nmax_count = 5\n\nmeta = [\n  { match = \"^q\\\\d+$\", batch = \"attitudes\", type = \"ordinal\" },\n  { variable = \"gender\", batch = \"demographics\", type = \"categorical\" },\n]",
+  "arguments": [
+    { "name": "input",     "type": "string",  "required": true,  "description": "Path to the input file. `.csv` / `.tsv` use the CSV reader; `.sav` / `.zsav` use the SPSS reader." },
+    { "name": "meta",      "type": "string|array",  "required": true,  "description": "Variable metadata: either a path to a meta CSV, or an inline TOML list of row/pattern entries. See the Inline meta notes below." },
+    { "name": "run_dir",   "type": "string",  "required": true,  "description": "Base directory for outputs. Files land in `<run_dir>/ocinfo/<run_name>_factor_analysis/`." },
+    { "name": "run_name",  "type": "string",  "required": true,  "description": "Short identifier for this run; no `..`, `/`, or `\\`." },
+    { "name": "batches",   "type": "array",   "required": false, "default": [], "description": "Subset of batch names to analyse. Empty = all batches from meta (or a single `all` batch if meta has no batch column)." },
+    { "name": "min_count", "type": "integer", "required": false, "default": 2, "description": "Smallest number of dimensions per batch." },
+    { "name": "max_count", "type": "integer", "required": false, "default": 5, "description": "Largest number of dimensions per batch." },
+    { "name": "na_action", "type": "string",  "required": false, "default": "complete_cases", "description": "`complete_cases` (listwise) or `fail`. FAMD is always listwise per batch." },
+    { "name": "headers",   "type": "boolean", "required": false, "default": true, "description": "Whether CSV inputs have a header row. Ignored for `.sav` inputs." },
+    { "name": "threads",   "type": "integer", "required": false, "default": 1, "description": "Worker thread count. `1` runs serially. Results are deterministic regardless of thread count." },
+    { "name": "output_format", "type": "string", "required": false, "description": "Override stdout format: `human`, `protocol`, or `quiet`." }
+  ],
+  "examples": [
+    {
+      "title": "CSV with external meta CSV",
+      "body": "[[\"factor-analysis::famd\"]]\ninput = \"./data.csv\"\nmeta = \"./meta.csv\"\nrun_dir = \"./runs\"\nrun_name = \"famd1\"\nmin_count = 2\nmax_count = 5"
+    },
+    {
+      "title": "Output: <batch>_sum sheet",
+      "body": "One row per (n_factors, eigenvalue dim). Header cells:\n  n_factors | n_obs | dim | eigenvalue | prop | cumulative"
+    },
+    {
+      "title": "Output: <batch>_vars sheet",
+      "body": "One row per (n_factors, variable). coord/contrib/cos² columns widen to the largest k in the batch; rows with smaller k leave higher-dim columns blank.\n  n_factors | variable | label | is_categorical\n  | coord_dim1 .. coord_dim<max_k>\n  | contrib_dim1 .. contrib_dim<max_k>\n  | cos2_dim1 .. cos2_dim<max_k>\n  | strongest_dim | strongest_abs_coord"
+    },
+    {
+      "title": "Output: <batch>_cats sheet (only when categoricals exist)",
+      "body": "Same columns as <batch>_vars but with an extra `level` column and one row per (n_factors, variable, level). Numeric variables do not appear."
+    }
+  ],
+  "notes": [
+    "Inline meta semantics: entries are evaluated in order, all-matches-apply. A column hit by multiple pattern entries is added once per entry, so one column can belong to multiple batches. Unmatched columns are silently dropped. Row entries use `variable = \"...\"`; pattern entries use `match = \"<regex>\"`.",
+    "Label templates (pattern entries): `label_template = \"Satisfaction: ${1}\"` expands `${name}` (whole column name), `${0}` (whole regex match), and `${1}`, `${2}`, ... (positional captures). Omitted template → SPSS variable label (`.sav`) or column name (CSV).",
+    "Column `type` drives the encoding: numeric is standardised; dichotomous, ordinal, and categorical are disjunctively coded. Mixed batches (numeric + categorical) are the main use case.",
+    "Variables with zero variance (numeric) or a single level (categorical) are dropped from a batch with a warning.",
+    "`strongest_dim` / `strongest_abs_coord` identify the axis on which each variable or level loads most heavily — useful as a secondary sort when exploring results."
+  ]
+}
