@@ -46,7 +46,13 @@ jobs:
       - name: Sign manifest
         env:
           OC_REGISTRY_KEY: ${{ secrets.OC_REGISTRY_KEY }}
-        run: node scripts/sign-manifest.js
+        run: |
+          if [ -n "${OC_REGISTRY_KEY:-}" ]; then
+            node scripts/sign-manifest.js
+          else
+            echo "OC_REGISTRY_KEY not set - skipping CI signing."
+            echo "manifest.json must be pre-signed locally before push."
+          fi
 
       - name: Build site
         run: pnpm build
