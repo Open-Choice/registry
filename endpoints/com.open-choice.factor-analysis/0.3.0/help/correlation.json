@@ -1,0 +1,24 @@
+{
+  "command": "correlation",
+  "title": "Build a correlation matrix with any psych::fa(cor=...) method",
+  "summary": "Compute a variable × variable correlation (or covariance) matrix and write it as both a CSV (long-compatible header) and a three-sheet xlsx (correlation, n_obs, meta). Intended as the matrix feeding a downstream factor-analysis fa run, or as a standalone diagnostic.",
+  "description": "Loads the chosen subset of columns, optionally consulting `meta` to resolve per-column types for `mixed`/biserial/polyserial dispatch, and computes pairwise correlations using the selected method. The CSV output has a leading blank header cell, variable names as the first column, and standard numeric formatting; the xlsx has a `correlation` sheet with bold headers and 0.0000 numeric format, an `n_obs` sheet reporting the pairwise sample sizes, and a `meta` sheet recording the method and variable count.",
+  "usage": "[[\"factor-analysis::correlation\"]]\ninput = \"./data.csv\"\nrun_dir = \"./runs\"\nrun_name = \"cor1\"\nmethod = \"pearson\"\n# optional:\nmeta = \"./meta.csv\"\nvars = [\"q1\", \"q2\", \"q3\"]",
+  "arguments": [
+    { "name": "input",    "type": "string",  "required": true,  "description": "CSV of variables to correlate." },
+    { "name": "run_dir",  "type": "string",  "required": true,  "description": "Base directory. Outputs land in `<run_dir>/ocinfo/<run_name>_factor_analysis/`." },
+    { "name": "run_name", "type": "string",  "required": true,  "description": "Short identifier for this run; no '..', '/' or '\\\\'." },
+    { "name": "method",   "type": "string",  "required": false, "default": "pearson", "description": "pearson|covariance|tetrachoric|polychoric|mixed|biserial|polyserial|yuleb|yuleq|yuley. All methods implemented, matching psych::fa(cor=...) conventions." },
+    { "name": "meta",     "type": "string",  "required": false, "description": "Optional variable metadata CSV. Required for `mixed`/biserial/polyserial to determine per-column types." },
+    { "name": "vars",     "type": "array",   "required": false, "default": [], "description": "Subset of input columns to include. Empty = all columns." },
+    { "name": "correct",  "type": "number",  "required": false, "default": 0.5, "description": "Continuity correction: replace zero cells in contingency tables used by tetrachoric/polychoric/yule. Matches psych defaults." },
+    { "name": "na_action","type": "string",  "required": false, "default": "complete_cases", "description": "Pairwise deletion or abort on any NA." },
+    { "name": "headers",  "type": "boolean", "required": false, "default": true, "description": "Whether CSV inputs have a header row." },
+    { "name": "threads",  "type": "integer", "required": false, "default": 1, "description": "Number of worker threads for per-pair correlation parallelism. `1` (default) runs serially. Results are deterministic regardless of thread count." },
+    { "name": "output_format", "type": "string", "required": false, "description": "Override stdout format: human, protocol, or quiet." }
+  ],
+  "notes": [
+    "The `covariance` method produces the unnormalised sample covariance (divisor n-1), not a correlation.",
+    "Pairwise sample sizes are written to the `n_obs` sheet so downstream consumers can weight the matrix appropriately."
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "pearson_all_vars": {
+    "input": "./data.csv",
+    "run_dir": "./runs",
+    "run_name": "cor_pearson",
+    "method": "pearson"
+  },
+  "covariance_subset": {
+    "input": "./data.csv",
+    "run_dir": "./runs",
+    "run_name": "cor_cov",
+    "method": "covariance",
+    "vars": ["q1", "q2", "q3", "q4"]
+  },
+  "mixed_with_meta": {
+    "input": "./data.csv",
+    "meta": "./meta.csv",
+    "run_dir": "./runs",
+    "run_name": "cor_mixed",
+    "method": "mixed"
+  }
+}

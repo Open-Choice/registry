@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-21T19:29:33.952Z",
-  "signature": "E53AjxRKhWY9ibbh/MJ3MIUUrBKsmUd5DkGs4zqn2UIo53MBUPDIXyKoSwgMKOEHnj+Nn+ei1GHtjZq3CISoCQ==",
+  "generated_at": "2026-04-21T21:20:16.903Z",
+  "signature": "4ogYT6LYc8yL3c/Gyw3hKFUQO+NsBT/xTWE4/QCRtKmPMm966Gs+mpk3kM1NkH0Ujzg9diL7Heg1evoGFggRCw==",
   "signer_key_id": "oc-registry-2026",
   "plugins": [
     {
@@ -183,9 +183,19 @@
         "psychometrics",
         "correlation"
       ],
-      "latest_version": "0.1.0",
+      "latest_version": "0.3.0",
       "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.factor-analysis/",
       "versions": [
+        {
+          "version": "0.3.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/factor-analysis-v0.3.0/factor-analysis-0.3.0-windows-x86_64.ocplugin",
+          "artifact_sha256": "896c24952f8df67e3d4501b64a13c21369ac2aee6017a12f41a8cedb7fc6b8f6",
+          "signer_key_id": "open-choice-2026",
+          "min_app_version": "0.1.0",
+          "released_at": "2026-04-21T15:20:04Z",
+          "release_notes": "Input flexibility: SPSS `.sav` support and inline meta with regex patterns.\n\n- **SPSS `.sav` / `.zsav` input.** `fa` and `famd` now dispatch on the input extension: `.csv`/`.tsv` use the existing CSV reader, `.sav`/`.zsav` go through the bundled `spss-io` library (readstat + polars). SPSS user-defined missing values are coerced to NA on read. When meta leaves fields blank, SPSS variable labels fill in `label` and SPSS value-label presence infers `type` (numeric-with-labels â†’ ordinal, plain numeric â†’ numeric, string â†’ categorical).\n- **Inline meta.** `meta` may now be an inline TOML array instead of a path to a CSV. Two entry shapes: row entries (`variable = \"...\"`) and regex pattern entries (`match = \"...\"`). Type/batch/label defaults cascade down from pattern entries to all matching columns. Empty-list / zero-match inline metas error up front.\n- **Regex variable selection.** Pattern entries use the Rust `regex` crate (no backrefs/lookaround). All matches apply: a column hit by multiple entries is added once per entry, so one column can belong to multiple batches. Unmatched columns are silently dropped.\n- **Label templates.** Pattern entries accept a `label_template` with placeholders: `${name}` (full column name), `${0}` (whole regex match), `${1}`, `${2}`, â€¦ (positional captures). Omitting `label_template` falls back to the SPSS variable label (for `.sav`) or the column name (for CSV).\n- Existing path-based meta CSVs continue to work without change; the workflow is purely additive.",
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/factor-analysis-v0.3.0"
+        },
         {
           "version": "0.1.0",
           "download_url": "https://github.com/Open-Choice/registry/releases/download/factor-analysis-v0.1.0/factor-analysis-0.1.0-windows-x86_64.ocplugin",

@@ -1,0 +1,31 @@
+{
+  "command": "fa",
+  "title": "Exploratory factor analysis on numeric data",
+  "summary": "Rust port of psych::fa: iterative principal-axis / minimum-residual factor extraction with Kaiser-normalized analytic Varimax rotation. Iterates over meta batches and a range of n_factors values, emitting one xlsx workbook with per-combination summary + loadings sheets.",
+  "description": "For each batch and each n_factors in [min_count, min(max_count, n_vars-1)]: builds the correlation matrix, extracts factors (MinRes/PA both route to iterative principal-axis with SMC communality initialisation), rotates loadings, and writes eigenvalues (all dims: value, diff, prop, cumulative), per-variable loadings MR1..MRk, communality h², uniqueness u², Hoffman complexity (Σl²)²/Σl⁴, and dominant factor index. Rows are sorted within each sheet by dominant factor ascending then |loading| descending — matching psych's `fa.sort`. Sheet names follow `<batch>_k<n>_sum` and `<batch>_k<n>_load`, truncated to Excel's 31-char limit.",
+  "usage": "[[\"factor-analysis::fa\"]]\ninput = \"./data.sav\"\nrun_dir = \"./runs\"\nrun_name = \"fa1\"\nmin_count = 2\nmax_count = 5\ncor = \"pearson\"\nfm = \"minres\"\nrotate = \"varimax\"\n\n# Inline meta: regex patterns + row entries. A column may land in multiple batches.\nmeta = [\n  { match = \"^att_\", batch = \"attitudes\", type = \"ordinal\" },\n  { match = \"^sat_(.+)\", batch = \"satisfaction\", label_template = \"Satisfaction: ${1}\" },\n  { variable = \"nps\", batch = \"outcomes\", label = \"Net Promoter Score\" },\n]",
+  "arguments": [
+    { "name": "input",     "type": "string",  "required": true,  "description": "Path to the input file. Supports CSV (wide, one row per observation) or SPSS .sav/.zsav; extension chooses the reader. SPSS columns inherit variable labels and infer type from value labels (labelled → ordinal, else numeric)." },
+    { "name": "meta",      "type": "string|array",  "required": true,  "description": "Either a path to a meta CSV (columns: variable, label?, batch?, type?), or an inline TOML list of entries. Inline entries are either a row (`variable = \"...\"`) or a regex pattern (`match = \"...\"`). All-matches-apply: a column may appear in multiple entries and thus multiple batches. Unmatched columns are silently dropped. Label templates support ${name}, ${0} (whole match), ${1}, ${2}, ... (captures)." },
+    { "name": "run_dir",   "type": "string",  "required": true,  "description": "Base directory. Outputs land in `<run_dir>/ocinfo/<run_name>_factor_analysis/`." },
+    { "name": "run_name",  "type": "string",  "required": true,  "description": "Short identifier for this run; no '..', '/' or '\\\\'." },
+    { "name": "batches",   "type": "array",   "required": false, "default": [], "description": "Subset of batches to analyse. Empty = one FA per batch, or a single `all` batch if meta has no batch column." },
+    { "name": "min_count", "type": "integer", "required": false, "default": 2, "description": "Smallest n_factors to extract per batch." },
+    { "name": "max_count", "type": "integer", "required": false, "default": 5, "description": "Largest n_factors to extract per batch. Clamped to (n_vars - 1)." },
+    { "name": "cor",       "type": "string",  "required": false, "default": "pearson", "description": "Correlation method: pearson|covariance|tetrachoric|polychoric|mixed|biserial|polyserial|yuleb|yuleq|yuley. All methods implemented." },
+    { "name": "fm",        "type": "string",  "required": false, "default": "minres", "description": "Factoring method: minres|pa|uls|ols|wls|gls|ml|minchi|minrank|alpha. Currently minres and pa (iterative principal-axis); other values error at runtime pending Phase 3." },
+    { "name": "rotate",    "type": "string",  "required": false, "default": "varimax", "description": "Rotation: none|varimax|quartimax|bentler_t|equamax|varimin|geomin_t|bifactor|promax|oblimin|simplimax|bentler_q|geomin_q|biquartimin|cluster. Currently none and varimax; other values error at runtime pending Phase 3." },
+    { "name": "correct",   "type": "number",  "required": false, "default": 0.5, "description": "Continuity correction for tetrachoric/polychoric zero cells (matches psych defaults)." },
+    { "name": "na_action", "type": "string",  "required": false, "default": "complete_cases", "description": "complete_cases (pairwise deletion) or fail (abort on NA)." },
+    { "name": "headers",   "type": "boolean", "required": false, "default": true, "description": "Whether CSV inputs have a header row." },
+    { "name": "threads",   "type": "integer", "required": false, "default": 1, "description": "Number of worker threads for parallel batch × n_factors fan-out and per-pair correlation parallelism. `1` (default) runs serially. Results are deterministic regardless of thread count." },
+    { "name": "output_format", "type": "string", "required": false, "description": "Override stdout format: human, protocol, or quiet." }
+  ],
+  "notes": [
+    "Input formats: `.csv` / `.tsv` (CSV reader) or `.sav` / `.zsav` (SPSS via the bundled reader). SPSS user-defined missing values are coerced to NA on read.",
+    "Inline meta semantics: entries are evaluated in order; a column matching multiple entries is added multiple times (one per entry) and may participate in multiple batches. Set `type` to override the default (Numeric for CSV; SPSS-inferred for `.sav`). Set `label` / `label_template` to override the default label (column name for CSV; SPSS variable label for `.sav`).",
+    "Current delivery: full correlation family (Phase 2), MinRes/PA extraction, Varimax rotation. Remaining fm/rotate values are accepted by the validator but return a NotImplemented runtime error until Phase 3.",
+    "Sample size for each batch is the minimum non-zero n_obs across all correlation cells — a conservative choice matching psych::fa's default pairwise behaviour.",
+    "The `com` column is Hoffman's complexity: 1.0 means a variable loads on one factor; values approach n_factors as loadings are spread evenly."
+  ]
+}
