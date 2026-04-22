@@ -41,5 +41,18 @@
       "description": "An editable Excel workbook with one row per observed (variable, value) pair. Fill in the new-label, new-value, and mark-missing columns for any values that need cleaning, then supply the completed file to apply-cleaning-map. Rows left blank are no-ops.",
       "fields": []
     }
+  ],
+  "details": "The template workbook lists every variable in the input file and, for categorical variables (those with 100 or fewer distinct values), every observed (code, label) pair. Each row carries the current variable name, current value label, observed count, and three blank columns: `new label` (to relabel a value), `new value` (to recode a value’s integer code), and `mark-missing` (to flag a value as a declared-missing code in the output .sav).\n\nContinuous or free-text variables appear as header rows only — with no per-value rows — because they have too many distinct values to enumerate. Editing those rows affects the variable label and measure level but not value-level recodes.\n\nThe workflow is: (1) run `write-cleaning-map-template` to generate the blank template, (2) open the workbook and fill in the columns that need changes, (3) run `apply-cleaning-map` to apply those changes and produce the cleaned .sav. Re-running this command overwrites the template — save your edits under a different filename before regenerating.",
+  "see_also": [
+    {
+      "command": "apply-cleaning-map",
+      "description": "Apply the completed cleaning map to produce a cleaned .sav — the downstream consumer of the template this command produces."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Write a blank cleaning-map template from an SPSS file",
+      "body": "[[\"spss-reader::write-cleaning-map-template\"]]\ninput_path = \"./data/survey.sav\"\noutput_dir = \"./cleaning\""
+    }
   ]
 }

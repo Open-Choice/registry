@@ -159,5 +159,26 @@
         }
       ]
     }
+  ],
+  "details": "The design file is parsed to build a complete version-to-task-to-alternative-labels map before any respondents are generated, so invalid designs fail fast. For MaxDiff (wide format), item columns are auto-detected as any column named 'Item1', 'Item2', ... or as purely numeric column names; override with `design_item_cols` when the header follows a different convention. For CBC (long format), the alternative column is auto-detected from 'alt', 'alternative', 'option', 'concept', or 'profile'; when none is found, alternatives are numbered sequentially within each (version, task) pair in row order.\n\nEach fake respondent is assigned a uniformly random design version, then for every task in that version a response filler runs: `fill_maxdiff_pick` selects a best and worst item that are always distinct; `fill_cbc_pick` with `cbc_mode='standard'` selects any alternative with equal probability; `fill_cbc_pick` with `cbc_mode='none'` selects K+1 (the no-choice code) with probability 0.20; `fill_cbc_pick` with `cbc_mode='dual'` always selects a real alternative but appends a binary yes/no column; `fill_share` allocates integer points across K slots using uniform-random weights with a rounding correction so the row sums exactly to `share_points`.\n\nTasks present in the version-union but absent from a respondent's assigned version are written as empty strings.",
+  "see_also": [
+    {
+      "command": "prepare-maxdiff",
+      "description": "Prepare a MaxDiff respondent CSV for analysis — the downstream consumer of the data generated here."
+    },
+    {
+      "command": "stack-maxdiff",
+      "description": "Stack a wide MaxDiff respondent CSV into coded-long format suitable for model estimation."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Generate 200 fake MaxDiff best/worst picks",
+      "body": "[[\"choice-wrangling::generate-fake-respondents\"]]\ndesign_csv = \"./data/maxdiff_design.csv\"\nout_csv = \"./data/fake_respondents.csv\"\nn_respondents = 200\ndesign_type = \"maxdiff\"\nresponse_format = \"pick\"\nseed = 42"
+    },
+    {
+      "title": "Generate 100 fake CBC responses with a none-of-these option",
+      "body": "[[\"choice-wrangling::generate-fake-respondents\"]]\ndesign_csv = \"./data/cbc_design.csv\"\nout_csv = \"./data/fake_cbc.csv\"\nn_respondents = 100\ndesign_type = \"cbc\"\nresponse_format = \"pick\"\ncbc_mode = \"none\"\nprefix = \"CBC\"\nseed = 99"
+    }
   ]
 }

@@ -206,5 +206,26 @@
         }
       ]
     }
+  ],
+  "details": "FAMD encodes the two column types on the same scale before extracting dimensions. Numeric columns are standardised (mean 0, unit variance). Categorical columns are expanded into one 0/1 indicator column per level, and each indicator is centred on the level’s overall proportion and rescaled so that rarer levels carry weight comparable to common ones. After that, the numeric and coded-categorical blocks are stacked side-by-side and the dimensions are extracted from the combined matrix by singular value decomposition. The first few dimensions summarise the strongest joint patterns across both types of column.\n\nFor interpretation, coordinates (on the `_vars` sheet) say where a variable sits on each dimension — numeric columns get a single coordinate per dimension while categorical columns get one row per level on the `_cats` sheet, because different levels of the same variable typically sit in different places. Contributions tell you which variables most strongly define each dimension (higher = more important). Cos² tells you how well each variable’s position is captured by the dimensions you extracted — a variable with low cos² on every dimension is essentially off the map and will not figure in your interpretation.\n\nCommon gotchas: because FAMD is always listwise, a single column with heavy missingness can drop a lot of respondents from the analysis — check the sample size on the summary sheet. Numeric columns with zero variance and categorical columns with a single level are dropped with a warning. If a group has only numeric variables, FAMD degenerates to PCA; if it has only categoricals, it degenerates to multiple correspondence analysis.",
+  "see_also": [
+    {
+      "command": "fa",
+      "description": "Exploratory factor analysis for purely numeric item groups. Use `fa` when your group is all scaled/ordinal ratings."
+    },
+    {
+      "command": "correlation",
+      "description": "Build a correlation matrix — a useful preliminary diagnostic before running FAMD."
+    }
+  ],
+  "examples": [
+    {
+      "title": "CSV input with an external meta file",
+      "body": "[[\"factor-analysis::famd\"]]\ninput = \"./data.csv\"\nmeta = \"./meta.csv\"\nrun_dir = \"./runs\"\nrun_name = \"famd1\"\nmin_count = 2\nmax_count = 5"
+    },
+    {
+      "title": "Inline meta mixing ordinal ratings with a categorical demographic",
+      "body": "[[\"factor-analysis::famd\"]]\ninput = \"./survey.sav\"\nrun_dir = \"./runs\"\nrun_name = \"mix1\"\nmin_count = 2\nmax_count = 4\n\nmeta = [\n  { match = \"^att_\", batch = \"attitudes_plus_seg\", type = \"ordinal\" },\n  { variable = \"segment\", batch = \"attitudes_plus_seg\", type = \"categorical\" },\n]"
+    }
   ]
 }

@@ -55,5 +55,26 @@
       "description": "The input CSV or Excel data written as an SPSS .sav file. When a data dictionary or export-excel workbook is supplied, variable labels, value labels, measure levels, and missing-value codes are embedded in the file.",
       "fields": []
     }
+  ],
+  "details": "Three modes are supported. Mode 1 (no metadata): column types are detected heuristically — all-integer columns become SPSS numeric, all-string columns become SPSS string — and the .sav is written without value labels, measure levels, or missing-code declarations. Mode 2 (with `data_dictionary_path`): the workbook produced by `data-dictionary` is parsed and its variable labels, value labels, measure levels, and declared missing-code ranges are applied on top of the detected types. This is the standard rebuild path after receiving a cleaned CSV from a data-processing step. Mode 3 (`from_export_excel = true`): the input workbook is an export-excel round-trip workbook whose variable-metadata sheet carries enough information to reconstruct the .sav. The hidden raw-code columns in Sheet 1 are used to recover the original integer codes.\n\nNumeric columns whose values all fall within the dictionary’s value-label set are stored as SPSS numeric with F format; string columns are stored as A with the minimum width needed. Missing-code ranges declared in the dictionary are applied verbatim — if the dictionary marks 97/98/99 as missing, the written .sav carries those declared-missing ranges.",
+  "see_also": [
+    {
+      "command": "export-excel",
+      "description": "Export a .sav to a labeled Excel workbook — producing the round-trip source for `from_export_excel = true`."
+    },
+    {
+      "command": "data-dictionary",
+      "description": "Generate the data-dictionary workbook used by `data_dictionary_path` in Mode 2."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Rebuild a .sav from CSV with a data dictionary",
+      "body": "[[\"spss-reader::write-sav\"]]\ninput_path = \"./data/survey.csv\"\noutput_dir = \"./output\"\ndata_dictionary_path = \"./output/survey_data_dictionary.xlsx\""
+    },
+    {
+      "title": "Round-trip reconstruction from an export-excel workbook",
+      "body": "[[\"spss-reader::write-sav\"]]\ninput_path = \"./output/survey_export.xlsx\"\noutput_dir = \"./output\"\nfrom_export_excel = true"
+    }
   ]
 }

@@ -149,5 +149,18 @@
       "description": "The same profiling statistics in flat CSV format for further analysis or custom visualisation.",
       "fields": []
     }
+  ],
+  "details": "For each solution column the plugin left-joins the memberships onto both numeric input files by `uuid_col`, stacks the profile metadata on top of the segmentation metadata (profile rows override duplicates keyed on variable name), and then runs a per-variable profiling loop. For each variable and each segment the statistics are: weighted mean (using `weight_col` from `weight_source`, or unit weights if omitted), weighted and unweighted counts, weighted proportion, Welch t-score (compares the segment to all other respondents combined, not just the total), standardised difference (same numerator as the t-test but divided by the pooled unweighted SD, so it reports an effect size), and index (segment mean divided by overall mean, multiplied by 100).\n\nThe conditional-formatting thresholds in the output xlsx are written as live cells in the top-left of each sheet so analysts can raise or lower the Count, Tscore, Sdiff, and Index cutoffs without re-running the plugin. Editing these cells in Excel is instant — the conditional formatting recalculates automatically.",
+  "see_also": [
+    {
+      "command": "seg-profile::migration",
+      "description": "Cross-tabulate segment memberships across solutions — run this before profiling to check segmentation stability."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Profile a 4-segment solution against attitudinal and demographic inputs",
+      "body": "[[\"seg-profile::profile\"]]\nmemberships = \"./output/memberships.csv\"\nseg_inputs = \"./data/seg_inputs.csv\"\nseg_meta = \"./data/seg_meta.csv\"\nprofile_inputs = \"./data/profile_inputs.csv\"\nprofile_meta = \"./data/profile_meta.csv\"\nuuid_col = \"resp_id\"\nrun_dir = \"./runs\"\nrun_name = \"p1\"\nsolution_cols = [\"sol_4\"]\nweight_col = \"wgt\"\nweight_source = \"memberships\""
+    }
   ]
 }

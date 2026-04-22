@@ -54,5 +54,22 @@
       "description": "The input data with all recodes, renames, and missing-value declarations from the cleaning map applied. Produced as an SPSS .sav file preserving variable labels, measure levels, and the corrected value codes.",
       "fields": []
     }
+  ],
+  "details": "The cleaning map workbook — produced by `write-cleaning-map-template` — lists every (variable, value) pair observed in the input. Each row carries editable columns: `new label` (replaces the value label in the output .sav), `new value` (recodes the numeric code), and `mark-missing` (adds the value to the variable’s declared-missing range). Rows left blank are no-ops — only filled-in cells trigger changes.\n\nOperations are applied in a specific order: renames first, then recodes, then missing-code declarations. Value collisions — two source codes that recode to the same target code — are reported as errors before any output is written, so a partial output is never produced. When `include_vars` is supplied, only those variables are passed through the cleaning logic; all other variables are written unchanged from the input.\n\nThe output is always a .sav file. If the input was a CSV or Excel file, apply-cleaning-map performs rename-only cleaning (no numeric recoding or missing-code declarations, since those require integer codes).",
+  "see_also": [
+    {
+      "command": "write-cleaning-map-template",
+      "description": "Generate the blank cleaning-map template that you edit and supply to this command."
+    },
+    {
+      "command": "data-dictionary",
+      "description": "Inspect the resulting .sav’s variable labels, value labels, and missing codes after cleaning."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Apply a completed cleaning map to an SPSS file",
+      "body": "[[\"spss-reader::apply-cleaning-map\"]]\ninput_path = \"./data/survey.sav\"\ncleaning_map_path = \"./cleaning/survey_cleaning_map.xlsx\"\noutput_dir = \"./cleaned\""
+    }
   ]
 }

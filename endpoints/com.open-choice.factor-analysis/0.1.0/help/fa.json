@@ -216,5 +216,26 @@
         }
       ]
     }
+  ],
+  "details": "For each combination of (item group, number of factors) the plugin runs a full factor-analysis pipeline: compute the correlation matrix with the chosen method, extract the requested number of factors, rotate the loading matrix to improve interpretability, and record the per-factor eigenvalues and per-item loadings. Within each loadings sheet, rows are sorted so that items on the same dominant factor appear together and the strongest loading appears first — the same ordering R’s `psych::fa.sort` produces.\n\nSample size is reported per item group as the smallest pairwise n across the correlation matrix. This is conservative — if you have a lot of missing data it will reflect the weakest overlap, not an average. Factor loadings are deterministic: the same input data and settings always produce the same numbers, even across thread counts.\n\nA few common gotchas: tetrachoric correlations require binary items (two values) and polychoric correlations require ordered categorical items, so mark the `type` correctly in your meta. Items with zero variance (e.g. everyone answered the same value) are silently dropped. If you request more factors than the group can support, the max is clamped down automatically and a notice is emitted.",
+  "see_also": [
+    {
+      "command": "correlation",
+      "description": "Build just the correlation matrix without running the factor extraction — handy for preliminary diagnostics or feeding into a downstream tool."
+    },
+    {
+      "command": "famd",
+      "description": "The mixed-data cousin. Use FAMD when your item group contains both numeric and categorical variables (e.g. attitudinal items plus demographic segments)."
+    }
+  ],
+  "examples": [
+    {
+      "title": "CSV input with an external meta file",
+      "body": "[[\"factor-analysis::fa\"]]\ninput = \"./data.csv\"\nmeta = \"./meta.csv\"\nrun_dir = \"./runs\"\nrun_name = \"fa1\"\nmin_count = 2\nmax_count = 5\ncor = \"pearson\"\nrotate = \"varimax\""
+    },
+    {
+      "title": "Dichotomous items with tetrachoric correlations",
+      "body": "[[\"factor-analysis::fa\"]]\ninput = \"./items.sav\"\nrun_dir = \"./runs\"\nrun_name = \"tetra\"\ncor = \"tetrachoric\"\nrotate = \"varimax\"\n\n# type = dichotomous is required for tetrachoric correlations.\nmeta = [\n  { match = \"^P1_\", batch = \"attitudes\", type = \"dichotomous\" },\n]"
+    }
   ]
 }

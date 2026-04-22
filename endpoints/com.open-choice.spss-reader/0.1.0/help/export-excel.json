@@ -41,5 +41,22 @@
       "description": "A two-sheet Excel workbook. Sheet 1 contains the data with value labels applied (integer codes replaced by text labels). Sheet 2 lists variable metadata (name, label, storage type, measure level, missing codes). Use this to share data with stakeholders who do not have SPSS.",
       "fields": []
     }
+  ],
+  "details": "The output workbook has two sheets. Sheet 1 contains the data: each row is one respondent, each column is one variable. For categorical variables (those with SPSS value labels), the cell shows the label text rather than the raw integer code. Sheet 2 contains variable metadata: one row per variable with name, label, storage type, SPSS measure level, and declared missing-value codes.\n\nTo preserve round-trip fidelity, each categorical column in Sheet 1 has a hidden companion column that stores the raw numeric codes. When the workbook is fed back to `write-sav` with `from_export_excel = true`, those hidden columns are used to reconstruct the original integer codes without loss. This means you can share the workbook, receive it back with labelling edits (on Sheet 2), and reconstruct a corrected .sav.\n\nCSV inputs have no SPSS metadata: Sheet 2 is populated with detected types only and there are no value labels or missing codes.",
+  "see_also": [
+    {
+      "command": "write-sav",
+      "description": "Round-trip: read back an export-excel workbook and reconstruct a .sav with `from_export_excel = true`."
+    },
+    {
+      "command": "data-dictionary",
+      "description": "A lighter alternative that outputs a dictionary workbook — without the full data rows — for metadata inspection."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Export an SPSS file to a labeled Excel workbook",
+      "body": "[[\"spss-reader::export-excel\"]]\ninput_path = \"./data/survey.sav\"\noutput_dir = \"./output\""
+    }
   ]
 }

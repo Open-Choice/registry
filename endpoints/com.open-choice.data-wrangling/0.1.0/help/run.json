@@ -144,5 +144,26 @@
         }
       ]
     }
+  ],
+  "details": "In ops mode the plugin chains Polars lazy-frame verbs against a named starting input. The `input` field names the starting frame in the `[inputs]` map; each verb in the `[[ops]]` array transforms it in order. Filter and expression fields (`filter.expr`, `with_columns.exprs`, `group_by.agg`) accept SQL-flavoured scalar and aggregate expressions via `polars_sql::sql_expr` — the same syntax as query mode, but applied one operation at a time. The `join` verb resolves its `with` against the `[inputs]` map, honouring that input's own pre-pipeline before the join.\n\nIn query mode the `query` field holds a full SQL statement. Every entry in `[inputs]` is registered under its map key as a table, so `SELECT * FROM main JOIN lookup ON main.id = lookup.id` works directly. Query mode is the right choice when the transformation can be expressed more naturally as a SQL statement than as a sequence of verbs.\n\nEach input may declare its own `ops` pre-pipeline that is applied at load time before any top-level operation sees the frame. This is useful for renaming columns, filtering rows, or dropping unused columns from a large file before a join.",
+  "see_also": [
+    {
+      "command": "spss-reader::export-excel",
+      "description": "Export SPSS or CSV data to a labeled Excel workbook — a common source for data-wrangling inputs."
+    },
+    {
+      "command": "factor-analysis::fa",
+      "description": "Example of a downstream consumer that expects a specific CSV layout — data-wrangling::run can reshape inputs into that layout."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Ops mode: select and filter columns",
+      "body": "[[\"data-wrangling::run\"]]\nrun_dir = \"./runs\"\nrun_name = \"w1\"\noutput = \"./out.csv\"\ninput = \"main\"\n\n[inputs.main]\npath = \"./data.csv\"\n\n[[ops]]\nverb = \"select\"\ncols = [\"id\", \"segment\", \"score\"]\n\n[[ops]]\nverb = \"filter\"\nexpr = \"score > 3\""
+    },
+    {
+      "title": "Query mode: join two inputs with SQL",
+      "body": "[[\"data-wrangling::run\"]]\nrun_dir = \"./runs\"\nrun_name = \"w2\"\noutput = \"./joined.csv\"\nquery = \"SELECT a.id, a.score, b.label FROM responses AS a LEFT JOIN labels AS b ON a.code = b.code\"\n\n[inputs.responses]\npath = \"./responses.csv\"\n\n[inputs.labels]\npath = \"./labels.csv\""
+    }
   ]
 }

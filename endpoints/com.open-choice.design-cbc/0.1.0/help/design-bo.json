@@ -156,5 +156,12 @@
       "description": "How often each level of each attribute appears across the design. Roughly equal counts per level indicate good balance.",
       "fields": []
     }
+  ],
+  "details": "The BO objective jointly minimises two SSE terms: pair-count balance (how evenly each attribute-level pair co-appears across tasks) and marginal-count balance (how evenly each attribute level appears across tasks and versions). Neither term requires a prior on respondent utilities, making BO the right choice when no pilot data exists.\n\nThe search engine is simulated annealing (SA). Each step proposes a small random perturbation — either swapping one attribute-level assignment within a task or replacing a full task-attribute vector — and accepts or rejects the change based on the change in objective and the current temperature. Temperature decays multiplicatively by `cooling_rate` each step. Running multiple independent SA chains (`n_starts` > 1, with matching `threads`) and keeping the best result is more effective than a single long chain, because the objective surface can have many local minima.\n\nForbidden combinations (pairwise restrictions, gating rules) are enforced as hard constraints — any proposal that would create a forbidden combination is rejected before scoring. Fixed cells hold specific attribute-level assignments constant throughout the search.",
+  "examples": [
+    {
+      "title": "Generate a 4-version, 8-task, 3-concept CBC design",
+      "body": "[[\"design-cbc::design-bo\"]]\nrun_dir = \"./designs\"\nrun_name = \"bo1\"\nseed = 42\nn_starts = 4\nthreads = 4\n\n[spec]\nversions = 4\ntasks_per_version = 8\nconcepts_per_task = 3\n\n[[spec.attributes]]\nname = \"Brand\"\nmax_level = 4\n\n[[spec.attributes]]\nname = \"Price\"\nmax_level = 3\n\n[[spec.attributes]]\nname = \"Feature\"\nmax_level = 3"
+    }
   ]
 }

@@ -48,5 +48,26 @@
       "description": "An Excel workbook cataloguing every variable in the dataset. Shows name, label, storage type, SPSS measure level, and missing-value codes. For categorical variables, includes a frequency table of observed codes with labels, counts, and percentages. Use this to check data quality and understand the variable universe before any analysis.",
       "fields": []
     }
+  ],
+  "details": "A variable is treated as categorical when its distinct-value count is at or below `cutoff` (default 100). Categorical variables get a frequency table: each observed code appears as a row with its SPSS value label, count, and percentage of the total (missing values are excluded from the denominator). Variables above the cutoff are treated as continuous and get descriptive summaries (min, max, mean) instead of a frequency table. The cutoff is a pragmatic ceiling, not a statistical rule — adjust it for surveys with long enumeration lists.\n\nThe output workbook is the canonical metadata carrier for this plugin family: `write-sav` accepts it via `data_dictionary_path` to hydrate variable labels, value labels, measure levels, and missing-code ranges onto a CSV-based build, letting you reconstruct a fully labelled .sav from a plain CSV and a dictionary workbook.",
+  "see_also": [
+    {
+      "command": "export-excel",
+      "description": "Export the .sav to a labeled Excel workbook — useful for sharing data with stakeholders who do not have SPSS."
+    },
+    {
+      "command": "write-sav",
+      "description": "Build a .sav from CSV + data-dictionary workbook — the inverse of data-dictionary."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Generate a data dictionary for an SPSS file",
+      "body": "[[\"spss-reader::data-dictionary\"]]\ninput_path = \"./data/survey.sav\"\noutput_dir = \"./output\""
+    },
+    {
+      "title": "Lower the cutoff to treat more variables as continuous",
+      "body": "[[\"spss-reader::data-dictionary\"]]\ninput_path = \"./data/survey.sav\"\noutput_dir = \"./output\"\ncutoff = 20"
+    }
   ]
 }

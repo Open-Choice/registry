@@ -175,5 +175,12 @@
       "description": "Frequency of each attribute level across the design.",
       "fields": []
     }
+  ],
+  "details": "D-efficient designs maximise the log-determinant of the aggregate MNL information matrix, which is proportional to the precision of utility estimates. Each attribute is effects-coded: the last level receives coefficients -1 across all parameters. Under null utilities (no prior), choice probabilities are uniform 1/C and the information matrix is determined purely by the design. When a `beta` prior is supplied, choice probabilities are computed from `softmax(z_c · beta)` for each concept, making the design sensitive to the specific prior values.\n\nThe objective balances total information (log|M_total|) with per-version information (mean_v log|M_v|) via the `alpha` weight. Setting `alpha=0` optimises only aggregate information; setting `alpha=1` gives equal weight to per-version efficiency. The `ridge` parameter keeps the information matrix positive definite when restrictions or fixed cells create near-degenerate profiles.\n\nBayesian D-optimal designs pass an array of beta draws: the objective averages across draws, which hedges against prior uncertainty. This requires prior beliefs from a pilot study or elicitation.",
+  "examples": [
+    {
+      "title": "D-efficient design with null prior (uniform 1/C probabilities)",
+      "body": "[[\"design-cbc::design-de\"]]\nrun_dir = \"./designs\"\nrun_name = \"de1\"\nseed = 42\nn_starts = 4\nthreads = 4\n\n[spec]\nversions = 4\ntasks_per_version = 8\nconcepts_per_task = 3\n\n[[spec.attributes]]\nname = \"Brand\"\nmax_level = 4\n\n[[spec.attributes]]\nname = \"Price\"\nmax_level = 3"
+    }
   ]
 }

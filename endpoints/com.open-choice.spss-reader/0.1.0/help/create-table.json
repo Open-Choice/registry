@@ -75,5 +75,22 @@
       "description": "An Excel workbook with one table per variable showing weighted percentages (or means for continuous variables) broken out across banner columns. Significance-letter cells flag statistically significant differences between banner groups. This is the standard frequency-table deliverable format for quantitative market research.",
       "fields": []
     }
+  ],
+  "details": "The banner is the Cartesian cross of the `banner_vars` categories — if you supply gender (2 levels) and age group (4 levels) you get 8 banner columns plus Total. For each variable in the input file a row block is produced: categorical variables emit one row per value with a weighted (or unweighted) percentage per banner column; continuous variables emit a mean and standard error. Significance letters are added to each cell using the standard banner-testing convention: a letter in a cell indicates a banner column against which this column is significantly higher at the default alpha (5%).\n\nThe discrete/continuous boundary is controlled by `discrete_count_cutoff` (default 100 distinct values). Variables above the cutoff are treated as continuous. SPSS missing-coded values are excluded from the base by default — set `include_na = true` to include them in the count.\n\nFor multi-response (checkbox) variables, each checked option appears as a separate row with the proportion of respondents who checked it. The implied unchecked rows are suppressed by default — set `include_unchecked = true` to emit them.",
+  "see_also": [
+    {
+      "command": "data-dictionary",
+      "description": "Review variable labels, value labels, and missing codes before building the table."
+    },
+    {
+      "command": "export-excel",
+      "description": "Export data to a labeled Excel workbook for manual inspection alongside the table output."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Banner table by gender and age group with a survey weight",
+      "body": "[[\"spss-reader::create-table\"]]\ninput_path = \"./data/survey.sav\"\noutput_dir = \"./output\"\nbanner_vars = [\"Q_gender\", \"Q_age_group\"]\nweight_var = \"weight\""
+    }
   ]
 }

@@ -224,5 +224,22 @@
       "description": "JSON record of lambda.min, lambda.1se, the selected CV measure, family, and fit metadata. Use this to programmatically retrieve the key model parameters.",
       "fields": []
     }
+  ],
+  "details": "The regularisation path starts at lambda_max (the smallest lambda that makes all coefficients exactly zero) and descends through a log-spaced sequence of `nlambda` values. At each step, warm starts from the previous solution accelerate convergence — the active-set strategy cycles only the currently active predictors until stable, then does a full KKT sweep to check for newly active predictors, and repeats. Gaussian fits use direct weighted least squares at each coordinate; binomial, poisson, multinomial, and cox use IRLS (partial-Newton majorisation) with coordinate descent as the inner solve.\n\nCross-validation splits the data into `nfolds` folds, retrains on each fold’s training set at the shared master lambda grid, and scores held-out observations with `type_measure`. The CV curve (`cv_results.csv`) reports `cvm` (mean CV loss), `cvsd` (standard error), `nzero` (predictor count), and flags `lambda.min` and `lambda.1se`. The 1-SE rule chooses the largest lambda whose CV loss is within one standard error of the minimum — a sparser, more conservative model that is less sensitive to the specific train/validation split.",
+  "see_also": [
+    {
+      "command": "model-shapley::fit",
+      "description": "Shapley / Johnson importance attribution — a natural follow-on to identify which predictors the glmnet model is relying on."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Gaussian lasso with 10-fold CV",
+      "body": "[[\"model-glmnet::fit\"]]\ninput = \"./data.csv\"\nrun_dir = \"./runs\"\nrun_name = \"g1\"\nfamily = \"gaussian\"\ny = \"outcome\"\nalpha = 1.0\nnlambda = 100\nnfolds = 10"
+    },
+    {
+      "title": "Elastic-net binomial with equal lasso/ridge mixing and AUC scoring",
+      "body": "[[\"model-glmnet::fit\"]]\ninput = \"./survey.csv\"\nrun_dir = \"./runs\"\nrun_name = \"bin1\"\nfamily = \"binomial\"\ny = \"converted\"\nalpha = 0.5\nnlambda = 100\nnfolds = 5\ntype_measure = \"auc\""
+    }
   ]
 }

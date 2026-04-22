@@ -149,5 +149,22 @@
       "description": "JSON record of the method used (exact Shapley, sampled, or Johnson), total R², always-block R², seed, and run metadata.",
       "fields": []
     }
+  ],
+  "details": "Exact Shapley (Lindeman-Merenda-Gold, `lmg`) enumerates all 2^p subsets of the predictor groups. For each subset S and each group j not in S, the marginal R² gain of adding j to S is computed. Averaging these marginal gains with Shapley weights (1/p choices of ordering) gives the exact Shapley value for j. This is the gold standard for importance attribution but becomes expensive beyond about 14 free groups (2^14 = 16,384 subsets).\n\nJohnson’s ε (relative weights) eigendecomposes the predictor correlation matrix, finds the orthogonal transformation that best approximates the original predictors, and attributes R² via the squared projection loadings. It is fast and produces results close to exact Shapley when predictors are moderately correlated, but diverges when collinearity is high.\n\nSampled Shapley (Castro-Gómez-Tejada) draws `n_orderings` random permutations of the predictor groups and averages the telescoping prefix marginals. The standard error shrinks as 1/√n_orderings and is reported per variable. This is the right method when you have 15-40 free predictors.\n\nFactors (non-numeric columns) are one-hot expanded internally with the first level as reference, but the importance table reports a single row per original variable — the expansion is invisible in the output.",
+  "see_also": [
+    {
+      "command": "model-glmnet::fit",
+      "description": "Elastic-net regression — a natural companion when you want both a predictive model and importance scores from the same dataset."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Auto-method (exact Shapley up to 14 free predictors)",
+      "body": "[[\"model-shapley::fit\"]]\ninput = \"./data.csv\"\nrun_dir = \"./runs\"\nrun_name = \"s1\"\ny = \"overall_satisfaction\"\nmethod = \"auto\""
+    },
+    {
+      "title": "Johnson relative weights with a survey weight column",
+      "body": "[[\"model-shapley::fit\"]]\ninput = \"./data.csv\"\nrun_dir = \"./runs\"\nrun_name = \"s2\"\ny = \"overall_satisfaction\"\nmethod = \"johnson\"\nweights_col = \"wgt\""
+    }
   ]
 }

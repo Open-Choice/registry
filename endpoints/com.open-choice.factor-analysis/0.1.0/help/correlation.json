@@ -153,5 +153,26 @@
         }
       ]
     }
+  ],
+  "details": "Correlations measure the strength and direction of a linear relationship: values near +1 mean two items move up together, near −1 mean they move in opposite directions, and near 0 mean they’re unrelated. Different item types call for different measures. Pearson is the classic choice for continuous and scaled responses. Tetrachoric is built for two-category items (yes/no, agree/disagree) and recovers the correlation that would exist on an underlying latent scale. Polychoric does the same for ordered categorical items with more than two levels. Biserial and polyserial mix one numeric column with a categorical partner. Covariance is the only option here that is not normalised to −1/+1 — it’s useful when you want raw covariances for a downstream computation.\n\nSample sizes can vary across cells when respondents skip items. That’s why the Excel workbook includes an `n_obs` sheet: each cell mirrors the main matrix but shows how many respondents contributed to that pair. Inspecting `n_obs` is a fast way to spot items with unusually low coverage that might be distorting the factor structure.",
+  "see_also": [
+    {
+      "command": "fa",
+      "description": "Run a full exploratory factor analysis on numeric items. Uses the same correlation methods under the hood."
+    },
+    {
+      "command": "famd",
+      "description": "Factor analysis for mixed numeric and categorical data — the right choice when your group contains both types."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Pearson correlations on all columns of a CSV",
+      "body": "[[\"factor-analysis::correlation\"]]\ninput = \"./data.csv\"\nrun_dir = \"./runs\"\nrun_name = \"cor1\"\nmethod = \"pearson\""
+    },
+    {
+      "title": "Polychoric correlations on a subset of ordinal items",
+      "body": "[[\"factor-analysis::correlation\"]]\ninput = \"./survey.sav\"\nrun_dir = \"./runs\"\nrun_name = \"poly\"\nmethod = \"polychoric\"\nmeta = \"./meta.csv\"\nvars = [\"q1\", \"q2\", \"q3\", \"q4\", \"q5\"]"
+    }
   ]
 }

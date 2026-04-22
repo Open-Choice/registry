@@ -67,5 +67,18 @@
       "description": "The same cross-tabulation in CSV format for further processing.",
       "fields": []
     }
+  ],
+  "details": "The migration table is a stacked cross-tabulation. Each entry in the matrix is the count of respondents who belong to segment i of solution A and segment j of solution B. Reading across a row tells you where the respondents in one segment map in the comparison solution; reading down a column tells you where the respondents in a comparison-solution segment came from. The total row and column give the marginal counts for each solution independently.\n\nDiagonal blocks (where the row solution and column solution are the same) are self-cross-tabs and show only the per-segment sample sizes. Off-diagonal blocks are the actual migration tables. When you have more than two solutions, all pairwise combinations are stacked into a single workbook sheet, making it easy to scan across a grid of comparisons at once.\n\nThis command is typically used to assess the stability of a segmentation: if a 3-segment solution and a 4-segment solution agree strongly on most respondents, the extra segment in the 4-class solution represents a genuine split rather than noise.",
+  "see_also": [
+    {
+      "command": "seg-profile::profile",
+      "description": "Profile segment membership against numeric survey variables — the natural follow-on after reviewing migration patterns."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Cross-tabulate two competing segmentation solutions",
+      "body": "[[\"seg-profile::migration\"]]\nmemberships = \"./output/memberships.csv\"\nrun_dir = \"./runs\"\nrun_name = \"m1\"\nuuid_col = \"resp_id\"\nsolution_cols = [\"sol_3\", \"sol_4\"]"
+    }
   ]
 }
