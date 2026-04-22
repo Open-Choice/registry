@@ -87,7 +87,11 @@
       "type": "string",
       "required": false,
       "default": "weighted-by-probability",
-      "accepted_values": ["weighted-by-probability", "first-choice", "threshold"],
+      "accepted_values": [
+        "weighted-by-probability",
+        "first-choice",
+        "threshold"
+      ],
       "description": "Reach scoring rule. `weighted-by-probability` (default) weights each respondent's contribution by the softmax probability of picking an item from the candidate subset within an implied task of `number_of_alt` alternatives. `first-choice` counts a respondent as 'reached' iff their highest-utility item in the subset would be the first choice across the implied task. `threshold` uses a fixed utility cutoff."
     },
     {
@@ -120,9 +124,18 @@
     "For comparing against search results, use the same `reach_method`, `number_of_alt`, and (where applicable) `threshold` you used for the search."
   ],
   "see_also": [
-    { "command": "maxdiff-turf::search-k", "description": "Search for the best subset of a given size — produces results comparable to scenario scores." },
-    { "command": "maxdiff-turf::search-ladder", "description": "Build the full value ladder over k — useful for picking which sizes to score scenarios at." },
-    { "command": "maxdiff-turf::inspect-input", "description": "Sanity-check the utilities file before scoring." }
+    {
+      "command": "maxdiff-turf::search-k",
+      "description": "Search for the best subset of a given size — produces results comparable to scenario scores."
+    },
+    {
+      "command": "maxdiff-turf::search-ladder",
+      "description": "Build the full value ladder over k — useful for picking which sizes to score scenarios at."
+    },
+    {
+      "command": "maxdiff-turf::inspect-input",
+      "description": "Sanity-check the utilities file before scoring."
+    }
   ],
   "examples": [
     {
@@ -143,20 +156,126 @@
     }
   ],
   "fields": [
-    { "name": "utilities",        "description": "Path to per-respondent utilities CSV.",                                          "required": true,  "accepted_values": [] },
-    { "name": "scenarios",        "description": "Path to scenarios CSV (one row per candidate subset).",                          "required": true,  "accepted_values": [] },
-    { "name": "out_dir",          "description": "Output directory for results. Created if it does not exist.",                    "required": true,  "accepted_values": [] },
-    { "name": "subgroups",        "description": "Optional subgroup membership CSV.",                                              "required": false, "accepted_values": [] },
-    { "name": "labels",           "description": "Optional item labels CSV.",                                                      "required": false, "accepted_values": [] },
-    { "name": "include",          "description": "Comma-separated 1-based item indices to force-include.",                         "required": false, "accepted_values": [] },
-    { "name": "exclude",          "description": "Comma-separated 1-based item indices to exclude.",                               "required": false, "accepted_values": [] },
-    { "name": "utility_cols",     "description": "Explicit utility column spec (1-based, supports ranges).",                       "required": false, "accepted_values": [] },
-    { "name": "non_utility_cols", "description": "Comma-separated 1-based columns to ignore.",                                     "required": false, "accepted_values": [] },
-    { "name": "forbidden_pairs",  "description": "Forbidden pairs spec, e.g. '1:2,3:4'.",                                          "required": false, "accepted_values": [] },
-    { "name": "headers",          "description": "Whether the CSV files have header rows. Default: true.",                         "required": false, "accepted_values": [] },
-    { "name": "reach_method",     "description": "Reach scoring rule.",                                                            "required": false, "accepted_values": ["weighted-by-probability", "first-choice", "threshold"] },
-    { "name": "number_of_alt",    "description": "Implied alternatives per task. Default: 5.",                                      "required": false, "accepted_values": [] },
-    { "name": "threshold",        "description": "Threshold value for the threshold reach method. Default: 0.8.",                   "required": false, "accepted_values": [] },
-    { "name": "threads",          "description": "Rayon worker threads for parallel scenario scoring. Default: 1.",                 "required": false, "accepted_values": [] }
+    {
+      "name": "utilities",
+      "description": "Path to per-respondent utilities CSV.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "scenarios",
+      "description": "Path to scenarios CSV (one row per candidate subset).",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "out_dir",
+      "description": "Output directory for results. Created if it does not exist.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "subgroups",
+      "description": "Optional subgroup membership CSV.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "labels",
+      "description": "Optional item labels CSV.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "include",
+      "description": "Comma-separated 1-based item indices to force-include.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "exclude",
+      "description": "Comma-separated 1-based item indices to exclude.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "utility_cols",
+      "description": "Explicit utility column spec (1-based, supports ranges).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "non_utility_cols",
+      "description": "Comma-separated 1-based columns to ignore.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "forbidden_pairs",
+      "description": "Forbidden pairs spec, e.g. '1:2,3:4'.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "headers",
+      "description": "Whether the CSV files have header rows. Default: true.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "reach_method",
+      "description": "Reach scoring rule.",
+      "required": false,
+      "accepted_values": [
+        "weighted-by-probability",
+        "first-choice",
+        "threshold"
+      ]
+    },
+    {
+      "name": "number_of_alt",
+      "description": "Implied alternatives per task. Default: 5.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "threshold",
+      "description": "Threshold value for the threshold reach method. Default: 0.8.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "threads",
+      "description": "Rayon worker threads for parallel scenario scoring. Default: 1.",
+      "required": false,
+      "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{out_dir}/{run_name}_scored_scenarios.csv",
+      "title": "Scored scenarios",
+      "description": "One row per input scenario with its TURF reach score and any per-subgroup reach columns requested. Use this when you have a hand-built shortlist and want to compare the alternatives on reach.",
+      "fields": [
+        {
+          "name": "scenario_id",
+          "description": "Row identifier from the input scenarios CSV."
+        },
+        {
+          "name": "reach",
+          "description": "TURF reach for this scenario across all respondents."
+        },
+        {
+          "name": "items",
+          "description": "Items included in this scenario."
+        }
+      ]
+    },
+    {
+      "path": "{out_dir}/{run_name}_input_snapshot.json",
+      "title": "Prepared-input snapshot",
+      "description": "Records the resolved utility columns, applied filters, and reach-method settings used to score the scenarios.",
+      "fields": []
+    }
   ]
 }

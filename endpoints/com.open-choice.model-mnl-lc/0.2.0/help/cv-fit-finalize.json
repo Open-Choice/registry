@@ -58,7 +58,7 @@
       "name": "convergence_threshold",
       "type": "number",
       "required": false,
-      "default": 0.00001,
+      "default": 1e-05,
       "description": "EM convergence tolerance. Default `1e-5`."
     },
     {
@@ -207,6 +207,33 @@
       "description": "Number of threads per fold. Default: 1.",
       "required": false,
       "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{run_dir}/cv_summary.csv",
+      "title": "Cross-validation summary",
+      "description": "Per-fold and aggregate train/holdout log-likelihood. The headline metric for comparing LC solutions with different numbers of classes on held-out respondents.",
+      "fields": [
+        {
+          "name": "fold",
+          "description": "Fold identifier."
+        },
+        {
+          "name": "train_llh",
+          "description": "Training log-likelihood."
+        },
+        {
+          "name": "holdout_llh",
+          "description": "Holdout log-likelihood."
+        }
+      ]
+    },
+    {
+      "path": "{run_dir}/{fold_id}/exports/",
+      "title": "Per-fold exports",
+      "description": "Finalized exports for each fold: IC.csv and coefficients.csv per class.",
+      "fields": []
     }
   ]
 }

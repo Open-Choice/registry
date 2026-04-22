@@ -5,20 +5,153 @@
   "description": "Loads the chosen subset of columns, optionally consulting `meta` to resolve per-column types for `mixed`/biserial/polyserial dispatch, and computes pairwise correlations using the selected method. The CSV output has a leading blank header cell, variable names as the first column, and standard numeric formatting; the xlsx has a `correlation` sheet with bold headers and 0.0000 numeric format, an `n_obs` sheet reporting the pairwise sample sizes, and a `meta` sheet recording the method and variable count.",
   "usage": "[[\"factor-analysis::correlation\"]]\ninput = \"./data.csv\"\nrun_dir = \"./runs\"\nrun_name = \"cor1\"\nmethod = \"pearson\"\n# optional:\nmeta = \"./meta.csv\"\nvars = [\"q1\", \"q2\", \"q3\"]",
   "arguments": [
-    { "name": "input",    "type": "string",  "required": true,  "description": "CSV of variables to correlate." },
-    { "name": "run_dir",  "type": "string",  "required": true,  "description": "Base directory. Outputs land in `<run_dir>/ocinfo/<run_name>_factor_analysis/`." },
-    { "name": "run_name", "type": "string",  "required": true,  "description": "Short identifier for this run; no '..', '/' or '\\\\'." },
-    { "name": "method",   "type": "string",  "required": false, "default": "pearson", "description": "pearson|covariance|tetrachoric|polychoric|mixed|biserial|polyserial|yuleb|yuleq|yuley. All methods implemented, matching psych::fa(cor=...) conventions." },
-    { "name": "meta",     "type": "string",  "required": false, "description": "Optional variable metadata CSV. Required for `mixed`/biserial/polyserial to determine per-column types." },
-    { "name": "vars",     "type": "array",   "required": false, "default": [], "description": "Subset of input columns to include. Empty = all columns." },
-    { "name": "correct",  "type": "number",  "required": false, "default": 0.5, "description": "Continuity correction: replace zero cells in contingency tables used by tetrachoric/polychoric/yule. Matches psych defaults." },
-    { "name": "na_action","type": "string",  "required": false, "default": "complete_cases", "description": "Pairwise deletion or abort on any NA." },
-    { "name": "headers",  "type": "boolean", "required": false, "default": true, "description": "Whether CSV inputs have a header row." },
-    { "name": "threads",  "type": "integer", "required": false, "default": 1, "description": "Number of worker threads for per-pair correlation parallelism. `1` (default) runs serially. Results are deterministic regardless of thread count." },
-    { "name": "output_format", "type": "string", "required": false, "description": "Override stdout format: human, protocol, or quiet." }
+    {
+      "name": "input",
+      "type": "string",
+      "required": true,
+      "description": "CSV of variables to correlate."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "description": "Base directory. Outputs land in `<run_dir>/ocinfo/<run_name>_factor_analysis/`."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "description": "Short identifier for this run; no '..', '/' or '\\\\'."
+    },
+    {
+      "name": "method",
+      "type": "string",
+      "required": false,
+      "default": "pearson",
+      "description": "pearson|covariance|tetrachoric|polychoric|mixed|biserial|polyserial|yuleb|yuleq|yuley. All methods implemented, matching psych::fa(cor=...) conventions."
+    },
+    {
+      "name": "meta",
+      "type": "string",
+      "required": false,
+      "description": "Optional variable metadata CSV. Required for `mixed`/biserial/polyserial to determine per-column types."
+    },
+    {
+      "name": "vars",
+      "type": "array",
+      "required": false,
+      "default": [],
+      "description": "Subset of input columns to include. Empty = all columns."
+    },
+    {
+      "name": "correct",
+      "type": "number",
+      "required": false,
+      "default": 0.5,
+      "description": "Continuity correction: replace zero cells in contingency tables used by tetrachoric/polychoric/yule. Matches psych defaults."
+    },
+    {
+      "name": "na_action",
+      "type": "string",
+      "required": false,
+      "default": "complete_cases",
+      "description": "Pairwise deletion or abort on any NA."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether CSV inputs have a header row."
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Number of worker threads for per-pair correlation parallelism. `1` (default) runs serially. Results are deterministic regardless of thread count."
+    },
+    {
+      "name": "output_format",
+      "type": "string",
+      "required": false,
+      "description": "Override stdout format: human, protocol, or quiet."
+    }
   ],
   "notes": [
     "The `covariance` method produces the unnormalised sample covariance (divisor n-1), not a correlation.",
     "Pairwise sample sizes are written to the `n_obs` sheet so downstream consumers can weight the matrix appropriately."
+  ],
+  "artifacts": [
+    {
+      "path": "<run_name>.csv",
+      "title": "Correlation matrix (flat CSV)",
+      "description": "The correlation matrix in its simplest form — one row and one column per variable, ready to open in Excel, paste into R/Python, or visualise with any correlogram tool.",
+      "fields": [
+        {
+          "name": "(header cell, row 1 column 1)",
+          "description": "Blank — the top-left corner. Variable names run along the first row and the first column."
+        },
+        {
+          "name": "first column",
+          "description": "Variable names, in the same order as the columns."
+        },
+        {
+          "name": "remaining cells",
+          "description": "The full correlation matrix (both upper and lower triangles written — the matrix is symmetric). Values near ±1 indicate strong relationships; near 0, no linear relationship."
+        }
+      ]
+    },
+    {
+      "path": "<run_name>.xlsx",
+      "title": "Correlation workbook (three sheets)",
+      "description": "The same matrix plus the extra context an Excel-using reviewer typically wants: sample sizes per cell and the run metadata.",
+      "fields": []
+    },
+    {
+      "path": "correlation sheet",
+      "title": "Correlations with formatted headers",
+      "description": "The same matrix as the CSV, but with bold headers and a four-decimal number format for easier reading on screen.",
+      "fields": [
+        {
+          "name": "first column",
+          "description": "Variable names."
+        },
+        {
+          "name": "remaining columns",
+          "description": "Pairwise correlations (or covariances if method is `covariance`)."
+        }
+      ]
+    },
+    {
+      "path": "n_obs sheet",
+      "title": "Pairwise sample sizes",
+      "description": "A cell-for-cell twin of the correlation sheet showing how many respondents contributed to each pair. Rows/columns where n_obs drops sharply signal items with heavy missingness — worth investigating before trusting the correlations involving them.",
+      "fields": [
+        {
+          "name": "first column",
+          "description": "Variable names."
+        },
+        {
+          "name": "remaining cells",
+          "description": "Number of respondents with non-missing values on both the row and the column item."
+        }
+      ]
+    },
+    {
+      "path": "meta sheet",
+      "title": "Run metadata",
+      "description": "A small key/value block recording the settings used, so a colleague opening the workbook can see what was run without re-reading the task file.",
+      "fields": [
+        {
+          "name": "method",
+          "description": "Correlation method used for this run (e.g. `pearson`, `polychoric`)."
+        },
+        {
+          "name": "n_vars",
+          "description": "Number of variables included in the matrix."
+        }
+      ]
+    }
   ]
 }

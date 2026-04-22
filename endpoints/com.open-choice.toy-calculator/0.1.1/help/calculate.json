@@ -54,8 +54,42 @@
     }
   ],
   "fields": [
-    { "name": "operation",  "description": "Arithmetic operation: add, subtract, multiply, or divide.",              "required": true,  "accepted_values": ["add", "subtract", "multiply", "divide"] },
-    { "name": "operands",   "description": "Array of numbers to reduce left-to-right. At least one element required.", "required": true,  "accepted_values": [] },
-    { "name": "output_dir", "description": "Directory for result.json and run.log.",                                  "required": true,  "accepted_values": [] }
+    {
+      "name": "operation",
+      "description": "Arithmetic operation: add, subtract, multiply, or divide.",
+      "required": true,
+      "accepted_values": [
+        "add",
+        "subtract",
+        "multiply",
+        "divide"
+      ]
+    },
+    {
+      "name": "operands",
+      "description": "Array of numbers to reduce left-to-right. At least one element required.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "output_dir",
+      "description": "Directory for result.json and run.log.",
+      "required": true,
+      "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{output_dir}/result.json",
+      "title": "Calculation result",
+      "description": "Contains the computed value as { \"result\": <number> }.",
+      "fields": []
+    },
+    {
+      "path": "{output_dir}/run.log",
+      "title": "Run log",
+      "description": "A brief summary of the operation performed.",
+      "fields": []
+    }
   ]
 }

@@ -5,15 +5,69 @@
   "description": "Reads a wide-format training CSV (one row per observation), separates the response column from the feature columns, and fits a Fisher linear discriminant analysis. Produces an xlsx report with fitted coefficients, training hit rates, optional holdout hit rates, and a run-info sheet. Emits a single started / finished event pair.",
   "usage": "[[\"model-dfa::fit-finalize\"]]\ninput = \"<wide.csv>\"\nrun_dir = \"<dir>\"\nrun_name = \"dfa_run\"\ny_col = \"y\"\n# optional:\ntest_input = \"<holdout.csv>\"\nx_cols = \"x1,x3,x5-x8\"",
   "arguments": [
-    { "name": "input", "type": "string", "required": true, "default": null, "description": "Path to the wide-format CSV. One row per observation; one column holds the class label, the rest are numeric features." },
-    { "name": "run_dir", "type": "string", "required": true, "default": null, "description": "Output directory for results. Created if it does not exist. Artefacts land in `{run_dir}/ocinfo/{run_name}_dfa/`." },
-    { "name": "run_name", "type": "string", "required": true, "default": null, "description": "Short identifier for this run. Must not contain path separators or '..'." },
-    { "name": "y_col", "type": "string", "required": true, "default": null, "description": "Name or 1-based index of the class-label column. Labels must be exactly 1..=K with no gaps." },
-    { "name": "x_cols", "type": "string", "required": false, "default": null, "description": "Comma-separated specifier picking which columns to use as features. Accepts names, 1-based indices, and ranges like `3-7`. Default: all columns except y_col." },
-    { "name": "test_input", "type": "string", "required": false, "default": null, "description": "Optional holdout CSV for out-of-sample evaluation. Must have the same column layout as `input`." },
-    { "name": "headers", "type": "boolean", "required": false, "default": true, "description": "Whether the input CSVs have a header row. Default `true`." },
-    { "name": "random_seed", "type": "integer", "required": false, "default": 0, "description": "Random seed. `0` means non-deterministic. (LDA fit itself is deterministic; reserved for future K-fold splits.)" },
-    { "name": "threads", "type": "integer", "required": false, "default": 1, "description": "Reserved for API parity across `model-dfa` commands. A single LDA fit has no parallelism to exploit, so this parameter is accepted but currently ignored." }
+    {
+      "name": "input",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Path to the wide-format CSV. One row per observation; one column holds the class label, the rest are numeric features."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory for results. Created if it does not exist. Artefacts land in `{run_dir}/ocinfo/{run_name}_dfa/`."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Must not contain path separators or '..'."
+    },
+    {
+      "name": "y_col",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Name or 1-based index of the class-label column. Labels must be exactly 1..=K with no gaps."
+    },
+    {
+      "name": "x_cols",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Comma-separated specifier picking which columns to use as features. Accepts names, 1-based indices, and ranges like `3-7`. Default: all columns except y_col."
+    },
+    {
+      "name": "test_input",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Optional holdout CSV for out-of-sample evaluation. Must have the same column layout as `input`."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether the input CSVs have a header row. Default `true`."
+    },
+    {
+      "name": "random_seed",
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "description": "Random seed. `0` means non-deterministic. (LDA fit itself is deterministic; reserved for future K-fold splits.)"
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Reserved for API parity across `model-dfa` commands. A single LDA fit has no parallelism to exploit, so this parameter is accepted but currently ignored."
+    }
   ],
   "details": "LDA coefficients `w_k = Σ⁻¹ μ_k` are produced via a Cholesky solve on the pooled within-class covariance. Intercepts are `-0.5 μ_k' w_k + ln(prior_k)`. Predicted class is the argmax of `β_k' [1 | x]`. The training CSV must have labels exactly `1..=K` (no gaps, no zeros). Singular designs (e.g. a constant feature column) are rejected with a LinAlg error.",
   "value": "On success, `{run_dir}/ocinfo/{run_name}_dfa/` contains:\n\n- `spec.json` — run configuration snapshot.\n- `fit.json` — fitted LDA parameters (betas, priors, fit_cols, n_train, k, p).\n- `{run_name}_dfa_coefficients.csv` — tidy coefficient table (intercept + one row per feature × K classes).\n- `{run_name}_dfa_report.xlsx` — multi-sheet workbook (coefficients + training hit rates + optional holdout hit rates + run info).\n\nThe primary xlsx is also copied to `{run_dir}/{run_name}_dfa.xlsx` for discoverability.",
@@ -23,22 +77,112 @@
     "Use `cv-fit-finalize` for cross-validated fits (Phase B)."
   ],
   "see_also": [
-    { "command": "model-dfa::cv-fit-finalize", "description": "Cross-validated LDA fit over a folds directory (Phase B)." }
+    {
+      "command": "model-dfa::cv-fit-finalize",
+      "description": "Cross-validated LDA fit over a folds directory (Phase B)."
+    }
   ],
   "examples": [
-    { "title": "Basic LDA fit-finalize", "body": "[[\"model-dfa::fit-finalize\"]]\ninput = \"./wide.csv\"\nrun_dir = \"./runs\"\nrun_name = \"pilot\"\ny_col = \"y\"" },
-    { "title": "Fit-finalize with holdout", "body": "[[\"model-dfa::fit-finalize\"]]\ninput = \"./wide_train.csv\"\ntest_input = \"./wide_holdout.csv\"\nrun_dir = \"./runs\"\nrun_name = \"pilot_holdout\"\ny_col = \"y\"" },
-    { "title": "Fit-finalize with an explicit feature subset", "body": "[[\"model-dfa::fit-finalize\"]]\ninput = \"./wide.csv\"\nrun_dir = \"./runs\"\nrun_name = \"subset\"\ny_col = \"y\"\nx_cols = \"x1,x3,x5-x8\"" }
+    {
+      "title": "Basic LDA fit-finalize",
+      "body": "[[\"model-dfa::fit-finalize\"]]\ninput = \"./wide.csv\"\nrun_dir = \"./runs\"\nrun_name = \"pilot\"\ny_col = \"y\""
+    },
+    {
+      "title": "Fit-finalize with holdout",
+      "body": "[[\"model-dfa::fit-finalize\"]]\ninput = \"./wide_train.csv\"\ntest_input = \"./wide_holdout.csv\"\nrun_dir = \"./runs\"\nrun_name = \"pilot_holdout\"\ny_col = \"y\""
+    },
+    {
+      "title": "Fit-finalize with an explicit feature subset",
+      "body": "[[\"model-dfa::fit-finalize\"]]\ninput = \"./wide.csv\"\nrun_dir = \"./runs\"\nrun_name = \"subset\"\ny_col = \"y\"\nx_cols = \"x1,x3,x5-x8\""
+    }
   ],
   "fields": [
-    { "name": "input", "description": "Path to the wide-format CSV.", "required": true, "accepted_values": [] },
-    { "name": "run_dir", "description": "Output directory for results. Created if it does not exist.", "required": true, "accepted_values": [] },
-    { "name": "run_name", "description": "Short identifier for this run. Must not contain path separators or '..'.", "required": true, "accepted_values": [] },
-    { "name": "y_col", "description": "Name or 1-based index of the class-label column.", "required": true, "accepted_values": [] },
-    { "name": "x_cols", "description": "Comma-separated specifier picking feature columns (names, indices, or ranges).", "required": false, "accepted_values": [] },
-    { "name": "test_input", "description": "Optional holdout CSV for out-of-sample evaluation.", "required": false, "accepted_values": [] },
-    { "name": "headers", "description": "Whether the CSV has a header row. Default: true.", "required": false, "accepted_values": [] },
-    { "name": "random_seed", "description": "Random seed (0 = non-deterministic).", "required": false, "accepted_values": [] },
-    { "name": "threads", "description": "Reserved for API parity; currently unused.", "required": false, "accepted_values": [] }
+    {
+      "name": "input",
+      "description": "Path to the wide-format CSV.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Output directory for results. Created if it does not exist.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Must not contain path separators or '..'.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "y_col",
+      "description": "Name or 1-based index of the class-label column.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "x_cols",
+      "description": "Comma-separated specifier picking feature columns (names, indices, or ranges).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "test_input",
+      "description": "Optional holdout CSV for out-of-sample evaluation.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "headers",
+      "description": "Whether the CSV has a header row. Default: true.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "random_seed",
+      "description": "Random seed (0 = non-deterministic).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "threads",
+      "description": "Reserved for API parity; currently unused.",
+      "required": false,
+      "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{run_dir}/{run_name}_dfa.xlsx",
+      "title": "LDA report workbook",
+      "description": "The primary deliverable for a discriminant analysis. Contains the model coefficients, training classification accuracy, and optional holdout hit rates in a multi-sheet workbook ready to share with a client or review in Excel.",
+      "fields": [
+        {
+          "name": "coefficients sheet",
+          "description": "LDA coefficients: intercept plus one row per feature across K classes."
+        },
+        {
+          "name": "hit_rates sheet",
+          "description": "Training and optional holdout classification accuracy."
+        },
+        {
+          "name": "run_info sheet",
+          "description": "Run parameters and timestamp."
+        }
+      ]
+    },
+    {
+      "path": "{run_dir}/ocinfo/{run_name}_dfa/{run_name}_dfa_coefficients.csv",
+      "title": "Tidy coefficient table",
+      "description": "Machine-readable version of the LDA coefficients, one row per feature. Use this to feed downstream tools or to build custom coefficient charts.",
+      "fields": []
+    },
+    {
+      "path": "{run_dir}/ocinfo/{run_name}_dfa/fit.json",
+      "title": "Fitted LDA parameters",
+      "description": "JSON record of the full fitted model (betas, priors, feature list, class count). Use this to restore the model for scoring new data.",
+      "fields": []
+    }
   ]
 }

@@ -98,5 +98,26 @@
       "required": true,
       "accepted_values": []
     }
+  ],
+  "artifacts": [
+    {
+      "path": "{run_dir}/{run_name}_coefficients_expanded.csv",
+      "title": "Expanded coefficients",
+      "description": "One row per attribute-level with the corresponding preference utility. This is the reporting-ready table — attribute names and level labels are restored from the coding cookbook, making the output suitable for stakeholder charts and deliverable tables.",
+      "fields": [
+        {
+          "name": "attribute",
+          "description": "The attribute name (e.g. Brand, Price, Packaging)."
+        },
+        {
+          "name": "level",
+          "description": "The level label within that attribute (e.g. Brand A, $9.99)."
+        },
+        {
+          "name": "(estimate columns)",
+          "description": "Numeric columns with the expanded utility values. May include a point estimate, standard error, or posterior summary statistics depending on which model produced the input coefficients."
+        }
+      ]
+    }
   ]
 }

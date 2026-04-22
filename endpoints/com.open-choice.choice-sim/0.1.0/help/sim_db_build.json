@@ -27,7 +27,12 @@
       "name": "model_type",
       "type": "enum",
       "required": true,
-      "accepted_values": ["hb", "hb_stan", "lc", "lg"],
+      "accepted_values": [
+        "hb",
+        "hb_stan",
+        "lc",
+        "lg"
+      ],
       "description": "Type of model that produced betas_csv. One of: hb (model-mnl-hb-mh: has header row, first column is resp_id), hb_stan (model-mnl-hb-stan: no header, no resp_id, columns in cookbook order), lc (model-mnl-lc: coefficient_name × segment matrix), lg (model-mnl-lg: single row of aggregate coefficients)."
     },
     {
@@ -91,9 +96,18 @@
     "For LC models, consider setting the weight column in the data sheet manually to segment size proportions after building, if you want market-share-weighted averages."
   ],
   "see_also": [
-    { "command": "cs::sim_run",           "description": "Run a competitive-share simulation using the generated workbook." },
-    { "command": "cs::sim_sensitivities", "description": "Sensitivity sweep driven by the generated workbook." },
-    { "command": "cs::sim_combinations",  "description": "Grid or zip search using the generated workbook." }
+    {
+      "command": "cs::sim_run",
+      "description": "Run a competitive-share simulation using the generated workbook."
+    },
+    {
+      "command": "cs::sim_sensitivities",
+      "description": "Sensitivity sweep driven by the generated workbook."
+    },
+    {
+      "command": "cs::sim_combinations",
+      "description": "Grid or zip search using the generated workbook."
+    }
   ],
   "examples": [
     {
@@ -106,15 +120,105 @@
     }
   ],
   "fields": [
-    { "name": "betas_csv",     "type": "string",        "required": true },
-    { "name": "cookbook_json", "type": "string",        "required": true },
-    { "name": "output",        "type": "string",        "required": true },
-    { "name": "model_type",    "type": "enum",          "required": true, "accepted_values": ["hb", "hb_stan", "lc", "lg"] },
-    { "name": "resp_id_col",   "type": "string",        "required": false, "default": "resp_id" },
-    { "name": "subgroup_cols", "type": "array<string>", "required": false, "default": "[]" },
-    { "name": "weight_col",    "type": "string",        "required": false },
-    { "name": "scenarios_csv", "type": "string",        "required": false },
-    { "name": "table_sheet",   "type": "string",        "required": false, "default": "tables" },
-    { "name": "data_sheet",    "type": "string",        "required": false, "default": "data" }
+    {
+      "name": "betas_csv",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "cookbook_json",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "output",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "model_type",
+      "type": "enum",
+      "required": true,
+      "accepted_values": [
+        "hb",
+        "hb_stan",
+        "lc",
+        "lg"
+      ]
+    },
+    {
+      "name": "resp_id_col",
+      "type": "string",
+      "required": false,
+      "default": "resp_id"
+    },
+    {
+      "name": "subgroup_cols",
+      "type": "array<string>",
+      "required": false,
+      "default": "[]"
+    },
+    {
+      "name": "weight_col",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "scenarios_csv",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "table_sheet",
+      "type": "string",
+      "required": false,
+      "default": "tables"
+    },
+    {
+      "name": "data_sheet",
+      "type": "string",
+      "required": false,
+      "default": "data"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{output}.xlsx",
+      "title": "Simulator database workbook",
+      "description": "The Excel sim_db workbook consumed by all sim_run-family commands. Contains a 'tables' sheet with product definitions, attribute metadata, and scenarios, and a 'data' sheet with one row per respondent holding their individual preference estimates (part-worths).",
+      "fields": [
+        {
+          "name": "tables sheet — attributes",
+          "description": "Product attributes and their levels, defining the simulation space."
+        },
+        {
+          "name": "tables sheet — scenarios",
+          "description": "Named market scenarios with attribute values per product."
+        },
+        {
+          "name": "data sheet",
+          "description": "One row per respondent. Columns hold the individual-level preference estimates needed to compute market shares."
+        }
+      ]
+    },
+    {
+      "path": "{output}_scenarios_template.csv",
+      "title": "Scenarios template",
+      "description": "A blank CSV skeleton showing the exact column format required to add new scenarios. Fill in product attribute values here and supply the completed file as scenarios_csv on the next build.",
+      "fields": [
+        {
+          "name": "name",
+          "description": "Scenario identifier, referenced when running simulations."
+        },
+        {
+          "name": "product_name",
+          "description": "Internal identifier for the product concept."
+        },
+        {
+          "name": "(attribute columns)",
+          "description": "One column per attribute from the cookbook, holding the attribute value for this product in this scenario."
+        }
+      ]
+    }
   ]
 }

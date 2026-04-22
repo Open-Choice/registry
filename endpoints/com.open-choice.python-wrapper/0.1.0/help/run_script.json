@@ -57,8 +57,14 @@
     "The virtualenv must already exist and have its packages installed — the wrapper does not create or install into the environment."
   ],
   "see_also": [
-    { "command": "r-wrapper::run_script", "description": "R equivalent — run a .R file or inline R code." },
-    { "command": "julia-wrapper::run_script", "description": "Julia equivalent — run a .jl file and optionally activate a Julia project environment." }
+    {
+      "command": "r-wrapper::run_script",
+      "description": "R equivalent — run a .R file or inline R code."
+    },
+    {
+      "command": "julia-wrapper::run_script",
+      "description": "Julia equivalent — run a .jl file and optionally activate a Julia project environment."
+    }
   ],
   "examples": [
     {
@@ -79,11 +85,57 @@
     }
   ],
   "fields": [
-    { "name": "script",             "description": "Path to the .py file to execute.",                                         "required": true,  "accepted_values": [] },
-    { "name": "args",               "description": "Positional args forwarded to the script via sys.argv.",                   "required": false, "accepted_values": [] },
-    { "name": "kwargs",             "description": "Named args forwarded as --key value pairs.",                               "required": false, "accepted_values": [] },
-    { "name": "executable",         "description": "Python executable. Default: python. Accepts PATH name, venv path, or absolute path.", "required": false, "accepted_values": [] },
-    { "name": "output_dir",         "description": "Directory for run.log and stderr.log.",                                    "required": true,  "accepted_values": [] },
-    { "name": "trust_acknowledged", "description": "Must be true. Safety gate for arbitrary code execution.",                  "required": true,  "accepted_values": ["true"] }
+    {
+      "name": "script",
+      "description": "Path to the .py file to execute.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "args",
+      "description": "Positional args forwarded to the script via sys.argv.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "kwargs",
+      "description": "Named args forwarded as --key value pairs.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "executable",
+      "description": "Python executable. Default: python. Accepts PATH name, venv path, or absolute path.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "output_dir",
+      "description": "Directory for run.log and stderr.log.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "trust_acknowledged",
+      "description": "Must be true. Safety gate for arbitrary code execution.",
+      "required": true,
+      "accepted_values": [
+        "true"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{output_dir}/run.log",
+      "title": "Script stdout log",
+      "description": "Every line written to stdout by the script, captured in order. Review this to see printed results, progress messages, and any output the script produced.",
+      "fields": []
+    },
+    {
+      "path": "{output_dir}/stderr.log",
+      "title": "Script stderr log",
+      "description": "Every line written to stderr by the script, captured as warnings. Review this first if the run fails — error messages and stack traces appear here.",
+      "fields": []
+    }
   ]
 }

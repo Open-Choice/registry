@@ -5,20 +5,101 @@
   "description": "Searches the space of (V × T × C × K) integer level matrices using simulated annealing. The objective sums two SSE terms: pair-count balance (X^T X for each task should match its expected value under independent uniform sampling, scaled by V*T) and marginal-count balance (sum_c X[c,:] for each task). Constraints supported: pairwise restrictions, parent-child gating, fixed cells, and per-attribute level weights. Multi-start parallel search via `n_starts` + `threads` is the most effective lever for solution quality.",
   "usage": "[[\"design-cbc::design-bo\"]]\nrun_dir = \"<path>\"\nrun_name = \"<id>\"\n# spec.* = the CBC structural inputs (versions, tasks_per_version, concepts_per_task, attributes, ...)\n# optional: seed, n_steps, n_starts, threads, weights.*",
   "arguments": [
-    { "name": "run_dir",  "type": "string",  "required": true, "description": "Workspace directory; primary output goes to {run_dir}/{run_name}_design.csv." },
-    { "name": "run_name", "type": "string",  "required": true, "description": "Run identifier; used as a filename prefix and to namespace ocinfo files." },
-    { "name": "spec",     "type": "object",  "required": true, "description": "CBC spec input. Required fields: versions, tasks_per_version, concepts_per_task, attributes (each with name + max_level). Optional: pairwise_restrictions, gating_rules, fixed_cells, fixed_attributes, level_weights." },
-    { "name": "weights",  "type": "object",  "required": false, "description": "BO objective weights: w_total (default 1.0), w_ver (1.0), w_task_pairs (1.0), w_task_margins (0.2)." },
-    { "name": "seed",        "type": "integer", "required": false, "description": "Base seed; per-start seeds are derived as base + i. Omit for non-deterministic." },
-    { "name": "engine",      "type": "string",  "required": false, "default": "sa", "accepted_values": ["sa", "greedy"], "description": "Optimisation engine." },
-    { "name": "n_steps",     "type": "integer", "required": false, "default": 200000, "description": "SA iterations per start." },
-    { "name": "initial_temperature", "type": "number", "required": false, "default": 5.0 },
-    { "name": "cooling_rate", "type": "number", "required": false, "default": 0.9997, "description": "Per-step multiplicative cooling factor; T = T0 * cooling_rate^step." },
-    { "name": "keep_best",   "type": "boolean", "required": false, "default": true, "description": "Snapshot the best-seen design and restore it at the end of each start." },
-    { "name": "n_starts",    "type": "integer", "required": false, "default": 1, "description": "Number of independent SA chains; the lowest-scoring design wins." },
-    { "name": "threads",     "type": "integer", "required": false, "default": 1, "description": "Worker threads for parallel restarts (only meaningful when n_starts > 1)." },
-    { "name": "report_every","type": "integer", "required": false, "default": 5000, "description": "Reserved for future progress envelopes (currently informational)." },
-    { "name": "proposal_mix","type": "object",  "required": false, "description": "Proposal weights: p_task_att_vec (0.7), p_cell (0.3), m_try (5)." }
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "description": "Workspace directory; primary output goes to {run_dir}/{run_name}_design.csv."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "description": "Run identifier; used as a filename prefix and to namespace ocinfo files."
+    },
+    {
+      "name": "spec",
+      "type": "object",
+      "required": true,
+      "description": "CBC spec input. Required fields: versions, tasks_per_version, concepts_per_task, attributes (each with name + max_level). Optional: pairwise_restrictions, gating_rules, fixed_cells, fixed_attributes, level_weights."
+    },
+    {
+      "name": "weights",
+      "type": "object",
+      "required": false,
+      "description": "BO objective weights: w_total (default 1.0), w_ver (1.0), w_task_pairs (1.0), w_task_margins (0.2)."
+    },
+    {
+      "name": "seed",
+      "type": "integer",
+      "required": false,
+      "description": "Base seed; per-start seeds are derived as base + i. Omit for non-deterministic."
+    },
+    {
+      "name": "engine",
+      "type": "string",
+      "required": false,
+      "default": "sa",
+      "accepted_values": [
+        "sa",
+        "greedy"
+      ],
+      "description": "Optimisation engine."
+    },
+    {
+      "name": "n_steps",
+      "type": "integer",
+      "required": false,
+      "default": 200000,
+      "description": "SA iterations per start."
+    },
+    {
+      "name": "initial_temperature",
+      "type": "number",
+      "required": false,
+      "default": 5.0
+    },
+    {
+      "name": "cooling_rate",
+      "type": "number",
+      "required": false,
+      "default": 0.9997,
+      "description": "Per-step multiplicative cooling factor; T = T0 * cooling_rate^step."
+    },
+    {
+      "name": "keep_best",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Snapshot the best-seen design and restore it at the end of each start."
+    },
+    {
+      "name": "n_starts",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Number of independent SA chains; the lowest-scoring design wins."
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Worker threads for parallel restarts (only meaningful when n_starts > 1)."
+    },
+    {
+      "name": "report_every",
+      "type": "integer",
+      "required": false,
+      "default": 5000,
+      "description": "Reserved for future progress envelopes (currently informational)."
+    },
+    {
+      "name": "proposal_mix",
+      "type": "object",
+      "required": false,
+      "description": "Proposal weights: p_task_att_vec (0.7), p_cell (0.3), m_try (5)."
+    }
   ],
   "value": "On success, `run_dir` contains:\n- `{run_name}_design.csv` — wide design (Version, Task, Concept, <attribute columns>).\n- `ocinfo/{run_name}_design/design_long.csv` — long design (one row per cell).\n- `ocinfo/{run_name}_design/summary_overview.csv` — final score, iterations, accepted moves.\n- `ocinfo/{run_name}_design/summary_main_counts.csv` — per-attribute level counts.\n- `ocinfo/{run_name}_design/design.json`, `summary.json`, `spec.input.json` — machine-readable outputs.\n\nIn protocol mode the plugin emits `event.run.started`, one `event.artifact.created` per output, and a final `event.run.finished` (or `event.run.failed`).",
   "notes": [
@@ -28,6 +109,52 @@
     "Multi-start (`n_starts` 4–8 with matched `threads`) is more effective than longer single chains."
   ],
   "see_also": [
-    { "command": "design-cbc::design-de", "description": "D-efficient variant; useful when prior beliefs about respondent utilities exist." }
+    {
+      "command": "design-cbc::design-de",
+      "description": "D-efficient variant; useful when prior beliefs about respondent utilities exist."
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{run_name}_design.csv",
+      "title": "CBC design — wide format",
+      "description": "The primary design file for survey programming. One row per (version, task, concept) with integer attribute level codes. Supply this file to your survey platform and to assess-design for quality verification.",
+      "fields": [
+        {
+          "name": "Version",
+          "description": "Design version number. Each respondent is randomly assigned one version."
+        },
+        {
+          "name": "Task",
+          "description": "Task number within the version."
+        },
+        {
+          "name": "Concept",
+          "description": "Concept (product alternative) position within the task."
+        },
+        {
+          "name": "(attribute columns)",
+          "description": "Integer level codes for each attribute — one column per attribute in the spec."
+        }
+      ]
+    },
+    {
+      "path": "ocinfo/{run_name}_design/design_long.csv",
+      "title": "Design — long format",
+      "description": "Alternative representation with one row per (version, task, concept, attribute). Useful for programmatic inspection and quality checks.",
+      "fields": []
+    },
+    {
+      "path": "ocinfo/{run_name}_design/summary_overview.csv",
+      "title": "Design quality summary",
+      "description": "Final balance/overlap score, iteration count, and accepted-move statistics. Lower scores indicate better-balanced designs.",
+      "fields": []
+    },
+    {
+      "path": "ocinfo/{run_name}_design/summary_main_counts.csv",
+      "title": "Attribute level frequency counts",
+      "description": "How often each level of each attribute appears across the design. Roughly equal counts per level indicate good balance.",
+      "fields": []
+    }
   ]
 }

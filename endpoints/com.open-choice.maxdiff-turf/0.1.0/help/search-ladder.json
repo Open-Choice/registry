@@ -87,7 +87,11 @@
       "type": "string",
       "required": false,
       "default": "weighted-by-probability",
-      "accepted_values": ["weighted-by-probability", "first-choice", "threshold"],
+      "accepted_values": [
+        "weighted-by-probability",
+        "first-choice",
+        "threshold"
+      ],
       "description": "Reach scoring rule used at every ladder step. See `search-k` for the per-method details."
     },
     {
@@ -109,7 +113,12 @@
       "type": "string",
       "required": false,
       "default": "auto",
-      "accepted_values": ["auto", "exhaustive", "sampled", "beam"],
+      "accepted_values": [
+        "auto",
+        "exhaustive",
+        "sampled",
+        "beam"
+      ],
       "description": "Search strategy used at the anchor size. Same semantics as `search-k`'s `search_method`. The anchor pass is the most expensive step in the ladder; pick a method that gives high-quality candidates because the rest of the ladder builds on them."
     },
     {
@@ -131,7 +140,11 @@
       "type": "string",
       "required": false,
       "default": "repair",
-      "accepted_values": ["repair", "strict", "beam"],
+      "accepted_values": [
+        "repair",
+        "strict",
+        "beam"
+      ],
       "description": "Ladder construction mode. `repair` (default) allows the local-improvement pass to swap items as the ladder grows / shrinks, repairing any sub-optimal step. `strict` only adds or removes the single best item at each step. `beam` uses a beam-search step internally."
     },
     {
@@ -139,7 +152,11 @@
       "type": "string",
       "required": false,
       "default": "both",
-      "accepted_values": ["both", "down", "up"],
+      "accepted_values": [
+        "both",
+        "down",
+        "up"
+      ],
       "description": "Direction(s) of ladder traversal from the anchor. `both` (default) walks up and down. `up` only grows; `down` only shrinks."
     },
     {
@@ -196,7 +213,12 @@
       "type": "string",
       "required": false,
       "default": "sampled",
-      "accepted_values": ["auto", "exhaustive", "sampled", "beam"],
+      "accepted_values": [
+        "auto",
+        "exhaustive",
+        "sampled",
+        "beam"
+      ],
       "description": "Search method used during refine passes on `refine_sizes`."
     },
     {
@@ -239,14 +261,19 @@
       "type": "string",
       "required": false,
       "default": "hybrid",
-      "accepted_values": ["hybrid", "mean", "top-rate", "marginal"],
+      "accepted_values": [
+        "hybrid",
+        "mean",
+        "top-rate",
+        "marginal"
+      ],
       "description": "Screening metric used during sampled search. Default `hybrid`."
     },
     {
       "name": "top_alpha",
       "type": "number",
       "required": false,
-      "default": 0.10,
+      "default": 0.1,
       "description": "Top-alpha tail probability for the `top-rate` and `hybrid` screening metrics. Default `0.10`."
     },
     {
@@ -293,9 +320,18 @@
     "`refine_sizes` is the right tool when only a handful of specific sizes need top-quality answers; running the entire ladder under a heavy method is usually wasteful."
   ],
   "see_also": [
-    { "command": "maxdiff-turf::search-k", "description": "Single-size search — useful when you only need one k." },
-    { "command": "maxdiff-turf::curve-family", "description": "Run anchored ladders from multiple anchor sizes in parallel." },
-    { "command": "maxdiff-turf::score-scenarios", "description": "Score a fixed list of hand-built subsets at any size." }
+    {
+      "command": "maxdiff-turf::search-k",
+      "description": "Single-size search — useful when you only need one k."
+    },
+    {
+      "command": "maxdiff-turf::curve-family",
+      "description": "Run anchored ladders from multiple anchor sizes in parallel."
+    },
+    {
+      "command": "maxdiff-turf::score-scenarios",
+      "description": "Score a fixed list of hand-built subsets at any size."
+    }
   ],
   "examples": [
     {
@@ -312,44 +348,299 @@
     }
   ],
   "fields": [
-    { "name": "utilities",               "description": "Path to per-respondent utilities CSV.",                                              "required": true,  "accepted_values": [] },
-    { "name": "out_dir",                 "description": "Output directory for results. Created if it does not exist.",                        "required": true,  "accepted_values": [] },
-    { "name": "anchor_k",                "description": "Anchor subset size used to seed the ladder.",                                        "required": true,  "accepted_values": [] },
-    { "name": "subgroups",               "description": "Optional subgroup membership CSV.",                                                  "required": false, "accepted_values": [] },
-    { "name": "labels",                  "description": "Optional item labels CSV.",                                                          "required": false, "accepted_values": [] },
-    { "name": "include",                 "description": "Comma-separated 1-based item indices to force-include.",                             "required": false, "accepted_values": [] },
-    { "name": "exclude",                 "description": "Comma-separated 1-based item indices to exclude.",                                   "required": false, "accepted_values": [] },
-    { "name": "utility_cols",            "description": "Explicit utility column spec (1-based, supports ranges).",                           "required": false, "accepted_values": [] },
-    { "name": "non_utility_cols",        "description": "Comma-separated 1-based columns to ignore.",                                         "required": false, "accepted_values": [] },
-    { "name": "forbidden_pairs",         "description": "Forbidden pairs spec, e.g. '1:2,3:4'.",                                               "required": false, "accepted_values": [] },
-    { "name": "headers",                 "description": "Whether the CSV files have header rows. Default: true.",                             "required": false, "accepted_values": [] },
-    { "name": "reach_method",            "description": "Reach scoring rule.",                                                                 "required": false, "accepted_values": ["weighted-by-probability", "first-choice", "threshold"] },
-    { "name": "number_of_alt",           "description": "Implied alternatives per task. Default: 5.",                                          "required": false, "accepted_values": [] },
-    { "name": "threshold",               "description": "Threshold value for the threshold reach method. Default: 0.8.",                       "required": false, "accepted_values": [] },
-    { "name": "anchor_search_method",    "description": "Search strategy used at the anchor size.",                                            "required": false, "accepted_values": ["auto", "exhaustive", "sampled", "beam"] },
-    { "name": "anchor_exhaustive_limit", "description": "Anchor exhaustive enumeration limit. Default: 100000.",                                "required": false, "accepted_values": [] },
-    { "name": "anchor_top_n",            "description": "Top-N candidates retained at the anchor size. Default: 25.",                          "required": false, "accepted_values": [] },
-    { "name": "ladder_mode",             "description": "Ladder construction mode.",                                                            "required": false, "accepted_values": ["repair", "strict", "beam"] },
-    { "name": "direction",               "description": "Direction(s) of ladder traversal from the anchor.",                                   "required": false, "accepted_values": ["both", "down", "up"] },
-    { "name": "k_min",                   "description": "Minimum subset size visited along the ladder. Default: 1.",                            "required": false, "accepted_values": [] },
-    { "name": "k_max",                   "description": "Maximum subset size; defaults to all eligible items.",                                 "required": false, "accepted_values": [] },
-    { "name": "beam_width",              "description": "Beam width during ladder traversal. Default: 25.",                                    "required": false, "accepted_values": [] },
-    { "name": "step_top_n",              "description": "Candidates kept per ladder step. Default: 10.",                                        "required": false, "accepted_values": [] },
-    { "name": "local_improve",           "description": "Apply local improvement pass to candidates. Default: true.",                          "required": false, "accepted_values": [] },
-    { "name": "local_improve_max_iter",  "description": "Max iterations for local improvement. Default: 25.",                                   "required": false, "accepted_values": [] },
-    { "name": "refine_sizes",            "description": "Subset sizes to refine after the initial ladder (array of integers).",                "required": false, "accepted_values": [] },
-    { "name": "refine_method",           "description": "Search method used during refine passes.",                                            "required": false, "accepted_values": ["auto", "exhaustive", "sampled", "beam"] },
-    { "name": "sample_n",                "description": "Sampled-search budget.",                                                               "required": false, "accepted_values": [] },
-    { "name": "sample_factor",           "description": "Multiplier on the auto-sampled budget. Default: 20.",                                  "required": false, "accepted_values": [] },
-    { "name": "sample_replicates",       "description": "Sampled-search replicates. Default: 3.",                                               "required": false, "accepted_values": [] },
-    { "name": "drop_frac",               "description": "Fraction of items dropped each screening pass. Default: 0.25.",                        "required": false, "accepted_values": [] },
-    { "name": "min_survivors",           "description": "Minimum survivors retained during screening rounds.",                                  "required": false, "accepted_values": [] },
-    { "name": "screen_metric",           "description": "Screening metric used during sampled search.",                                         "required": false, "accepted_values": ["hybrid", "mean", "top-rate", "marginal"] },
-    { "name": "top_alpha",               "description": "Top-alpha tail probability for screening. Default: 0.10.",                             "required": false, "accepted_values": [] },
-    { "name": "seed",                    "description": "Random seed (omit for non-deterministic).",                                            "required": false, "accepted_values": [] },
-    { "name": "keep_scenarios",          "description": "Retain per-respondent scenario rows. Default: true.",                                  "required": false, "accepted_values": [] },
-    { "name": "keep_diagnostics",        "description": "Retain diagnostic columns. Default: true.",                                            "required": false, "accepted_values": [] },
-    { "name": "target_subgroup",         "description": "Optimize against a specific subgroup column.",                                         "required": false, "accepted_values": [] },
-    { "name": "threads",                 "description": "Rayon worker threads for parallel candidate scoring. Default: 1.",                     "required": false, "accepted_values": [] }
+    {
+      "name": "utilities",
+      "description": "Path to per-respondent utilities CSV.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "out_dir",
+      "description": "Output directory for results. Created if it does not exist.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "anchor_k",
+      "description": "Anchor subset size used to seed the ladder.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "subgroups",
+      "description": "Optional subgroup membership CSV.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "labels",
+      "description": "Optional item labels CSV.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "include",
+      "description": "Comma-separated 1-based item indices to force-include.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "exclude",
+      "description": "Comma-separated 1-based item indices to exclude.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "utility_cols",
+      "description": "Explicit utility column spec (1-based, supports ranges).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "non_utility_cols",
+      "description": "Comma-separated 1-based columns to ignore.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "forbidden_pairs",
+      "description": "Forbidden pairs spec, e.g. '1:2,3:4'.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "headers",
+      "description": "Whether the CSV files have header rows. Default: true.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "reach_method",
+      "description": "Reach scoring rule.",
+      "required": false,
+      "accepted_values": [
+        "weighted-by-probability",
+        "first-choice",
+        "threshold"
+      ]
+    },
+    {
+      "name": "number_of_alt",
+      "description": "Implied alternatives per task. Default: 5.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "threshold",
+      "description": "Threshold value for the threshold reach method. Default: 0.8.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "anchor_search_method",
+      "description": "Search strategy used at the anchor size.",
+      "required": false,
+      "accepted_values": [
+        "auto",
+        "exhaustive",
+        "sampled",
+        "beam"
+      ]
+    },
+    {
+      "name": "anchor_exhaustive_limit",
+      "description": "Anchor exhaustive enumeration limit. Default: 100000.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "anchor_top_n",
+      "description": "Top-N candidates retained at the anchor size. Default: 25.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "ladder_mode",
+      "description": "Ladder construction mode.",
+      "required": false,
+      "accepted_values": [
+        "repair",
+        "strict",
+        "beam"
+      ]
+    },
+    {
+      "name": "direction",
+      "description": "Direction(s) of ladder traversal from the anchor.",
+      "required": false,
+      "accepted_values": [
+        "both",
+        "down",
+        "up"
+      ]
+    },
+    {
+      "name": "k_min",
+      "description": "Minimum subset size visited along the ladder. Default: 1.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "k_max",
+      "description": "Maximum subset size; defaults to all eligible items.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "beam_width",
+      "description": "Beam width during ladder traversal. Default: 25.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "step_top_n",
+      "description": "Candidates kept per ladder step. Default: 10.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "local_improve",
+      "description": "Apply local improvement pass to candidates. Default: true.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "local_improve_max_iter",
+      "description": "Max iterations for local improvement. Default: 25.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "refine_sizes",
+      "description": "Subset sizes to refine after the initial ladder (array of integers).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "refine_method",
+      "description": "Search method used during refine passes.",
+      "required": false,
+      "accepted_values": [
+        "auto",
+        "exhaustive",
+        "sampled",
+        "beam"
+      ]
+    },
+    {
+      "name": "sample_n",
+      "description": "Sampled-search budget.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "sample_factor",
+      "description": "Multiplier on the auto-sampled budget. Default: 20.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "sample_replicates",
+      "description": "Sampled-search replicates. Default: 3.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "drop_frac",
+      "description": "Fraction of items dropped each screening pass. Default: 0.25.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "min_survivors",
+      "description": "Minimum survivors retained during screening rounds.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "screen_metric",
+      "description": "Screening metric used during sampled search.",
+      "required": false,
+      "accepted_values": [
+        "hybrid",
+        "mean",
+        "top-rate",
+        "marginal"
+      ]
+    },
+    {
+      "name": "top_alpha",
+      "description": "Top-alpha tail probability for screening. Default: 0.10.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "seed",
+      "description": "Random seed (omit for non-deterministic).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "keep_scenarios",
+      "description": "Retain per-respondent scenario rows. Default: true.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "keep_diagnostics",
+      "description": "Retain diagnostic columns. Default: true.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "target_subgroup",
+      "description": "Optimize against a specific subgroup column.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "threads",
+      "description": "Rayon worker threads for parallel candidate scoring. Default: 1.",
+      "required": false,
+      "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{out_dir}/{run_name}_ladder.csv",
+      "title": "Anchored reach ladder",
+      "description": "The TURF value curve: one row per (k, candidate item) across all ladder steps from k_min to k_max. This is the primary output — plot reach vs. k to find the inflection point where adding more items stops paying off.",
+      "fields": [
+        {
+          "name": "k",
+          "description": "Subset size at this ladder step."
+        },
+        {
+          "name": "reach",
+          "description": "TURF reach achieved at size k."
+        },
+        {
+          "name": "item",
+          "description": "The item added (or removed) to reach this subset."
+        }
+      ]
+    },
+    {
+      "path": "{out_dir}/{run_name}_refined_{k}.csv",
+      "title": "Refined-size outputs",
+      "description": "One file per size listed in refine_sizes. Runs a fresh exhaustive or beam search at that specific size, giving you a more thorough look at that point on the curve.",
+      "fields": []
+    },
+    {
+      "path": "{out_dir}/{run_name}_input_snapshot.json",
+      "title": "Prepared-input snapshot",
+      "description": "Records the resolved utility columns, applied filters, and ladder settings for reproducibility.",
+      "fields": []
+    }
   ]
 }

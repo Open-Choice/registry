@@ -135,7 +135,7 @@
       "name": "init_ridge",
       "type": "number",
       "required": false,
-      "default": 1e-8,
+      "default": 1e-08,
       "description": "Numerical ridge for Hessian during MAP init. Default `1e-8`."
     },
     {
@@ -339,6 +339,33 @@
       "description": "Optional covariate CSV (resp_id + numeric columns).",
       "required": false,
       "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "cv_summary.csv",
+      "title": "Cross-validation summary",
+      "description": "Per-fold and aggregate holdout prediction accuracy. The headline metric for comparing HB against latent class and aggregate logit on the same data — a higher average holdout score indicates better generalisation.",
+      "fields": [
+        {
+          "name": "fold",
+          "description": "Fold identifier."
+        },
+        {
+          "name": "train_fit",
+          "description": "In-sample fit statistic for the fold."
+        },
+        {
+          "name": "holdout_fit",
+          "description": "Out-of-sample prediction accuracy for the fold."
+        }
+      ]
+    },
+    {
+      "path": "<fold_id>/exports/",
+      "title": "Per-fold exports",
+      "description": "Each fold subdirectory contains the same outputs as a single `fit` run: partworths and segment summary for that fold's training sample.",
+      "fields": []
     }
   ]
 }

@@ -116,5 +116,26 @@
       "required": false,
       "accepted_values": []
     }
+  ],
+  "artifacts": [
+    {
+      "path": "cv_summary.csv",
+      "title": "Updated cross-validation summary",
+      "description": "Per-fold and aggregate holdout accuracy recomputed from the extended chains. Compare against the pre-extension summary to see whether additional draws materially changed the CV estimates.",
+      "fields": [
+        {
+          "name": "fold",
+          "description": "Fold identifier."
+        },
+        {
+          "name": "train_fit",
+          "description": "In-sample fit statistic for the fold."
+        },
+        {
+          "name": "holdout_fit",
+          "description": "Out-of-sample prediction accuracy for the fold."
+        }
+      ]
+    }
   ]
 }

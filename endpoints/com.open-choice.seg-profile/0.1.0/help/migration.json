@@ -5,16 +5,67 @@
   "description": "Given a memberships CSV with a respondent id and one or more solution columns (e.g. `sol_3`, `sol_4`), computes `table(sol_i, sol_j)` for every pair and assembles the results into a stacked matrix of size `1 + Σ k_i` where `k_i` is the number of levels in solution i. Row/column 0 is the total count and per-level marginals. Missing values are excluded. Used to see how respondents migrate between competing segmentations, or to confirm the per-level sample sizes of a single solution.",
   "usage": "[[\"seg-profile::migration\"]]\nmemberships = \"<memberships.csv>\"\nrun_dir = \"./runs\"\nrun_name = \"m1\"\n# optional:\nuuid_col = \"resp_id\"\nsolution_cols = [\"sol_3\", \"sol_4\"]",
   "arguments": [
-    { "name": "memberships",   "type": "string",  "required": true,  "description": "CSV with per-respondent segment labels across one or more solution columns." },
-    { "name": "run_dir",       "type": "string",  "required": true,  "description": "Base directory. Outputs land in `<run_dir>/ocinfo/<run_name>_seg_profile/`." },
-    { "name": "run_name",      "type": "string",  "required": true,  "description": "Short identifier for this run; no '..', '/' or '\\\\'." },
-    { "name": "uuid_col",      "type": "string",  "required": false, "description": "Respondent identifier column. If omitted, the first column is treated as the id." },
-    { "name": "solution_cols", "type": "array",   "required": false, "default": [], "description": "Subset of solution columns to include. Empty = use all non-uuid columns." },
-    { "name": "headers",       "type": "boolean", "required": false, "default": true, "description": "Whether the CSV has a header row." },
-    { "name": "output_format", "type": "string",  "required": false, "description": "Override stdout format: `human`, `protocol`, or `quiet`." }
+    {
+      "name": "memberships",
+      "type": "string",
+      "required": true,
+      "description": "CSV with per-respondent segment labels across one or more solution columns."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "description": "Base directory. Outputs land in `<run_dir>/ocinfo/<run_name>_seg_profile/`."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "description": "Short identifier for this run; no '..', '/' or '\\\\'."
+    },
+    {
+      "name": "uuid_col",
+      "type": "string",
+      "required": false,
+      "description": "Respondent identifier column. If omitted, the first column is treated as the id."
+    },
+    {
+      "name": "solution_cols",
+      "type": "array",
+      "required": false,
+      "default": [],
+      "description": "Subset of solution columns to include. Empty = use all non-uuid columns."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether the CSV has a header row."
+    },
+    {
+      "name": "output_format",
+      "type": "string",
+      "required": false,
+      "description": "Override stdout format: `human`, `protocol`, or `quiet`."
+    }
   ],
   "notes": [
     "The xlsx uses 3-colour conditional formatting (lavender → white → orange) over the body only, so the total row/col does not dominate the scale.",
     "Diagonal blocks are self-cross-tabs (sol_i × sol_i); off-diagonal blocks are (sol_i × sol_j)."
+  ],
+  "artifacts": [
+    {
+      "path": "ocinfo/{run_name}_seg_profile/migration.xlsx",
+      "title": "Segment migration workbook",
+      "description": "A cross-tabulation matrix showing how respondents are distributed across multiple segmentation solutions. Diagonal blocks show each solution's own segment sizes; off-diagonal blocks show how respondents from one solution's segments map across another's. Used to assess stability between competing segmentations.",
+      "fields": []
+    },
+    {
+      "path": "ocinfo/{run_name}_seg_profile/migration.csv",
+      "title": "Migration matrix data",
+      "description": "The same cross-tabulation in CSV format for further processing.",
+      "fields": []
+    }
   ]
 }

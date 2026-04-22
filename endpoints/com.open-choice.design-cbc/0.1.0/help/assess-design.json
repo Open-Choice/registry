@@ -30,7 +30,27 @@
     "d_efficiency = exp(logdet_total / n_parameters)."
   ],
   "see_also": [
-    { "command": "design-cbc::design-bo", "description": "Balance / minimum-overlap design generator; faster and prior-free." },
-    { "command": "design-cbc::design-de", "description": "D-efficient design generator; useful when prior beliefs about respondent utilities exist." }
+    {
+      "command": "design-cbc::design-bo",
+      "description": "Balance / minimum-overlap design generator; faster and prior-free."
+    },
+    {
+      "command": "design-cbc::design-de",
+      "description": "D-efficient design generator; useful when prior beliefs about respondent utilities exist."
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "ocinfo/{run_name}_design/summary_overview.csv",
+      "title": "Design quality overview",
+      "description": "Balance, overlap, and D-efficiency metrics for the assessed design. Use these to compare competing design options objectively before fielding.",
+      "fields": []
+    },
+    {
+      "path": "ocinfo/{run_name}_design/summary_main_counts.csv",
+      "title": "Attribute level frequency counts",
+      "description": "How often each attribute level appears across the design. Roughly equal counts indicate a balanced design.",
+      "fields": []
+    }
   ]
 }

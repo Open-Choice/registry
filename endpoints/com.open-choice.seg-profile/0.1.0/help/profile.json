@@ -5,25 +5,149 @@
   "description": "Reproduces the `profile_fast` pipeline: left-joins memberships onto the numeric inputs on `uuid_col`, stacks `profile_meta` over `seg_meta` (profile rows override duplicates), and for each solution column produces a long profiling table keyed to variable metadata (order/type/group/battery/final_variable/label). Per-segment statistics include wgt_mean, unweighted and weighted counts, weighted proportion, Welch t-score against the rest of the sample, standardised difference using the pooled unweighted SD, and an index (segment mean / overall mean × 100). Thresholds for the xlsx conditional formatting are exposed as live cells in the top-left of each sheet so analysts can adjust Count/Tscore/Sdiff/Index cutoffs without re-running the plugin.",
   "usage": "[[\"seg-profile::profile\"]]\nmemberships = \"<memberships.csv>\"\nseg_inputs = \"<seg_inputs.csv>\"\nseg_meta = \"<seg_meta.csv>\"\nprofile_inputs = \"<profile_inputs.csv>\"\nprofile_meta = \"<profile_meta.csv>\"\nuuid_col = \"resp_id\"\nrun_dir = \"./runs\"\nrun_name = \"p1\"\n# optional:\nsolution_cols = [\"sol_3\", \"sol_4\"]\nweight_col = \"wgt\"\nweight_source = \"memberships\"",
   "arguments": [
-    { "name": "memberships",    "type": "string",  "required": true,  "description": "CSV of respondent × solutions. Must contain `uuid_col` plus one column per solution whose values are the segment labels." },
-    { "name": "seg_inputs",     "type": "string",  "required": true,  "description": "CSV with `uuid_col` and the numeric variables used to build the segmentation." },
-    { "name": "seg_meta",       "type": "string",  "required": true,  "description": "Variable metadata for seg_inputs. Columns: variable, order, type, group, battery, final_variable, label." },
-    { "name": "profile_inputs", "type": "string",  "required": true,  "description": "CSV with `uuid_col` and the numeric variables to profile against the segmentation. May overlap seg_inputs; duplicates are resolved in favour of profile_inputs." },
-    { "name": "profile_meta",   "type": "string",  "required": true,  "description": "Variable metadata for profile_inputs (same columns as seg_meta). Rows whose `variable` matches a seg_meta row override it." },
-    { "name": "uuid_col",       "type": "string",  "required": true,  "description": "Respondent identifier column. Must be present in memberships, seg_inputs, and profile_inputs." },
-    { "name": "run_dir",        "type": "string",  "required": true,  "description": "Base directory. Outputs land in `<run_dir>/ocinfo/<run_name>_seg_profile/`." },
-    { "name": "run_name",       "type": "string",  "required": true,  "description": "Short identifier for this run; no '..', '/' or '\\\\'." },
-    { "name": "solution_cols",  "type": "array",   "required": false, "default": [], "description": "Subset of solution columns to profile. Empty = all non-uuid columns in memberships." },
-    { "name": "weight_col",     "type": "string",  "required": false, "description": "Name of a numeric weight column. Must be paired with `weight_source`." },
-    { "name": "weight_source",  "type": "string",  "required": false, "description": "Which input file carries `weight_col`: `memberships`, `seg_inputs`, or `profile_inputs`." },
-    { "name": "drop_missing_segment", "type": "boolean", "required": false, "default": true, "description": "Drop respondents with a missing value in the active solution column before profiling." },
-    { "name": "na_action",      "type": "string",  "required": false, "default": "complete_cases", "description": "How to handle NA values in numeric variables: `complete_cases` (per-variable pairwise deletion) or `fail` (abort)." },
-    { "name": "headers",        "type": "boolean", "required": false, "default": true, "description": "Whether CSV inputs have a header row." },
-    { "name": "threads",        "type": "integer", "required": false, "default": 1, "description": "Rayon worker threads for the per-variable profile loop. `1` (default) runs serially. Each variable is scored independently per solution, so parallel fan-out scales with the number of profile variables. Results are deterministic regardless of thread count." },
-    { "name": "output_format",  "type": "string",  "required": false, "description": "Override stdout format: `human`, `protocol`, or `quiet`." }
+    {
+      "name": "memberships",
+      "type": "string",
+      "required": true,
+      "description": "CSV of respondent × solutions. Must contain `uuid_col` plus one column per solution whose values are the segment labels."
+    },
+    {
+      "name": "seg_inputs",
+      "type": "string",
+      "required": true,
+      "description": "CSV with `uuid_col` and the numeric variables used to build the segmentation."
+    },
+    {
+      "name": "seg_meta",
+      "type": "string",
+      "required": true,
+      "description": "Variable metadata for seg_inputs. Columns: variable, order, type, group, battery, final_variable, label."
+    },
+    {
+      "name": "profile_inputs",
+      "type": "string",
+      "required": true,
+      "description": "CSV with `uuid_col` and the numeric variables to profile against the segmentation. May overlap seg_inputs; duplicates are resolved in favour of profile_inputs."
+    },
+    {
+      "name": "profile_meta",
+      "type": "string",
+      "required": true,
+      "description": "Variable metadata for profile_inputs (same columns as seg_meta). Rows whose `variable` matches a seg_meta row override it."
+    },
+    {
+      "name": "uuid_col",
+      "type": "string",
+      "required": true,
+      "description": "Respondent identifier column. Must be present in memberships, seg_inputs, and profile_inputs."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "description": "Base directory. Outputs land in `<run_dir>/ocinfo/<run_name>_seg_profile/`."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "description": "Short identifier for this run; no '..', '/' or '\\\\'."
+    },
+    {
+      "name": "solution_cols",
+      "type": "array",
+      "required": false,
+      "default": [],
+      "description": "Subset of solution columns to profile. Empty = all non-uuid columns in memberships."
+    },
+    {
+      "name": "weight_col",
+      "type": "string",
+      "required": false,
+      "description": "Name of a numeric weight column. Must be paired with `weight_source`."
+    },
+    {
+      "name": "weight_source",
+      "type": "string",
+      "required": false,
+      "description": "Which input file carries `weight_col`: `memberships`, `seg_inputs`, or `profile_inputs`."
+    },
+    {
+      "name": "drop_missing_segment",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Drop respondents with a missing value in the active solution column before profiling."
+    },
+    {
+      "name": "na_action",
+      "type": "string",
+      "required": false,
+      "default": "complete_cases",
+      "description": "How to handle NA values in numeric variables: `complete_cases` (per-variable pairwise deletion) or `fail` (abort)."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether CSV inputs have a header row."
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Rayon worker threads for the per-variable profile loop. `1` (default) runs serially. Each variable is scored independently per solution, so parallel fan-out scales with the number of profile variables. Results are deterministic regardless of thread count."
+    },
+    {
+      "name": "output_format",
+      "type": "string",
+      "required": false,
+      "description": "Override stdout format: `human`, `protocol`, or `quiet`."
+    }
   ],
   "notes": [
     "The conditional-formatting thresholds in the output xlsx (Count<, Tscore>, Sdiff>, Index>) are live cells. Editing them in Excel immediately re-highlights the table.",
     "Weighted means use the supplied weight; standardised differences use unweighted SD in the denominator to match the R reference."
+  ],
+  "artifacts": [
+    {
+      "path": "ocinfo/{run_name}_seg_profile/{solution_name}.xlsx",
+      "title": "Segment profile workbook",
+      "description": "One Excel workbook per segmentation solution. Each sheet profiles the segments against the survey variables: weighted means, Welch t-scores versus the total sample, standardised differences, and index values. Colour-coded cells highlight statistically meaningful differences. The formatting thresholds are live cells you can adjust in Excel without re-running.",
+      "fields": [
+        {
+          "name": "variable",
+          "description": "The survey variable or metric being profiled."
+        },
+        {
+          "name": "seg_1 ... seg_K",
+          "description": "One column per segment showing the weighted mean for that variable in that segment."
+        },
+        {
+          "name": "total",
+          "description": "The overall sample mean for context."
+        },
+        {
+          "name": "tscore",
+          "description": "Welch t-statistic comparing each segment to the rest of the sample — a measure of how distinctive the segment is on this variable."
+        },
+        {
+          "name": "sdiff",
+          "description": "Standardised difference (effect size) of the segment versus the total."
+        },
+        {
+          "name": "index",
+          "description": "Segment mean as a percentage of the total mean (100 = average, 120 = 20% above average)."
+        }
+      ]
+    },
+    {
+      "path": "ocinfo/{run_name}_seg_profile/{solution_name}.csv",
+      "title": "Segment profile data",
+      "description": "The same profiling statistics in flat CSV format for further analysis or custom visualisation.",
+      "fields": []
+    }
   ]
 }

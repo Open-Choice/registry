@@ -93,7 +93,7 @@
       "name": "ridge_scale",
       "type": "number",
       "required": false,
-      "default": 0.000001,
+      "default": 1e-06,
       "description": "Covariance prior ridge scale, all folds. Default 1e-6."
     },
     {
@@ -233,6 +233,39 @@
       "description": "Path to respondent-level covariate CSV. Same file for all folds. Omit for intercept-only.",
       "required": false,
       "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{fold_name}/part_worths.csv",
+      "title": "Per-fold part-worth utilities",
+      "description": "Individual-level posterior-mean utilities estimated on each fold's training respondents. One file per fold subdirectory.",
+      "fields": []
+    },
+    {
+      "path": "{fold_name}/diagnostics.json",
+      "title": "Per-fold convergence diagnostics",
+      "description": "Rhat and ESS values for each fold's sampling run. Review to confirm all folds converged before trusting the CV summary.",
+      "fields": []
+    },
+    {
+      "path": "cv_summary.csv",
+      "title": "Cross-validation summary",
+      "description": "Per-fold log joint posterior (lp__) statistics — the standard metric for comparing HB-Stan model configurations across a CV run. Higher lp__ values indicate better model fit.",
+      "fields": [
+        {
+          "name": "fold",
+          "description": "Fold identifier."
+        },
+        {
+          "name": "lp__mean",
+          "description": "Mean log joint posterior across post-warmup draws for this fold."
+        },
+        {
+          "name": "lp__sd",
+          "description": "Standard deviation of lp__ across draws."
+        }
+      ]
     }
   ]
 }

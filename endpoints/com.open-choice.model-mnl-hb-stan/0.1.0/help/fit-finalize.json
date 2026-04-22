@@ -93,7 +93,7 @@
       "name": "ridge_scale",
       "type": "number",
       "required": false,
-      "default": 0.000001,
+      "default": 1e-06,
       "description": "Ridge scale for covariance prior. Default 1e-6."
     },
     {
@@ -229,6 +229,43 @@
       "description": "Path to respondent-level covariate CSV. Omit for intercept-only.",
       "required": false,
       "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "stan_data.json",
+      "title": "Stan data file",
+      "description": "Converted Stan JSON for reproducibility. Use with the sample command to re-run sampling with different settings without repeating data conversion.",
+      "fields": []
+    },
+    {
+      "path": "hb_fit_chain_N.csv",
+      "title": "Raw posterior chain draws",
+      "description": "One CmdStan CSV per chain — retained so finalize can be re-run without repeating sampling.",
+      "fields": []
+    },
+    {
+      "path": "diagnostics.json",
+      "title": "Convergence diagnostics",
+      "description": "Per-parameter Rhat and ESS. Rhat above 1.01 indicates poor chain mixing — re-run with more samples or warmup.",
+      "fields": []
+    },
+    {
+      "path": "summary.json",
+      "title": "Posterior parameter summary",
+      "description": "Population-level posterior mean, SD, and quantiles for all model parameters.",
+      "fields": []
+    },
+    {
+      "path": "part_worths.csv",
+      "title": "Individual part-worth utilities",
+      "description": "The key output file. One row per respondent, one column per attribute. Posterior-mean utilities for each respondent. Feed to sim_db_build (model_type=hb_stan) to create a market simulator.",
+      "fields": [
+        {
+          "name": "(attribute columns)",
+          "description": "Posterior-mean utility per attribute per respondent."
+        }
+      ]
     }
   ]
 }

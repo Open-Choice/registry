@@ -72,7 +72,9 @@
       "name": "prob_methods_wgts",
       "type": "array<number>",
       "required": false,
-      "default": [1.0],
+      "default": [
+        1.0
+      ],
       "description": "Blend weights for prob_methods."
     },
     {
@@ -126,9 +128,18 @@
     "standard_error reflects model uncertainty from HB draws, not sampling variability."
   ],
   "see_also": [
-    { "command": "cs::sim_run",           "description": "Standard competitive-share simulation (identical engine)." },
-    { "command": "cs::sim_sensitivities", "description": "Sensitivity sweep in take-rate context." },
-    { "command": "cs::sim_combinations",  "description": "Multi-product attribute grid in take-rate context." }
+    {
+      "command": "cs::sim_run",
+      "description": "Standard competitive-share simulation (identical engine)."
+    },
+    {
+      "command": "cs::sim_sensitivities",
+      "description": "Sensitivity sweep in take-rate context."
+    },
+    {
+      "command": "cs::sim_combinations",
+      "description": "Multi-product attribute grid in take-rate context."
+    }
   ],
   "examples": [
     {
@@ -145,21 +156,147 @@
     }
   ],
   "fields": [
-    { "name": "measures",          "description": "Pipe-separated measures. Default: share|revenue.",                  "required": false, "accepted_values": ["share", "revenue", "volume", "cost", "profit", "standard_error", "__all__"] },
-    { "name": "scenarios",         "description": "Scenario name(s) to run. Use [\"__all__\"] for every scenario.",    "required": false, "accepted_values": [] },
-    { "name": "subgroups",         "description": "Subgroup column name(s). Use [\"__all__\"] for all.",              "required": false, "accepted_values": [] },
-    { "name": "weights",           "description": "Weight column name(s). Use [\"__all__\"] for all.",                "required": false, "accepted_values": [] },
-    { "name": "throttles",         "description": "Throttle set name(s). Omit to use sim_db default.",                "required": false, "accepted_values": [] },
-    { "name": "considerations",    "description": "Consideration set name(s). Omit to use sim_db default.",           "required": false, "accepted_values": [] },
-    { "name": "include_nets",      "description": "Add net rows summed by product_net group. Default: false.",        "required": false, "accepted_values": [] },
-    { "name": "exponents",         "description": "Beta scale factor applied before exponentiation. Default: 1.0.",   "required": false, "accepted_values": [] },
-    { "name": "prob_methods",      "description": "Probability method: sop, topN (N≥1), nested <top>:<bot>-<att>, or pipe-blended. Default: sop.", "required": false, "accepted_values": ["sop", "top1", "top2", "top3"] },
-    { "name": "prob_methods_wgts", "description": "Blend weights for prob_methods. Default: [1.0].",                 "required": false, "accepted_values": [] },
-    { "name": "trips",             "description": "Monte Carlo shopping trips per respondent. Default: 1.",           "required": false, "accepted_values": [] },
-    { "name": "trip_seeds",        "description": "Random seed for trip simulation. Default: 100.",                  "required": false, "accepted_values": [] },
-    { "name": "price_formulas",    "description": "Eval-lang expressions for derived prices.",                        "required": false, "accepted_values": [] },
-    { "name": "return_debug",      "description": "Include per-respondent debug output. Default: false.",             "required": false, "accepted_values": [] },
-    { "name": "scenario_chgs",     "description": "Attribute overrides: {product: {attr: value_or_array}}.",         "required": false, "accepted_values": [] },
-    { "name": "threads",           "description": "Rayon worker threads for scenarios × weights fan-out. Default: 1.", "required": false, "accepted_values": [] }
+    {
+      "name": "measures",
+      "description": "Pipe-separated measures. Default: share|revenue.",
+      "required": false,
+      "accepted_values": [
+        "share",
+        "revenue",
+        "volume",
+        "cost",
+        "profit",
+        "standard_error",
+        "__all__"
+      ]
+    },
+    {
+      "name": "scenarios",
+      "description": "Scenario name(s) to run. Use [\"__all__\"] for every scenario.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "subgroups",
+      "description": "Subgroup column name(s). Use [\"__all__\"] for all.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "weights",
+      "description": "Weight column name(s). Use [\"__all__\"] for all.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "throttles",
+      "description": "Throttle set name(s). Omit to use sim_db default.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "considerations",
+      "description": "Consideration set name(s). Omit to use sim_db default.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "include_nets",
+      "description": "Add net rows summed by product_net group. Default: false.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "exponents",
+      "description": "Beta scale factor applied before exponentiation. Default: 1.0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "prob_methods",
+      "description": "Probability method: sop, topN (N≥1), nested <top>:<bot>-<att>, or pipe-blended. Default: sop.",
+      "required": false,
+      "accepted_values": [
+        "sop",
+        "top1",
+        "top2",
+        "top3"
+      ]
+    },
+    {
+      "name": "prob_methods_wgts",
+      "description": "Blend weights for prob_methods. Default: [1.0].",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "trips",
+      "description": "Monte Carlo shopping trips per respondent. Default: 1.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "trip_seeds",
+      "description": "Random seed for trip simulation. Default: 100.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "price_formulas",
+      "description": "Eval-lang expressions for derived prices.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "return_debug",
+      "description": "Include per-respondent debug output. Default: false.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "scenario_chgs",
+      "description": "Attribute overrides: {product: {attr: value_or_array}}.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "threads",
+      "description": "Rayon worker threads for scenarios × weights fan-out. Default: 1.",
+      "required": false,
+      "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "sim_take_rate_0.csv",
+      "title": "Take-rate simulation results",
+      "description": "Purchase-intent simulation results. When respondent weights are calibrated to population estimates, volume and revenue figures reflect projected market volume. One row per scenario × subgroup × product.",
+      "fields": [
+        {
+          "name": "scenario",
+          "description": "Scenario name."
+        },
+        {
+          "name": "subgroup",
+          "description": "Respondent subgroup."
+        },
+        {
+          "name": "product",
+          "description": "Product being measured."
+        },
+        {
+          "name": "measure",
+          "description": "Metric type — volume and revenue are most meaningful for take-rate analyses."
+        },
+        {
+          "name": "value",
+          "description": "Simulated value."
+        },
+        {
+          "name": "error",
+          "description": "Standard deviation across posterior draws."
+        }
+      ]
+    }
   ]
 }

@@ -60,5 +60,30 @@
       "required": true,
       "accepted_values": []
     }
+  ],
+  "artifacts": [
+    {
+      "path": "diagnostics.json",
+      "title": "Convergence diagnostics",
+      "description": "Per-parameter Rhat (potential scale reduction factor) and ESS (effective sample size). Review this first — Rhat values above 1.01 indicate chains that have not mixed, and the model should be re-run with more warmup iterations or draws.",
+      "fields": []
+    },
+    {
+      "path": "summary.json",
+      "title": "Posterior parameter summary",
+      "description": "Posterior mean, standard deviation, and quantiles (5%, 25%, 50%, 75%, 95%) for each population-level parameter — the overall mean part-worths and correlation structure across respondents.",
+      "fields": []
+    },
+    {
+      "path": "part_worths.csv",
+      "title": "Individual part-worth utilities",
+      "description": "The key output file. One row per respondent, one column per attribute, showing each respondent's posterior-mean preference utility. Feed this to sim_db_build (model_type=hb_stan) to build a market simulator for competitive-share or take-rate projections.",
+      "fields": [
+        {
+          "name": "(attribute columns)",
+          "description": "Posterior-mean utility estimate per attribute per respondent. Column names match the coded attribute names from the estimation file."
+        }
+      ]
+    }
   ]
 }

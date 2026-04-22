@@ -205,5 +205,30 @@
       "title": "Best-only study with custom prefix",
       "body": "[[\"choice-wrangling::prepare-maxdiff\"]]\ndesign_csv = \"design.csv\"\nrespondent_csv = \"respondents.csv\"\nrun_dir = \"./prepared\"\nrun_name = \"pilot4\"\nprefix = \"MXD\"\nbest_columns = [\"MXD_b1\", \"MXD_b2\", \"MXD_b3\", \"MXD_b4\", \"MXD_b5\", \"MXD_b6\"]\ntask_numbers = [1, 2, 3, 4, 5, 6]"
     }
+  ],
+  "artifacts": [
+    {
+      "path": "{run_dir}/{run_name}_prepared.csv",
+      "title": "Prepared respondent data",
+      "description": "Wide-ish format respondent file with normalised best/worst selection columns and the design-version join key. One row per respondent-task. This is the direct input to build-choice-sets.",
+      "fields": [
+        {
+          "name": "respondent_id",
+          "description": "Unique respondent identifier."
+        },
+        {
+          "name": "mxd_design_version",
+          "description": "The design version each respondent was randomised to, used to join selections against the correct design rows."
+        },
+        {
+          "name": "mxd_best_N",
+          "description": "The item the respondent chose as best in task N."
+        },
+        {
+          "name": "mxd_worst_N",
+          "description": "The item the respondent chose as worst in task N."
+        }
+      ]
+    }
   ]
 }

@@ -58,7 +58,7 @@
       "name": "convergence_threshold",
       "type": "number",
       "required": false,
-      "default": 0.00001,
+      "default": 1e-05,
       "description": "EM convergence tolerance. Default `1e-5`. The outer EM loop terminates when the relative change in log-likelihood between successive iterations drops below this value."
     },
     {
@@ -72,7 +72,7 @@
       "name": "coefficient_precision",
       "type": "number",
       "required": false,
-      "default": 1e-7,
+      "default": 1e-07,
       "description": "Inner-loop coefficient convergence precision. Default `1e-7`."
     },
     {
@@ -323,6 +323,39 @@
       "description": "Number of threads. Default: 1.",
       "required": false,
       "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{run_dir}/exports/coefficients.csv",
+      "title": "Per-class coefficient table",
+      "description": "The key modelling output: one coefficient row per attribute level per latent class, plus intercepts. Feed this into choice-wrangling::expand-coefficients to produce part-worth utilities for simulation.",
+      "fields": [
+        {
+          "name": "class",
+          "description": "Latent class identifier."
+        },
+        {
+          "name": "variable",
+          "description": "Attribute level name."
+        },
+        {
+          "name": "coefficient",
+          "description": "MNL coefficient for this level within this class."
+        }
+      ]
+    },
+    {
+      "path": "{run_dir}/exports/summary.json",
+      "title": "Fit summary",
+      "description": "JSON record of the class sizes (segment shares), log-likelihood, AIC, BIC, and the coefficient table. Use this to compare solutions across different numbers of classes.",
+      "fields": []
+    },
+    {
+      "path": "{run_dir}/exports/IC.csv",
+      "title": "Information criteria table",
+      "description": "Per-class (per-segment) information criteria in tabular form. Use this to assess model fit as you vary the number of latent classes.",
+      "fields": []
     }
   ]
 }

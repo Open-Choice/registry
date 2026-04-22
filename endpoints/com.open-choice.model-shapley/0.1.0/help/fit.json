@@ -1,32 +1,153 @@
 {
   "command": "fit",
-  "title": "Importance attribution via Shapley / Johnson's \u03b5",
-  "summary": "Rust port of `relaimpo::calc.relimp(type=\"lmg\")` (exact Shapley), `iopsych::relWt` (Johnson's \u03b5), plus Castro\u2013G\u00f3mez\u2013Tejada sampled Shapley for medium-p. One CSV in \u2192 one \u03b5 per variable out, summing to R\u00b2 of the full model (minus the `always` block's R\u00b2, if any).",
-  "description": "Reads a CSV, auto-detects numeric vs categorical columns (one-hot expands factors, dropping the alphabetically-first level as the reference), centres + standardises as configured, and computes weighted covariance moments. Variables \u2014 not expanded dummies \u2014 are the unit of attribution: a factor with K levels is a single group of K-1 columns and gets a single \u03b5. Exact Shapley enumerates all 2^p subsets of free groups and averages marginal R\u00b2 contributions with Shapley weights; sampled Shapley draws random orderings and averages telescoping prefix marginals (reports a standard error); Johnson's \u03b5 eigendecomposes the predictor correlation matrix, projects onto the best-fitting orthogonal approximation, and sums squared projection loadings. `method=auto` picks exact if free groups \u2264 shapley_max_p, sampled if \u2264 shapley_sampled_max_p, Johnson otherwise. An `always` block is partialled out first via a block-inverse identity, and the attribution decomposes R\u00b2_full \u2212 R\u00b2_always across the free groups. Outputs: `importance.csv` (variable, eps, eps_rel, rank, [eps_se], is_always) and a multi-sheet XLSX (summary, importance, coefficients, factor_levels).",
+  "title": "Importance attribution via Shapley / Johnson's ε",
+  "summary": "Rust port of `relaimpo::calc.relimp(type=\"lmg\")` (exact Shapley), `iopsych::relWt` (Johnson's ε), plus Castro–Gómez–Tejada sampled Shapley for medium-p. One CSV in → one ε per variable out, summing to R² of the full model (minus the `always` block's R², if any).",
+  "description": "Reads a CSV, auto-detects numeric vs categorical columns (one-hot expands factors, dropping the alphabetically-first level as the reference), centres + standardises as configured, and computes weighted covariance moments. Variables — not expanded dummies — are the unit of attribution: a factor with K levels is a single group of K-1 columns and gets a single ε. Exact Shapley enumerates all 2^p subsets of free groups and averages marginal R² contributions with Shapley weights; sampled Shapley draws random orderings and averages telescoping prefix marginals (reports a standard error); Johnson's ε eigendecomposes the predictor correlation matrix, projects onto the best-fitting orthogonal approximation, and sums squared projection loadings. `method=auto` picks exact if free groups ≤ shapley_max_p, sampled if ≤ shapley_sampled_max_p, Johnson otherwise. An `always` block is partialled out first via a block-inverse identity, and the attribution decomposes R²_full − R²_always across the free groups. Outputs: `importance.csv` (variable, eps, eps_rel, rank, [eps_se], is_always) and a multi-sheet XLSX (summary, importance, coefficients, factor_levels).",
   "usage": "[[\"model-shapley::fit\"]]\ninput = \"./data.csv\"\nrun_dir = \"./runs\"\nrun_name = \"s1\"\ny = \"y\"\nmethod = \"auto\"",
   "arguments": [
-    { "name": "input",     "type": "string",  "required": true,  "description": "CSV of predictors + response. Non-numeric columns are auto-detected as factors and one-hot expanded." },
-    { "name": "run_dir",   "type": "string",  "required": true,  "description": "Base directory. Outputs land in `<run_dir>/ocinfo/<run_name>_model_shapley/`." },
-    { "name": "run_name",  "type": "string",  "required": true,  "description": "Short identifier for this run; no '..', '/', or '\\\\'." },
-    { "name": "y",         "type": "string",  "required": true,  "description": "Response column name (single, numeric)." },
-    { "name": "vars",      "type": "array",   "required": false, "default": [], "description": "Predictor subset. Empty = all non-y, non-always, non-weights columns." },
-    { "name": "always",    "type": "array",   "required": false, "default": [], "description": "Predictors whose R\u00b2 is attributed as a single block (not decomposed). Matches `relaimpo::calc.relimp(always=...)`." },
-    { "name": "weights_col", "type": "string", "required": false, "description": "Optional per-observation weights column. Missing = unit weights." },
-    { "name": "method",    "type": "string",  "required": false, "default": "auto", "description": "One of auto|shapley|shapley_sampled|johnson." },
-    { "name": "shapley_max_p",         "type": "integer", "required": false, "default": 14,   "description": "Exact-Shapley upper bound on free groups. Hard-capped at 20 (2^20 subsets)." },
-    { "name": "shapley_sampled_max_p", "type": "integer", "required": false, "default": 40,   "description": "Sampled-Shapley upper bound on free groups; above this `auto` falls back to Johnson." },
-    { "name": "n_orderings",           "type": "integer", "required": false, "default": 2000, "description": "Random orderings for sampled Shapley. SE shrinks as 1/\u221aN." },
-    { "name": "seed",                  "type": "integer", "required": false, "default": 1,    "description": "RNG seed for sampled Shapley (deterministic ChaCha20)." },
-    { "name": "standardize",           "type": "boolean", "required": false, "default": true, "description": "Standardise predictors + response. R\u00b2/\u03b5 invariant; only \u03b2 reporting is affected." },
-    { "name": "headers",               "type": "boolean", "required": false, "default": true, "description": "Whether CSV inputs have a header row." },
-    { "name": "threads",               "type": "integer", "required": false, "default": 1, "description": "Number of worker threads. `1` (default) runs serially. Parallelises exact-Shapley subset enumeration (2^p R² evaluations) and sampled-Shapley orderings. Results are bit-deterministic across thread counts." },
-    { "name": "output_format",         "type": "string",  "required": false, "description": "Override stdout format: human|protocol|quiet." }
+    {
+      "name": "input",
+      "type": "string",
+      "required": true,
+      "description": "CSV of predictors + response. Non-numeric columns are auto-detected as factors and one-hot expanded."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "description": "Base directory. Outputs land in `<run_dir>/ocinfo/<run_name>_model_shapley/`."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "description": "Short identifier for this run; no '..', '/', or '\\\\'."
+    },
+    {
+      "name": "y",
+      "type": "string",
+      "required": true,
+      "description": "Response column name (single, numeric)."
+    },
+    {
+      "name": "vars",
+      "type": "array",
+      "required": false,
+      "default": [],
+      "description": "Predictor subset. Empty = all non-y, non-always, non-weights columns."
+    },
+    {
+      "name": "always",
+      "type": "array",
+      "required": false,
+      "default": [],
+      "description": "Predictors whose R² is attributed as a single block (not decomposed). Matches `relaimpo::calc.relimp(always=...)`."
+    },
+    {
+      "name": "weights_col",
+      "type": "string",
+      "required": false,
+      "description": "Optional per-observation weights column. Missing = unit weights."
+    },
+    {
+      "name": "method",
+      "type": "string",
+      "required": false,
+      "default": "auto",
+      "description": "One of auto|shapley|shapley_sampled|johnson."
+    },
+    {
+      "name": "shapley_max_p",
+      "type": "integer",
+      "required": false,
+      "default": 14,
+      "description": "Exact-Shapley upper bound on free groups. Hard-capped at 20 (2^20 subsets)."
+    },
+    {
+      "name": "shapley_sampled_max_p",
+      "type": "integer",
+      "required": false,
+      "default": 40,
+      "description": "Sampled-Shapley upper bound on free groups; above this `auto` falls back to Johnson."
+    },
+    {
+      "name": "n_orderings",
+      "type": "integer",
+      "required": false,
+      "default": 2000,
+      "description": "Random orderings for sampled Shapley. SE shrinks as 1/√N."
+    },
+    {
+      "name": "seed",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "RNG seed for sampled Shapley (deterministic ChaCha20)."
+    },
+    {
+      "name": "standardize",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Standardise predictors + response. R²/ε invariant; only β reporting is affected."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether CSV inputs have a header row."
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Number of worker threads. `1` (default) runs serially. Parallelises exact-Shapley subset enumeration (2^p R² evaluations) and sampled-Shapley orderings. Results are bit-deterministic across thread counts."
+    },
+    {
+      "name": "output_format",
+      "type": "string",
+      "required": false,
+      "description": "Override stdout format: human|protocol|quiet."
+    }
   ],
   "notes": [
-    "`\u03b5_j` sums to R\u00b2_full across free groups (Shapley) or to R\u00b2_full (Johnson, when `always` is empty). With an `always` block present, free \u03b5 sums to R\u00b2_full \u2212 R\u00b2_always.",
+    "`ε_j` sums to R²_full across free groups (Shapley) or to R²_full (Johnson, when `always` is empty). With an `always` block present, free ε sums to R²_full − R²_always.",
     "Factors expand to `var=level` columns internally; the importance table reports a single row per original variable.",
-    "`auto` resolves once per fit: if free groups \u2264 shapley_max_p \u2192 exact Shapley; \u2264 shapley_sampled_max_p \u2192 sampled Shapley; else Johnson.",
+    "`auto` resolves once per fit: if free groups ≤ shapley_max_p → exact Shapley; ≤ shapley_sampled_max_p → sampled Shapley; else Johnson.",
     "Sampled Shapley returns a standard error per variable. Exact Shapley and Johnson do not (the uncertainty is purely algorithmic, not sampling).",
     "Exact Shapley over 20 free groups is refused hard (2^20 subsets). Use `shapley_sampled` or `johnson` for larger group counts."
+  ],
+  "artifacts": [
+    {
+      "path": "{run_dir}/ocinfo/{run_name}_model_shapley/importance.csv",
+      "title": "Variable importance table",
+      "description": "The primary output. One row per predictor variable with its Shapley or Johnson importance score — the share of the model's R² attributed to that variable. Scores sum to the total R² of the full model, so they can be read as percentages. Use this to tell clients which drivers matter most and by how much.",
+      "fields": [
+        {
+          "name": "variable",
+          "description": "Predictor variable name."
+        },
+        {
+          "name": "epsilon",
+          "description": "Importance score: share of total R² attributed to this variable."
+        },
+        {
+          "name": "epsilon_pct",
+          "description": "Importance as a percentage of total attributed R²."
+        },
+        {
+          "name": "se",
+          "description": "Standard error (sampled Shapley only; blank for exact Shapley and Johnson)."
+        }
+      ]
+    },
+    {
+      "path": "{run_dir}/ocinfo/{run_name}_model_shapley/summary.json",
+      "title": "Model summary",
+      "description": "JSON record of the method used (exact Shapley, sampled, or Johnson), total R², always-block R², seed, and run metadata.",
+      "fields": []
+    }
   ]
 }

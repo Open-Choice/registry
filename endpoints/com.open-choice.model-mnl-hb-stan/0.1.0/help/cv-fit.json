@@ -93,7 +93,7 @@
       "name": "ridge_scale",
       "type": "number",
       "required": false,
-      "default": 0.000001,
+      "default": 1e-06,
       "description": "Ridge scale for the covariance prior, applied to all folds. Default 1e-6."
     }
   ],
@@ -224,6 +224,20 @@
       "description": "Covariance prior ridge scale, all folds. Default: 1e-6.",
       "required": false,
       "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{fold_name}/stan_data.json",
+      "title": "Per-fold Stan data files",
+      "description": "One Stan JSON data file per fold, converted from the fold's train.csv. One file per fold subdirectory. Saved for reproducibility.",
+      "fields": []
+    },
+    {
+      "path": "{fold_name}/hb_fit_chain_N.csv",
+      "title": "Per-fold chain draws",
+      "description": "CmdStan CSV chain files for each fold. Input to cv-finalize. One set of chain files per fold subdirectory.",
+      "fields": []
     }
   ]
 }

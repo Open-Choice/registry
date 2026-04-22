@@ -162,5 +162,13 @@
         "false"
       ]
     }
+  ],
+  "artifacts": [
+    {
+      "path": "hb_fit_chain_N.csv",
+      "title": "Raw posterior chain draws",
+      "description": "One CmdStan CSV file per chain with all post-warmup draws from the NUTS sampler. Pass the run_dir to finalize to produce convergence diagnostics, posterior summaries, and the part-worth matrix.",
+      "fields": []
+    }
   ]
 }

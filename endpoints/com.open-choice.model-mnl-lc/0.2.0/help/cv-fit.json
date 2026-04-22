@@ -51,7 +51,7 @@
       "name": "convergence_threshold",
       "type": "number",
       "required": false,
-      "default": 0.00001,
+      "default": 1e-05,
       "description": "EM convergence tolerance. Default `1e-5`."
     },
     {
@@ -65,7 +65,7 @@
       "name": "coefficient_precision",
       "type": "number",
       "required": false,
-      "default": 1e-7,
+      "default": 1e-07,
       "description": "Inner-loop convergence precision. Default `1e-7`."
     },
     {
@@ -303,6 +303,33 @@
       "description": "Number of threads per fold. Default: 1.",
       "required": false,
       "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{run_dir}/cv_summary.csv",
+      "title": "Cross-validation summary",
+      "description": "Per-fold and aggregate train/holdout log-likelihood across all CV folds. Use this to compare model fit across numbers of latent classes on genuinely held-out respondents.",
+      "fields": [
+        {
+          "name": "fold",
+          "description": "Fold identifier."
+        },
+        {
+          "name": "train_llh",
+          "description": "Log-likelihood on the training portion of this fold."
+        },
+        {
+          "name": "holdout_llh",
+          "description": "Log-likelihood on the held-out test respondents."
+        }
+      ]
+    },
+    {
+      "path": "{run_dir}/{fold_id}/",
+      "title": "Per-fold fit outputs",
+      "description": "One subdirectory per fold with the same layout as a single fit run. Contains the EM state for each fold.",
+      "fields": []
     }
   ]
 }

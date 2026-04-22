@@ -59,7 +59,11 @@
       "type": "string",
       "required": false,
       "default": "sequential",
-      "accepted_values": ["sequential", "combined", "within"],
+      "accepted_values": [
+        "sequential",
+        "combined",
+        "within"
+      ],
       "description": "Selects which composite objective the optimiser minimises.\n\n`\"sequential\"` (default) optimises versions one at a time, each with its own full SA chain. The iteration budget applies independently to each version, so total SA work = `iterations × versions`. Global cross-version balance terms guide each version toward filling gaps left by earlier ones. Use this for virtually all studies.\n\n`\"within\"` is identical to `sequential` in algorithm and SA settings but with the cross-version balance terms disabled. Each version is optimised in complete isolation. Use this when versions will be fielded independently or when cross-version balance is explicitly not required. Expect slightly worse aggregate pair coverage across versions compared to `sequential`, but identical within-version balance.\n\n`\"combined\"` treats all versions as a single object optimised by one SA chain. The total iteration budget is shared across all versions (~`iterations / versions` steps per version on average). Critically, the SA temperature cools continuously for the entire run — with the default `cooling_rate = 0.9995` the chain freezes after roughly 60,000 steps, leaving essentially no exploration for large version counts. Only practical for `versions <= ~15` with correctly scaled `iterations` and `cooling_rate` (see Notes). Even then, `sequential` usually matches or exceeds its quality at a fraction of the runtime."
     },
     {
@@ -67,7 +71,10 @@
       "type": "string",
       "required": false,
       "default": "sa",
-      "accepted_values": ["sa", "greedy"],
+      "accepted_values": [
+        "sa",
+        "greedy"
+      ],
       "description": "Optimisation engine. `\"sa\"` is the simulated annealing solver (production default). `\"greedy\"` is a deterministic baseline used mainly as a sanity check or for very small problems where random restart isn't needed."
     },
     {
@@ -215,8 +222,14 @@
     "`print_every` is a no-op in plugin mode and exists only for the standalone `bw-cli design` shell entry point."
   ],
   "see_also": [
-    { "command": "choice-wrangling::prepare-maxdiff", "description": "Apply this design to raw respondent data once the survey is fielded." },
-    { "command": "model-mnl-hb-mh::fit", "description": "Estimate utilities from coded data collected against this design." }
+    {
+      "command": "choice-wrangling::prepare-maxdiff",
+      "description": "Apply this design to raw respondent data once the survey is fielded."
+    },
+    {
+      "command": "model-mnl-hb-mh::fit",
+      "description": "Estimate utilities from coded data collected against this design."
+    }
   ],
   "examples": [
     {
@@ -237,33 +250,243 @@
     }
   ],
   "fields": [
-    { "name": "n_items",                     "description": "Total number of items in the study. Integer >= 1.", "required": true,  "accepted_values": [] },
-    { "name": "items_per_task",              "description": "Items shown per task (the 'A' dimension). Integer >= 2 and <= n_items.", "required": true,  "accepted_values": [] },
-    { "name": "tasks_per_version",           "description": "Number of tasks in each design version. Integer >= 1.", "required": true,  "accepted_values": [] },
-    { "name": "versions",                    "description": "Number of design versions to generate. Integer >= 1.", "required": true,  "accepted_values": [] },
-    { "name": "run_dir",                     "description": "Output directory. Created if it does not exist. Receives design CSVs, summary CSVs, design.json, and summary.json.", "required": true,  "accepted_values": [] },
-    { "name": "run_name",                    "description": "Short identifier for this run. Non-empty string. Tags output artifacts so multiple designs under the same run_dir do not collide.", "required": true,  "accepted_values": [] },
-    { "name": "seed",                        "description": "Random seed for reproducibility. Integer. Omit for a non-deterministic seed.", "required": false, "accepted_values": [] },
-    { "name": "objective",                   "description": "Optimization objective. 'sequential' (default): full SA chain per version, budget applies independently per version, cross-version balance guided by global terms. 'within': same as sequential but cross-version balance terms disabled — each version optimized in isolation. 'combined': single SA chain for all versions, shared budget (~iterations/versions steps per version average); only practical for versions <= ~15 with scaled iterations and cooling_rate.", "required": false, "accepted_values": ["sequential", "combined", "within"] },
-    { "name": "engine",                      "description": "Optimization engine. 'sa' is the simulated annealing solver (default). 'greedy' is a deterministic baseline used mainly for comparison.", "required": false, "accepted_values": ["sa", "greedy"] },
-    { "name": "iterations",                  "description": "SA iteration budget. For sequential/within: applies independently per version (total work = iterations × versions). For combined: total budget shared across all versions. Default: 300000. For combined, set iterations = versions × 300000.", "required": false, "accepted_values": [] },
-    { "name": "exploration_rate",            "description": "SA exploration rate: probability of a 'replace' proposal versus a 'swap' proposal at each step. Number in (0, 1]. Default: 0.65.", "required": false, "accepted_values": [] },
-    { "name": "initial_temperature",         "description": "SA starting temperature for the Metropolis acceptance rule. Higher values accept more uphill moves early. Number > 0. Default: 10.0. For sequential/within, temperature restarts fresh each version. For combined, cools continuously for the entire run.", "required": false, "accepted_values": [] },
-    { "name": "cooling_rate",                "description": "Per-iteration multiplicative cooling factor (T <- T * cooling_rate). Number in (0, 1). Default: 0.9995. With defaults, chain freezes after ~60,000 steps — fine for sequential (restarts each version) but fatal for combined with large V. For combined: cooling_rate ≈ 1 - 2.3 / (versions × iterations).", "required": false, "accepted_values": [] },
-    { "name": "verbose",                     "description": "When true, the plugin emits one `event.run.progress` envelope per completed version (carrying the version number, best score, and accepted-move count). Defaults to false. Total envelope count scales with `versions` only - safe for any iteration count.", "required": false, "accepted_values": [] },
-    { "name": "print_every",                 "description": "How often (in SA iterations) bw-core's internal verbose-print path emits a tick. Integer >= 1. Default: 20000. NOTE: in plugin/protocol mode this knob has no effect on the wire stream - protocol output is per-version, not per-iteration. Retained for the standalone CLI's --verbose mode.", "required": false, "accepted_values": [] },
-    { "name": "n_starts",                    "description": "Number of independent SA restarts; the lowest-scoring design is kept. Integer >= 1. Default: 1. Values > 1 enable multi-start search and benefit from `threads`.", "required": false, "accepted_values": [] },
-    { "name": "threads",                     "description": "Worker threads used for parallel restarts. Integer >= 1. Default: 1. Only meaningful when `n_starts` > 1.", "required": false, "accepted_values": [] },
-    { "name": "proposal_batch_size",         "description": "Batch size for the batched-proposals search mode (advanced). Integer >= 1. Default: 8. Ignored unless the search mode resolves to batched_proposals.", "required": false, "accepted_values": [] },
-    { "name": "weight_item_balance",         "description": "Sequential objective: weight on per-version item exposure balance. Number >= 0. Default: 1.0.", "required": false, "accepted_values": [] },
-    { "name": "weight_pair_balance",         "description": "Sequential objective: weight on per-version item-pair co-occurrence balance. Number >= 0. Default: 1.0.", "required": false, "accepted_values": [] },
-    { "name": "weight_global_item_balance",  "description": "Sequential objective: weight on running global item balance across versions built so far. Number >= 0. Default: 1.0.", "required": false, "accepted_values": [] },
-    { "name": "weight_global_pair_balance",  "description": "Sequential objective: weight on running global pair balance across versions built so far. Number >= 0. Default: 1.0.", "required": false, "accepted_values": [] },
-    { "name": "weight_version_item_balance", "description": "Combined objective: weight on per-version item balance. Number >= 0. Default: 1.0.", "required": false, "accepted_values": [] },
-    { "name": "weight_version_pair_balance", "description": "Combined objective: weight on per-version pair balance. Number >= 0. Default: 1.0.", "required": false, "accepted_values": [] },
-    { "name": "weight_total_item_balance",   "description": "Combined objective: weight on total item balance across all versions. Number >= 0. Default: 1.0.", "required": false, "accepted_values": [] },
-    { "name": "weight_total_pair_balance",   "description": "Combined objective: weight on total pair balance across all versions. Number >= 0. Default: 1.0.", "required": false, "accepted_values": [] },
-    { "name": "item_labels",                 "description": "Optional human-readable labels for items. Array of strings; if provided, length must equal n_items. Used in CSV/JSON exports only - the optimizer is label-agnostic.", "required": false, "accepted_values": [] },
-    { "name": "forbidden_pairs",             "description": "Pairs of 1-based item indices that must never co-occur in the same task. Array of [a, b] integer pairs (each in 1..=n_items). The optimizer treats any task containing such a pair as infeasible.", "required": false, "accepted_values": [] }
+    {
+      "name": "n_items",
+      "description": "Total number of items in the study. Integer >= 1.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "items_per_task",
+      "description": "Items shown per task (the 'A' dimension). Integer >= 2 and <= n_items.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "tasks_per_version",
+      "description": "Number of tasks in each design version. Integer >= 1.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "versions",
+      "description": "Number of design versions to generate. Integer >= 1.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Output directory. Created if it does not exist. Receives design CSVs, summary CSVs, design.json, and summary.json.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run. Non-empty string. Tags output artifacts so multiple designs under the same run_dir do not collide.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "seed",
+      "description": "Random seed for reproducibility. Integer. Omit for a non-deterministic seed.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "objective",
+      "description": "Optimization objective. 'sequential' (default): full SA chain per version, budget applies independently per version, cross-version balance guided by global terms. 'within': same as sequential but cross-version balance terms disabled — each version optimized in isolation. 'combined': single SA chain for all versions, shared budget (~iterations/versions steps per version average); only practical for versions <= ~15 with scaled iterations and cooling_rate.",
+      "required": false,
+      "accepted_values": [
+        "sequential",
+        "combined",
+        "within"
+      ]
+    },
+    {
+      "name": "engine",
+      "description": "Optimization engine. 'sa' is the simulated annealing solver (default). 'greedy' is a deterministic baseline used mainly for comparison.",
+      "required": false,
+      "accepted_values": [
+        "sa",
+        "greedy"
+      ]
+    },
+    {
+      "name": "iterations",
+      "description": "SA iteration budget. For sequential/within: applies independently per version (total work = iterations × versions). For combined: total budget shared across all versions. Default: 300000. For combined, set iterations = versions × 300000.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "exploration_rate",
+      "description": "SA exploration rate: probability of a 'replace' proposal versus a 'swap' proposal at each step. Number in (0, 1]. Default: 0.65.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "initial_temperature",
+      "description": "SA starting temperature for the Metropolis acceptance rule. Higher values accept more uphill moves early. Number > 0. Default: 10.0. For sequential/within, temperature restarts fresh each version. For combined, cools continuously for the entire run.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "cooling_rate",
+      "description": "Per-iteration multiplicative cooling factor (T <- T * cooling_rate). Number in (0, 1). Default: 0.9995. With defaults, chain freezes after ~60,000 steps — fine for sequential (restarts each version) but fatal for combined with large V. For combined: cooling_rate ≈ 1 - 2.3 / (versions × iterations).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "verbose",
+      "description": "When true, the plugin emits one `event.run.progress` envelope per completed version (carrying the version number, best score, and accepted-move count). Defaults to false. Total envelope count scales with `versions` only - safe for any iteration count.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "print_every",
+      "description": "How often (in SA iterations) bw-core's internal verbose-print path emits a tick. Integer >= 1. Default: 20000. NOTE: in plugin/protocol mode this knob has no effect on the wire stream - protocol output is per-version, not per-iteration. Retained for the standalone CLI's --verbose mode.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "n_starts",
+      "description": "Number of independent SA restarts; the lowest-scoring design is kept. Integer >= 1. Default: 1. Values > 1 enable multi-start search and benefit from `threads`.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "threads",
+      "description": "Worker threads used for parallel restarts. Integer >= 1. Default: 1. Only meaningful when `n_starts` > 1.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "proposal_batch_size",
+      "description": "Batch size for the batched-proposals search mode (advanced). Integer >= 1. Default: 8. Ignored unless the search mode resolves to batched_proposals.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "weight_item_balance",
+      "description": "Sequential objective: weight on per-version item exposure balance. Number >= 0. Default: 1.0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "weight_pair_balance",
+      "description": "Sequential objective: weight on per-version item-pair co-occurrence balance. Number >= 0. Default: 1.0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "weight_global_item_balance",
+      "description": "Sequential objective: weight on running global item balance across versions built so far. Number >= 0. Default: 1.0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "weight_global_pair_balance",
+      "description": "Sequential objective: weight on running global pair balance across versions built so far. Number >= 0. Default: 1.0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "weight_version_item_balance",
+      "description": "Combined objective: weight on per-version item balance. Number >= 0. Default: 1.0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "weight_version_pair_balance",
+      "description": "Combined objective: weight on per-version pair balance. Number >= 0. Default: 1.0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "weight_total_item_balance",
+      "description": "Combined objective: weight on total item balance across all versions. Number >= 0. Default: 1.0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "weight_total_pair_balance",
+      "description": "Combined objective: weight on total pair balance across all versions. Number >= 0. Default: 1.0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "item_labels",
+      "description": "Optional human-readable labels for items. Array of strings; if provided, length must equal n_items. Used in CSV/JSON exports only - the optimizer is label-agnostic.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "forbidden_pairs",
+      "description": "Pairs of 1-based item indices that must never co-occur in the same task. Array of [a, b] integer pairs (each in 1..=n_items). The optimizer treats any task containing such a pair as infeasible.",
+      "required": false,
+      "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "design_wide.csv",
+      "title": "MaxDiff design — wide format",
+      "description": "The primary design file for survey programming. One row per (version, task) with item slot columns containing 1-based item indices. Hand this to your survey platform to programme the questionnaire.",
+      "fields": [
+        {
+          "name": "Version",
+          "description": "Design version number. Each respondent is randomly assigned one version."
+        },
+        {
+          "name": "Task",
+          "description": "Task number within the version."
+        },
+        {
+          "name": "Item1, Item2, ...",
+          "description": "1-based item indices shown to the respondent in each slot of this task."
+        }
+      ]
+    },
+    {
+      "path": "design_long.csv",
+      "title": "Design — long format",
+      "description": "One row per (version, task, slot, item) for programmatic use by wrangling tools.",
+      "fields": []
+    },
+    {
+      "path": "summary_overview.csv",
+      "title": "Design balance summary",
+      "description": "Overall item exposure and pair-coverage statistics for the chosen design.",
+      "fields": []
+    },
+    {
+      "path": "summary_exposure.csv",
+      "title": "Item exposure counts",
+      "description": "How many times each item appears across all tasks and versions. Well-balanced designs show roughly equal exposure across all items.",
+      "fields": [
+        {
+          "name": "item",
+          "description": "Item index or label."
+        },
+        {
+          "name": "count",
+          "description": "Total appearances across all tasks and all versions."
+        }
+      ]
+    },
+    {
+      "path": "summary_pair_counts.csv",
+      "title": "Item pair co-occurrence counts",
+      "description": "How often every unordered pair of items appears together in the same task. Balanced designs show roughly equal pair counts, ensuring that every combination of items is measured.",
+      "fields": [
+        {
+          "name": "item_a, item_b",
+          "description": "The two items in the pair."
+        },
+        {
+          "name": "count",
+          "description": "Number of tasks where both items appeared together."
+        }
+      ]
+    }
   ]
 }

@@ -149,7 +149,7 @@
       "name": "init_ridge",
       "type": "number",
       "required": false,
-      "default": 1e-8,
+      "default": 1e-08,
       "description": "Numerical ridge added to the Hessian diagonal during the MAP initialisation step. Default `1e-8`. Raise if MAP init fails on a near-singular Hessian (e.g., a near-collinear coding scheme)."
     },
     {
@@ -353,6 +353,29 @@
       "description": "Sign constraints: [{name, rule}] where rule is non_neg or non_pos.",
       "required": false,
       "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "exports/summary.json",
+      "title": "Model fit summary",
+      "description": "Segment-level means, mixture probabilities, and log-likelihood statistics for the fitted model. Includes training log-likelihood and — if a holdout file was supplied — the out-of-sample holdout log-likelihood for model comparison.",
+      "fields": []
+    },
+    {
+      "path": "exports/point_estimates.csv",
+      "title": "Individual part-worth utilities",
+      "description": "The key output file. One row per respondent with their posterior-mean preference estimates for each attribute. Feed this to sim_db_build (model_type=hb) to build a market simulator for competitive-share or take-rate projections.",
+      "fields": [
+        {
+          "name": "resp_id",
+          "description": "Respondent identifier."
+        },
+        {
+          "name": "(attribute columns)",
+          "description": "Posterior-mean part-worth utility for each coded attribute. One column per attribute in the coded-long input."
+        }
+      ]
     }
   ]
 }

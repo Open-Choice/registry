@@ -2,40 +2,147 @@
   "command": "run",
   "title": "Run a Polars verb pipeline or a SQL query over named inputs",
   "summary": "Two modes sharing one `[inputs]` map. Ops mode chains Polars verbs (select / filter / with_columns / sort / group_by / join / rename / drop / distinct / slice / head / tail) against a starting input. Query mode evaluates a SQL string via polars_sql::SQLContext with each input registered as a table. Inputs may carry their own per-input pre-pipeline applied at load. Output is written as CSV or Parquet (SAV write not yet supported).",
-  "description": "Each [inputs] entry is loaded lazily (CSV / Parquet) or eagerly (SAV via polars-readstat). Declared `format` overrides the extension-based inference. An input may declare its own `ops` array \u2014 those verbs are applied to that input at load time, before anything else sees the frame. Ops mode then applies the top-level `ops` pipeline to the `input`-named frame; verbs map 1:1 to LazyFrame methods, and expression-valued fields (`filter.expr`, `with_columns.exprs`, `group_by.agg`) are parsed with polars_sql::sql_expr so you can write SQL-flavoured scalar and aggregate expressions. The `join` verb resolves its `with` against the [inputs] map (honouring that input's pre-pipeline). Query mode skips the verb pipeline entirely and runs a single SQL statement, with each input name as a table. The result is collected into a DataFrame and written to `output`; the format is inferred from the extension (.csv / .parquet / .sav) unless `output_format` is set explicitly.",
+  "description": "Each [inputs] entry is loaded lazily (CSV / Parquet) or eagerly (SAV via polars-readstat). Declared `format` overrides the extension-based inference. An input may declare its own `ops` array — those verbs are applied to that input at load time, before anything else sees the frame. Ops mode then applies the top-level `ops` pipeline to the `input`-named frame; verbs map 1:1 to LazyFrame methods, and expression-valued fields (`filter.expr`, `with_columns.exprs`, `group_by.agg`) are parsed with polars_sql::sql_expr so you can write SQL-flavoured scalar and aggregate expressions. The `join` verb resolves its `with` against the [inputs] map (honouring that input's pre-pipeline). Query mode skips the verb pipeline entirely and runs a single SQL statement, with each input name as a table. The result is collected into a DataFrame and written to `output`; the format is inferred from the extension (.csv / .parquet / .sav) unless `output_format` is set explicitly.",
   "usage": "[[\"data-wrangling::run\"]]\nrun_dir = \"./runs\"\nrun_name = \"w1\"\noutput = \"./out.csv\"\ninput = \"main\"\n\n[inputs.main]\npath = \"./data.csv\"\n\n[[ops]]\nverb = \"select\"\ncols = [\"id\", \"x\"]\n\n[[ops]]\nverb = \"filter\"\nexpr = \"x > 20\"",
   "arguments": [
-    { "name": "run_dir",       "type": "string",  "required": true,  "description": "Base directory under which `ocinfo/<run_name>_data_wrangling/` is created by the orchestrator." },
-    { "name": "run_name",      "type": "string",  "required": true,  "description": "Short run identifier; no '..', '/', or '\\\\'." },
-    { "name": "output",        "type": "string",  "required": true,  "description": "Output file path. Extension (.csv / .parquet / .sav) picks the writer unless `output_format` is set." },
-    { "name": "output_format", "type": "string",  "required": false, "description": "One of csv|sav|parquet. SAV write currently returns `Error::Unsupported`." },
-    { "name": "inputs",        "type": "object",  "required": true,  "description": "Named map of InputSpec. At least one entry required. Keys are referenced by top-level `input`, by `join.with`, and (in query mode) by the SQL FROM clause." },
-    { "name": "input",         "type": "string",  "required": false, "description": "Ops mode: name of the starting input. Omit in query mode." },
-    { "name": "ops",           "type": "array",   "required": false, "default": [], "description": "Ops mode: ordered verb pipeline. Mutually exclusive with `query`." },
-    { "name": "query",         "type": "string",  "required": false, "description": "Query mode: SQL evaluated by polars_sql::SQLContext. Mutually exclusive with `input`/`ops`." },
-    { "name": "output_format_stdout", "type": "string", "required": false, "description": "Override stdout format when invoked directly: human|protocol|quiet." }
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "description": "Base directory under which `ocinfo/<run_name>_data_wrangling/` is created by the orchestrator."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "description": "Short run identifier; no '..', '/', or '\\\\'."
+    },
+    {
+      "name": "output",
+      "type": "string",
+      "required": true,
+      "description": "Output file path. Extension (.csv / .parquet / .sav) picks the writer unless `output_format` is set."
+    },
+    {
+      "name": "output_format",
+      "type": "string",
+      "required": false,
+      "description": "One of csv|sav|parquet. SAV write currently returns `Error::Unsupported`."
+    },
+    {
+      "name": "inputs",
+      "type": "object",
+      "required": true,
+      "description": "Named map of InputSpec. At least one entry required. Keys are referenced by top-level `input`, by `join.with`, and (in query mode) by the SQL FROM clause."
+    },
+    {
+      "name": "input",
+      "type": "string",
+      "required": false,
+      "description": "Ops mode: name of the starting input. Omit in query mode."
+    },
+    {
+      "name": "ops",
+      "type": "array",
+      "required": false,
+      "default": [],
+      "description": "Ops mode: ordered verb pipeline. Mutually exclusive with `query`."
+    },
+    {
+      "name": "query",
+      "type": "string",
+      "required": false,
+      "description": "Query mode: SQL evaluated by polars_sql::SQLContext. Mutually exclusive with `input`/`ops`."
+    },
+    {
+      "name": "output_format_stdout",
+      "type": "string",
+      "required": false,
+      "description": "Override stdout format when invoked directly: human|protocol|quiet."
+    }
   ],
   "verbs": [
-    { "name": "select",       "shape": "{ verb='select',       cols=[..] }",                               "notes": "Keep listed columns in the given order." },
-    { "name": "drop",         "shape": "{ verb='drop',         cols=[..] }",                               "notes": "Drop listed columns (strict by-name)." },
-    { "name": "rename",       "shape": "{ verb='rename',       map={ old='new', .. } }",                   "notes": "Rename existing columns; values are the new names." },
-    { "name": "filter",       "shape": "{ verb='filter',       expr='<sql>' }",                            "notes": "`expr` is parsed by polars_sql::sql_expr, e.g. `x > 20 AND group = 'a'`." },
-    { "name": "with_columns", "shape": "{ verb='with_columns', exprs={ alias='<sql>', .. } }",             "notes": "Each value is a SQL expression aliased to its key." },
-    { "name": "sort",         "shape": "{ verb='sort',         by=[..], descending=[..] }",                "notes": "`descending` defaults to all-ascending; when supplied it must match `by`'s length." },
-    { "name": "slice",        "shape": "{ verb='slice',        offset=N, length=M }",                      "notes": "`length` must be \u2265 1." },
-    { "name": "distinct",     "shape": "{ verb='distinct',     subset=[..] }",                             "notes": "Empty `subset` \u2192 dedupe on the full row. Keep-first, stable." },
-    { "name": "group_by",     "shape": "{ verb='group_by',     by=[..], agg={ alias='<sql>', .. } }",      "notes": "SQL aggregates over each group, e.g. `sum(x)`, `count(id)`, `mean(y)`." },
-    { "name": "join",         "shape": "{ verb='join',         with='<input>', on=[..], how='inner' }",    "notes": "`with` must name an entry in [inputs]; that input's pre-pipeline is applied first. Supported how: inner|left|right|full|semi|anti|cross." },
-    { "name": "head",         "shape": "{ verb='head',         n=N }",                                     "notes": "First N rows (N \u2265 1)." },
-    { "name": "tail",         "shape": "{ verb='tail',         n=N }",                                     "notes": "Last N rows (N \u2265 1)." }
+    {
+      "name": "select",
+      "shape": "{ verb='select',       cols=[..] }",
+      "notes": "Keep listed columns in the given order."
+    },
+    {
+      "name": "drop",
+      "shape": "{ verb='drop',         cols=[..] }",
+      "notes": "Drop listed columns (strict by-name)."
+    },
+    {
+      "name": "rename",
+      "shape": "{ verb='rename',       map={ old='new', .. } }",
+      "notes": "Rename existing columns; values are the new names."
+    },
+    {
+      "name": "filter",
+      "shape": "{ verb='filter',       expr='<sql>' }",
+      "notes": "`expr` is parsed by polars_sql::sql_expr, e.g. `x > 20 AND group = 'a'`."
+    },
+    {
+      "name": "with_columns",
+      "shape": "{ verb='with_columns', exprs={ alias='<sql>', .. } }",
+      "notes": "Each value is a SQL expression aliased to its key."
+    },
+    {
+      "name": "sort",
+      "shape": "{ verb='sort',         by=[..], descending=[..] }",
+      "notes": "`descending` defaults to all-ascending; when supplied it must match `by`'s length."
+    },
+    {
+      "name": "slice",
+      "shape": "{ verb='slice',        offset=N, length=M }",
+      "notes": "`length` must be ≥ 1."
+    },
+    {
+      "name": "distinct",
+      "shape": "{ verb='distinct',     subset=[..] }",
+      "notes": "Empty `subset` → dedupe on the full row. Keep-first, stable."
+    },
+    {
+      "name": "group_by",
+      "shape": "{ verb='group_by',     by=[..], agg={ alias='<sql>', .. } }",
+      "notes": "SQL aggregates over each group, e.g. `sum(x)`, `count(id)`, `mean(y)`."
+    },
+    {
+      "name": "join",
+      "shape": "{ verb='join',         with='<input>', on=[..], how='inner' }",
+      "notes": "`with` must name an entry in [inputs]; that input's pre-pipeline is applied first. Supported how: inner|left|right|full|semi|anti|cross."
+    },
+    {
+      "name": "head",
+      "shape": "{ verb='head',         n=N }",
+      "notes": "First N rows (N ≥ 1)."
+    },
+    {
+      "name": "tail",
+      "shape": "{ verb='tail',         n=N }",
+      "notes": "Last N rows (N ≥ 1)."
+    }
   ],
   "notes": [
     "Mode exclusivity is enforced at validation time: supply either `input` + `ops` or `query`, not both, and at least one.",
     "Insertion order of the [inputs] map is preserved (IndexMap). Iteration order affects nothing at runtime beyond the order of SQL table registration.",
-    "Input format detection priority: declared `format` \u2192 path extension. Unknown extensions fail at load. Supported: .csv / .tsv / .txt (CSV), .parquet, .sav / .zsav.",
+    "Input format detection priority: declared `format` → path extension. Unknown extensions fail at load. Supported: .csv / .tsv / .txt (CSV), .parquet, .sav / .zsav.",
     "CSV inputs are always read with a header row. CSV outputs write headers. No customisation of delimiter / quoting in 0.1.0.",
     "SAV write currently returns `Error::Unsupported` because derived frames lack the per-column metadata (widths, value labels, missing-value ranges) that spss-io's write_sav requires. Read is fully supported.",
-    "Expressions are polars-sql flavour \u2014 keyword operators and function names match SQL (`=`, `!=`, `AND`, `OR`, `IS NULL`, `CAST AS`, `COALESCE`, date/string functions). Full precedence list is in the polars-sql docs.",
+    "Expressions are polars-sql flavour — keyword operators and function names match SQL (`=`, `!=`, `AND`, `OR`, `IS NULL`, `CAST AS`, `COALESCE`, date/string functions). Full precedence list is in the polars-sql docs.",
     "Query mode runs the SQL in a fresh SQLContext each call: every input is registered under its map key, then `ctx.execute(query).collect()`. No multi-statement support."
+  ],
+  "artifacts": [
+    {
+      "path": "{output}",
+      "title": "Transformed data",
+      "description": "The result of the verb pipeline or SQL query, written as a CSV or Parquet file. Contains only the columns and rows that survived the operations — selects, filters, joins, aggregations, and renames all shape the output.",
+      "fields": [
+        {
+          "name": "(variable)",
+          "description": "Output columns depend entirely on the pipeline operations applied. The final column set reflects any selects, renames, joins, or aggregations in the task specification."
+        }
+      ]
+    }
   ]
 }

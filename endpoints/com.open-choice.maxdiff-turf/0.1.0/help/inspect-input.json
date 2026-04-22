@@ -76,9 +76,18 @@
     "`include` and `exclude` are 1-based to match the conventions used by all the maxdiff-turf commands."
   ],
   "see_also": [
-    { "command": "maxdiff-turf::search-k", "description": "Search for the best subset of size k against the same utilities file." },
-    { "command": "maxdiff-turf::search-ladder", "description": "Build an anchored value ladder against the same utilities file." },
-    { "command": "maxdiff-turf::score-scenarios", "description": "Score a hand-built list of candidate subsets against the same utilities file." }
+    {
+      "command": "maxdiff-turf::search-k",
+      "description": "Search for the best subset of size k against the same utilities file."
+    },
+    {
+      "command": "maxdiff-turf::search-ladder",
+      "description": "Build an anchored value ladder against the same utilities file."
+    },
+    {
+      "command": "maxdiff-turf::score-scenarios",
+      "description": "Score a hand-built list of candidate subsets against the same utilities file."
+    }
   ],
   "examples": [
     {
@@ -95,14 +104,60 @@
     }
   ],
   "fields": [
-    { "name": "utilities",        "description": "Path to per-respondent utilities CSV.",                       "required": true,  "accepted_values": [] },
-    { "name": "subgroups",        "description": "Optional subgroup membership CSV.",                           "required": false, "accepted_values": [] },
-    { "name": "labels",           "description": "Optional item labels CSV.",                                   "required": false, "accepted_values": [] },
-    { "name": "include",          "description": "Comma-separated 1-based item indices to force-include.",      "required": false, "accepted_values": [] },
-    { "name": "exclude",          "description": "Comma-separated 1-based item indices to exclude.",            "required": false, "accepted_values": [] },
-    { "name": "utility_cols",     "description": "Explicit utility column spec (1-based, supports ranges).",    "required": false, "accepted_values": [] },
-    { "name": "non_utility_cols", "description": "Comma-separated 1-based columns to ignore.",                  "required": false, "accepted_values": [] },
-    { "name": "forbidden_pairs",  "description": "Forbidden pairs spec, e.g. '1:2,3:4'.",                       "required": false, "accepted_values": [] },
-    { "name": "headers",          "description": "Whether the CSV files have header rows. Default: true.",      "required": false, "accepted_values": [] }
-  ]
+    {
+      "name": "utilities",
+      "description": "Path to per-respondent utilities CSV.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "subgroups",
+      "description": "Optional subgroup membership CSV.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "labels",
+      "description": "Optional item labels CSV.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "include",
+      "description": "Comma-separated 1-based item indices to force-include.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "exclude",
+      "description": "Comma-separated 1-based item indices to exclude.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "utility_cols",
+      "description": "Explicit utility column spec (1-based, supports ranges).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "non_utility_cols",
+      "description": "Comma-separated 1-based columns to ignore.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "forbidden_pairs",
+      "description": "Forbidden pairs spec, e.g. '1:2,3:4'.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "headers",
+      "description": "Whether the CSV files have header rows. Default: true.",
+      "required": false,
+      "accepted_values": []
+    }
+  ],
+  "artifacts": []
 }

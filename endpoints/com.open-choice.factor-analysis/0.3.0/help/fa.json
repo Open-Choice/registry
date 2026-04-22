@@ -5,21 +5,106 @@
   "description": "For each batch and each n_factors in [min_count, min(max_count, n_vars-1)]: builds the correlation matrix, extracts factors (MinRes/PA both route to iterative principal-axis with SMC communality initialisation), rotates loadings, and writes eigenvalues (all dims: value, diff, prop, cumulative), per-variable loadings MR1..MRk, communality h², uniqueness u², Hoffman complexity (Σl²)²/Σl⁴, and dominant factor index. Rows are sorted within each sheet by dominant factor ascending then |loading| descending — matching psych's `fa.sort`. Sheet names follow `<batch>_k<n>_sum` and `<batch>_k<n>_load`, truncated to Excel's 31-char limit.",
   "usage": "[[\"factor-analysis::fa\"]]\ninput = \"./data.sav\"\nrun_dir = \"./runs\"\nrun_name = \"fa1\"\nmin_count = 2\nmax_count = 5\ncor = \"pearson\"\nfm = \"minres\"\nrotate = \"varimax\"\n\n# Inline meta: regex patterns + row entries. A column may land in multiple batches.\nmeta = [\n  { match = \"^att_\", batch = \"attitudes\", type = \"ordinal\" },\n  { match = \"^sat_(.+)\", batch = \"satisfaction\", label_template = \"Satisfaction: ${1}\" },\n  { variable = \"nps\", batch = \"outcomes\", label = \"Net Promoter Score\" },\n]",
   "arguments": [
-    { "name": "input",     "type": "string",  "required": true,  "description": "Path to the input file. Supports CSV (wide, one row per observation) or SPSS .sav/.zsav; extension chooses the reader. SPSS columns inherit variable labels and infer type from value labels (labelled → ordinal, else numeric)." },
-    { "name": "meta",      "type": "string|array",  "required": true,  "description": "Either a path to a meta CSV (columns: variable, label?, batch?, type?), or an inline TOML list of entries. Inline entries are either a row (`variable = \"...\"`) or a regex pattern (`match = \"...\"`). All-matches-apply: a column may appear in multiple entries and thus multiple batches. Unmatched columns are silently dropped. Label templates support ${name}, ${0} (whole match), ${1}, ${2}, ... (captures)." },
-    { "name": "run_dir",   "type": "string",  "required": true,  "description": "Base directory. Outputs land in `<run_dir>/ocinfo/<run_name>_factor_analysis/`." },
-    { "name": "run_name",  "type": "string",  "required": true,  "description": "Short identifier for this run; no '..', '/' or '\\\\'." },
-    { "name": "batches",   "type": "array",   "required": false, "default": [], "description": "Subset of batches to analyse. Empty = one FA per batch, or a single `all` batch if meta has no batch column." },
-    { "name": "min_count", "type": "integer", "required": false, "default": 2, "description": "Smallest n_factors to extract per batch." },
-    { "name": "max_count", "type": "integer", "required": false, "default": 5, "description": "Largest n_factors to extract per batch. Clamped to (n_vars - 1)." },
-    { "name": "cor",       "type": "string",  "required": false, "default": "pearson", "description": "Correlation method: pearson|covariance|tetrachoric|polychoric|mixed|biserial|polyserial|yuleb|yuleq|yuley. All methods implemented." },
-    { "name": "fm",        "type": "string",  "required": false, "default": "minres", "description": "Factoring method: minres|pa|uls|ols|wls|gls|ml|minchi|minrank|alpha. Currently minres and pa (iterative principal-axis); other values error at runtime pending Phase 3." },
-    { "name": "rotate",    "type": "string",  "required": false, "default": "varimax", "description": "Rotation: none|varimax|quartimax|bentler_t|equamax|varimin|geomin_t|bifactor|promax|oblimin|simplimax|bentler_q|geomin_q|biquartimin|cluster. Currently none and varimax; other values error at runtime pending Phase 3." },
-    { "name": "correct",   "type": "number",  "required": false, "default": 0.5, "description": "Continuity correction for tetrachoric/polychoric zero cells (matches psych defaults)." },
-    { "name": "na_action", "type": "string",  "required": false, "default": "complete_cases", "description": "complete_cases (pairwise deletion) or fail (abort on NA)." },
-    { "name": "headers",   "type": "boolean", "required": false, "default": true, "description": "Whether CSV inputs have a header row." },
-    { "name": "threads",   "type": "integer", "required": false, "default": 1, "description": "Number of worker threads for parallel batch × n_factors fan-out and per-pair correlation parallelism. `1` (default) runs serially. Results are deterministic regardless of thread count." },
-    { "name": "output_format", "type": "string", "required": false, "description": "Override stdout format: human, protocol, or quiet." }
+    {
+      "name": "input",
+      "type": "string",
+      "required": true,
+      "description": "Path to the input file. Supports CSV (wide, one row per observation) or SPSS .sav/.zsav; extension chooses the reader. SPSS columns inherit variable labels and infer type from value labels (labelled → ordinal, else numeric)."
+    },
+    {
+      "name": "meta",
+      "type": "string|array",
+      "required": true,
+      "description": "Either a path to a meta CSV (columns: variable, label?, batch?, type?), or an inline TOML list of entries. Inline entries are either a row (`variable = \"...\"`) or a regex pattern (`match = \"...\"`). All-matches-apply: a column may appear in multiple entries and thus multiple batches. Unmatched columns are silently dropped. Label templates support ${name}, ${0} (whole match), ${1}, ${2}, ... (captures)."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "description": "Base directory. Outputs land in `<run_dir>/ocinfo/<run_name>_factor_analysis/`."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "description": "Short identifier for this run; no '..', '/' or '\\\\'."
+    },
+    {
+      "name": "batches",
+      "type": "array",
+      "required": false,
+      "default": [],
+      "description": "Subset of batches to analyse. Empty = one FA per batch, or a single `all` batch if meta has no batch column."
+    },
+    {
+      "name": "min_count",
+      "type": "integer",
+      "required": false,
+      "default": 2,
+      "description": "Smallest n_factors to extract per batch."
+    },
+    {
+      "name": "max_count",
+      "type": "integer",
+      "required": false,
+      "default": 5,
+      "description": "Largest n_factors to extract per batch. Clamped to (n_vars - 1)."
+    },
+    {
+      "name": "cor",
+      "type": "string",
+      "required": false,
+      "default": "pearson",
+      "description": "Correlation method: pearson|covariance|tetrachoric|polychoric|mixed|biserial|polyserial|yuleb|yuleq|yuley. All methods implemented."
+    },
+    {
+      "name": "fm",
+      "type": "string",
+      "required": false,
+      "default": "minres",
+      "description": "Factoring method: minres|pa|uls|ols|wls|gls|ml|minchi|minrank|alpha. Currently minres and pa (iterative principal-axis); other values error at runtime pending Phase 3."
+    },
+    {
+      "name": "rotate",
+      "type": "string",
+      "required": false,
+      "default": "varimax",
+      "description": "Rotation: none|varimax|quartimax|bentler_t|equamax|varimin|geomin_t|bifactor|promax|oblimin|simplimax|bentler_q|geomin_q|biquartimin|cluster. Currently none and varimax; other values error at runtime pending Phase 3."
+    },
+    {
+      "name": "correct",
+      "type": "number",
+      "required": false,
+      "default": 0.5,
+      "description": "Continuity correction for tetrachoric/polychoric zero cells (matches psych defaults)."
+    },
+    {
+      "name": "na_action",
+      "type": "string",
+      "required": false,
+      "default": "complete_cases",
+      "description": "complete_cases (pairwise deletion) or fail (abort on NA)."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether CSV inputs have a header row."
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Number of worker threads for parallel batch × n_factors fan-out and per-pair correlation parallelism. `1` (default) runs serially. Results are deterministic regardless of thread count."
+    },
+    {
+      "name": "output_format",
+      "type": "string",
+      "required": false,
+      "description": "Override stdout format: human, protocol, or quiet."
+    }
   ],
   "notes": [
     "Input formats: `.csv` / `.tsv` (CSV reader) or `.sav` / `.zsav` (SPSS via the bundled reader). SPSS user-defined missing values are coerced to NA on read.",
@@ -27,5 +112,111 @@
     "Current delivery: full correlation family (Phase 2), MinRes/PA extraction, Varimax rotation. Remaining fm/rotate values are accepted by the validator but return a NotImplemented runtime error until Phase 3.",
     "Sample size for each batch is the minimum non-zero n_obs across all correlation cells — a conservative choice matching psych::fa's default pairwise behaviour.",
     "The `com` column is Hoffman's complexity: 1.0 means a variable loads on one factor; values approach n_factors as loadings are spread evenly."
+  ],
+  "artifacts": [
+    {
+      "path": "<run_name>.xlsx",
+      "title": "Results workbook (one file, two sheets per group)",
+      "description": "Every item group produces two sheets: a summary sheet of eigenvalues and variance explained, and a loadings sheet of the per-item results. Both sheets stack the results for every factor count you requested (from `min_count` to `max_count`) in a single table so you can compare them side-by-side.",
+      "fields": []
+    },
+    {
+      "path": "<batch>_sum sheet",
+      "title": "Eigenvalue summary (one per item group)",
+      "description": "The diagnostic table for deciding how many factors to keep. Reading left to right: the metadata columns identify the run; the remaining columns give you one row per (n_factors, factor). Compare eigenvalues across factor counts to find the knee in the scree plot — the point after which additional factors add little variance.",
+      "fields": [
+        {
+          "name": "batch",
+          "description": "The item-group label (e.g. `attitudes`, `satisfaction`). Constant within the sheet."
+        },
+        {
+          "name": "cor",
+          "description": "The correlation method used (e.g. `pearson`). Constant within the sheet."
+        },
+        {
+          "name": "fm",
+          "description": "The factoring method used (e.g. `minres`). Constant within the sheet."
+        },
+        {
+          "name": "rotate",
+          "description": "The rotation applied (e.g. `varimax`). Constant within the sheet."
+        },
+        {
+          "name": "n_obs",
+          "description": "Sample size used — the smallest pairwise n across the correlation matrix for this group."
+        },
+        {
+          "name": "n_factors",
+          "description": "How many factors were extracted for this block of rows. The sheet contains blocks for every value from `min_count` to `max_count`."
+        },
+        {
+          "name": "iterations",
+          "description": "How many iterations the extraction took to converge. Very high counts (near the internal cap) can signal an unstable solution."
+        },
+        {
+          "name": "converged",
+          "description": "`true` if the extraction converged cleanly. `false` means the solution may be unreliable — inspect the loadings before trusting it."
+        },
+        {
+          "name": "dim",
+          "description": "The factor index within this block (1 = first factor, 2 = second factor, …). There are `n_factors` rows per block."
+        },
+        {
+          "name": "eigenvalue",
+          "description": "How much of the total variance this factor captures, in raw units. Larger = more important. The classic Kaiser rule drops factors below 1.0."
+        },
+        {
+          "name": "diff",
+          "description": "The gap between this eigenvalue and the next. A large drop followed by small drops is the 'elbow' of the scree plot."
+        },
+        {
+          "name": "prop",
+          "description": "Proportion of the total variance explained by this factor (eigenvalue / total). A quick read on how much signal the factor carries."
+        },
+        {
+          "name": "cumulative",
+          "description": "Running total of `prop` down the block. Useful for answering 'how much of the variance do my top k factors jointly explain?'."
+        }
+      ]
+    },
+    {
+      "path": "<batch>_load sheet",
+      "title": "Factor loadings (one per item group)",
+      "description": "The interpretive table — this is where you decide what each factor means. Each row is one item within one factor-count solution. The MR columns hold the rotated loadings. Items are sorted so that everything loading on Factor 1 appears first (strongest first), then everything loading on Factor 2, and so on — the same ordering as R's `psych::fa.sort`.",
+      "fields": [
+        {
+          "name": "n_factors",
+          "description": "How many factors were extracted for this block. The sheet contains blocks for every value from `min_count` to `max_count`."
+        },
+        {
+          "name": "variable",
+          "description": "The item's column name in the input data."
+        },
+        {
+          "name": "label",
+          "description": "The human-readable label. Taken from the SPSS variable label, the `label` or `label_template` in meta, or the column name as a fallback."
+        },
+        {
+          "name": "MR1 … MR<max_k>",
+          "description": "The rotated loading of this item on each factor. Values range roughly from −1 to 1. Loadings above 0.4 (or below −0.4) are generally strong enough to matter; loadings below 0.3 are typically ignored when naming a factor. Columns widen to the largest factor count in the sheet; rows for smaller counts leave higher-numbered MR columns blank."
+        },
+        {
+          "name": "h2",
+          "description": "Communality — the share of this item's variance explained by all the factors together. Values from 0 to 1; higher is better. An item with h² below 0.3 isn't really part of the factor structure and may be a candidate for removal."
+        },
+        {
+          "name": "u2",
+          "description": "Uniqueness — the share of this item's variance not explained by the factors (1 − h²). The item's 'personality', unrelated to the shared themes."
+        },
+        {
+          "name": "com",
+          "description": "Hoffman's complexity. 1.0 means the item loads cleanly on one factor (the ideal); values near `n_factors` mean the item is spread evenly across every factor (the worst case). A tidy solution has most items near 1.0."
+        },
+        {
+          "name": "dominant",
+          "description": "The index (1, 2, 3, …) of the factor this item loads on most strongly. Useful as a quick sort key and as the glue that holds the 'items on this factor' story together."
+        }
+      ]
+    }
   ]
 }

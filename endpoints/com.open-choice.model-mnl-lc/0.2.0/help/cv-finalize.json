@@ -72,5 +72,32 @@
       "required": false,
       "accepted_values": []
     }
+  ],
+  "artifacts": [
+    {
+      "path": "{run_dir}/cv_summary.csv",
+      "title": "Updated cross-validation summary",
+      "description": "Per-fold and aggregate train/holdout log-likelihood, regenerated after re-finalizing each fold.",
+      "fields": [
+        {
+          "name": "fold",
+          "description": "Fold identifier."
+        },
+        {
+          "name": "train_llh",
+          "description": "Training log-likelihood."
+        },
+        {
+          "name": "holdout_llh",
+          "description": "Holdout log-likelihood."
+        }
+      ]
+    },
+    {
+      "path": "{run_dir}/{fold_id}/exports/",
+      "title": "Per-fold exports",
+      "description": "Each fold's exports directory regenerated: summary.json, IC.csv, coefficients.csv, and related per-class outputs.",
+      "fields": []
+    }
   ]
 }

@@ -94,5 +94,41 @@
       "required": false,
       "accepted_values": []
     }
+  ],
+  "artifacts": [
+    {
+      "path": "exports/summary.json",
+      "title": "Updated model summary",
+      "description": "Segment-level mean partworths and mixture probabilities recomputed from the extended chain. Compare against the pre-extension summary to see whether additional draws changed the preference estimates meaningfully.",
+      "fields": [
+        {
+          "name": "segment_means",
+          "description": "Mean partworth vector for each population segment."
+        },
+        {
+          "name": "mixture_probabilities",
+          "description": "Estimated share of respondents in each segment."
+        },
+        {
+          "name": "fit_statistics",
+          "description": "Overall model fit metrics."
+        }
+      ]
+    },
+    {
+      "path": "exports/{run_id}_point_estimates.csv",
+      "title": "Per-respondent partworths (updated)",
+      "description": "Individual-level preference scores recomputed from the larger draw pool. These are the estimates to use for market simulations and downstream analysis.",
+      "fields": [
+        {
+          "name": "resp_id",
+          "description": "Respondent identifier."
+        },
+        {
+          "name": "<attribute_level_columns>",
+          "description": "Estimated partworth for each attribute level."
+        }
+      ]
+    }
   ]
 }

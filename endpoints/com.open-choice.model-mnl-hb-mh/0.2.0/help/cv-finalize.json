@@ -90,5 +90,41 @@
       "required": false,
       "accepted_values": []
     }
+  ],
+  "artifacts": [
+    {
+      "path": "cv_summary.csv",
+      "title": "Updated cross-validation summary",
+      "description": "Per-fold and aggregate holdout accuracy recomputed with the chosen burnin. The top-level summary for comparing model variants — higher average holdout accuracy indicates better generalisation.",
+      "fields": [
+        {
+          "name": "fold",
+          "description": "Fold identifier."
+        },
+        {
+          "name": "train_fit",
+          "description": "In-sample fit statistic for the fold."
+        },
+        {
+          "name": "holdout_fit",
+          "description": "Out-of-sample prediction accuracy for the fold."
+        }
+      ]
+    },
+    {
+      "path": "<fold_id>/exports/{run_id}_point_estimates.csv",
+      "title": "Per-fold respondent partworths (refreshed)",
+      "description": "Individual-level preference scores for each fold, recomputed with the chosen burnin.",
+      "fields": [
+        {
+          "name": "resp_id",
+          "description": "Respondent identifier."
+        },
+        {
+          "name": "<attribute_level_columns>",
+          "description": "Estimated partworth for each attribute level."
+        }
+      ]
+    }
   ]
 }

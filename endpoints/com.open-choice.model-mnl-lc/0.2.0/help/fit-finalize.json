@@ -65,7 +65,7 @@
       "name": "convergence_threshold",
       "type": "number",
       "required": false,
-      "default": 0.00001,
+      "default": 1e-05,
       "description": "EM convergence tolerance. Default `1e-5`."
     },
     {
@@ -79,7 +79,7 @@
       "name": "coefficient_precision",
       "type": "number",
       "required": false,
-      "default": 1e-7,
+      "default": 1e-07,
       "description": "Inner-loop convergence precision. Default `1e-7`."
     },
     {
@@ -331,6 +331,39 @@
       "description": "Number of threads. Default: 1.",
       "required": false,
       "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{run_dir}/exports/coefficients.csv",
+      "title": "Per-class coefficient table",
+      "description": "The key output from a latent class analysis: one row per attribute level per class. Feed into choice-wrangling::expand-coefficients to generate part-worth utilities for use in a market simulator.",
+      "fields": [
+        {
+          "name": "class",
+          "description": "Latent class identifier."
+        },
+        {
+          "name": "variable",
+          "description": "Attribute level name."
+        },
+        {
+          "name": "coefficient",
+          "description": "MNL coefficient for this level within this class."
+        }
+      ]
+    },
+    {
+      "path": "{run_dir}/exports/summary.json",
+      "title": "Fit summary",
+      "description": "Class sizes (segment shares), log-likelihood, AIC, BIC, and the full coefficient table in JSON form.",
+      "fields": []
+    },
+    {
+      "path": "{run_dir}/exports/IC.csv",
+      "title": "Information criteria table",
+      "description": "Per-segment information criteria for assessing how many classes to use.",
+      "fields": []
     }
   ]
 }

@@ -207,5 +207,49 @@
       "required": false,
       "accepted_values": []
     }
+  ],
+  "artifacts": [
+    {
+      "path": "{run_dir}/{run_name}_choice_sets.csv",
+      "title": "Choice-set rows",
+      "description": "One row per respondent-task-alternative with best and worst choice flags filled in. This is the standard long-format input that build-estimation-long consumes to produce the coded data for model fitting.",
+      "fields": [
+        {
+          "name": "respondent_id",
+          "description": "Unique identifier for each survey respondent."
+        },
+        {
+          "name": "task",
+          "description": "Task number within the respondent's assigned design version."
+        },
+        {
+          "name": "alternative",
+          "description": "The item shown in this alternative slot within the task."
+        },
+        {
+          "name": "chosen_best",
+          "description": "1 if this alternative was the respondent's best pick in this task, 0 otherwise."
+        },
+        {
+          "name": "chosen_worst",
+          "description": "1 if this alternative was the respondent's worst pick in this task, 0 otherwise."
+        }
+      ]
+    },
+    {
+      "path": "{run_dir}/{run_name}_task_metadata.csv",
+      "title": "Task metadata",
+      "description": "Describes the task structure: number of alternatives per task, best/worst layout, and none-option mode. Required by build-estimation-long.",
+      "fields": [
+        {
+          "name": "task_structure",
+          "description": "Whether tasks collected best only, worst only, or both responses."
+        },
+        {
+          "name": "alternatives_per_task",
+          "description": "Number of items shown per task."
+        }
+      ]
+    }
   ]
 }

@@ -5,17 +5,78 @@
   "description": "Pipeline per (batch, k): complete-case filter; split into numeric and qualitative columns; drop zero-variance numerics and single-level factors; standardise numerics with n-1 SD; disjunctively code categoricals as (indicator - proportion)/sqrt(proportion); concatenate and take the thin SVD of X/√n. Dimension coordinates are σ·V, contributions are V²·100 (%), cos² is coord²/total per item.",
   "usage": "[[\"factor-analysis::famd\"]]\ninput = \"./data.sav\"\nrun_dir = \"./runs\"\nrun_name = \"famd1\"\nmin_count = 2\nmax_count = 5\n\nmeta = [\n  { match = \"^q\\\\d+$\", batch = \"attitudes\", type = \"ordinal\" },\n  { variable = \"gender\", batch = \"demographics\", type = \"categorical\" },\n]",
   "arguments": [
-    { "name": "input",     "type": "string",  "required": true,  "description": "Path to the input file. `.csv` / `.tsv` use the CSV reader; `.sav` / `.zsav` use the SPSS reader." },
-    { "name": "meta",      "type": "string|array",  "required": true,  "description": "Variable metadata: either a path to a meta CSV, or an inline TOML list of row/pattern entries. See the Inline meta notes below." },
-    { "name": "run_dir",   "type": "string",  "required": true,  "description": "Base directory for outputs. Files land in `<run_dir>/ocinfo/<run_name>_factor_analysis/`." },
-    { "name": "run_name",  "type": "string",  "required": true,  "description": "Short identifier for this run; no `..`, `/`, or `\\`." },
-    { "name": "batches",   "type": "array",   "required": false, "default": [], "description": "Subset of batch names to analyse. Empty = all batches from meta (or a single `all` batch if meta has no batch column)." },
-    { "name": "min_count", "type": "integer", "required": false, "default": 2, "description": "Smallest number of dimensions per batch." },
-    { "name": "max_count", "type": "integer", "required": false, "default": 5, "description": "Largest number of dimensions per batch." },
-    { "name": "na_action", "type": "string",  "required": false, "default": "complete_cases", "description": "`complete_cases` (listwise) or `fail`. FAMD is always listwise per batch." },
-    { "name": "headers",   "type": "boolean", "required": false, "default": true, "description": "Whether CSV inputs have a header row. Ignored for `.sav` inputs." },
-    { "name": "threads",   "type": "integer", "required": false, "default": 1, "description": "Worker thread count. `1` runs serially. Results are deterministic regardless of thread count." },
-    { "name": "output_format", "type": "string", "required": false, "description": "Override stdout format: `human`, `protocol`, or `quiet`." }
+    {
+      "name": "input",
+      "type": "string",
+      "required": true,
+      "description": "Path to the input file. `.csv` / `.tsv` use the CSV reader; `.sav` / `.zsav` use the SPSS reader."
+    },
+    {
+      "name": "meta",
+      "type": "string|array",
+      "required": true,
+      "description": "Variable metadata: either a path to a meta CSV, or an inline TOML list of row/pattern entries. See the Inline meta notes below."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "description": "Base directory for outputs. Files land in `<run_dir>/ocinfo/<run_name>_factor_analysis/`."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "description": "Short identifier for this run; no `..`, `/`, or `\\`."
+    },
+    {
+      "name": "batches",
+      "type": "array",
+      "required": false,
+      "default": [],
+      "description": "Subset of batch names to analyse. Empty = all batches from meta (or a single `all` batch if meta has no batch column)."
+    },
+    {
+      "name": "min_count",
+      "type": "integer",
+      "required": false,
+      "default": 2,
+      "description": "Smallest number of dimensions per batch."
+    },
+    {
+      "name": "max_count",
+      "type": "integer",
+      "required": false,
+      "default": 5,
+      "description": "Largest number of dimensions per batch."
+    },
+    {
+      "name": "na_action",
+      "type": "string",
+      "required": false,
+      "default": "complete_cases",
+      "description": "`complete_cases` (listwise) or `fail`. FAMD is always listwise per batch."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether CSV inputs have a header row. Ignored for `.sav` inputs."
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Worker thread count. `1` runs serially. Results are deterministic regardless of thread count."
+    },
+    {
+      "name": "output_format",
+      "type": "string",
+      "required": false,
+      "description": "Override stdout format: `human`, `protocol`, or `quiet`."
+    }
   ],
   "examples": [
     {
@@ -41,5 +102,130 @@
     "Column `type` drives the encoding: numeric is standardised; dichotomous, ordinal, and categorical are disjunctively coded. Mixed batches (numeric + categorical) are the main use case.",
     "Variables with zero variance (numeric) or a single level (categorical) are dropped from a batch with a warning.",
     "`strongest_dim` / `strongest_abs_coord` identify the axis on which each variable or level loads most heavily — useful as a secondary sort when exploring results."
+  ],
+  "artifacts": [
+    {
+      "path": "<run_name>.xlsx",
+      "title": "Results workbook (one file, two or three sheets per group)",
+      "description": "Every group produces a summary sheet of eigenvalues and variance explained, plus a per-variable sheet of coordinates and contributions. Groups that contain any categorical columns also get a per-level sheet showing how each individual level of each categorical variable sits on the dimensions.",
+      "fields": []
+    },
+    {
+      "path": "<batch>_sum sheet",
+      "title": "Eigenvalue summary (one per group)",
+      "description": "Like the corresponding FA sheet: one block of rows per factor-count solution. Compare eigenvalues across solutions to decide how many dimensions to keep.",
+      "fields": [
+        {
+          "name": "n_factors",
+          "description": "How many dimensions were extracted for this block. The sheet contains blocks for every value from `min_count` to `max_count`."
+        },
+        {
+          "name": "n_obs",
+          "description": "Sample size after listwise dropping for this group (respondents with any missing value in the group's columns are excluded)."
+        },
+        {
+          "name": "dim",
+          "description": "The dimension index within this block (1 = first dimension, 2 = second, …). There are `n_factors` rows per block."
+        },
+        {
+          "name": "eigenvalue",
+          "description": "How much of the total variance this dimension captures, in raw units. Larger = more important."
+        },
+        {
+          "name": "prop",
+          "description": "Proportion of total variance explained by this dimension."
+        },
+        {
+          "name": "cumulative",
+          "description": "Running total of `prop` down the block. Tells you how much variance your top-k dimensions explain jointly."
+        }
+      ]
+    },
+    {
+      "path": "<batch>_vars sheet",
+      "title": "Per-variable coordinates, contributions, and cos² (one per group)",
+      "description": "One row per (factor-count solution, variable). This is the main interpretive sheet: each variable's coordinate on each dimension (where it sits), its contribution (how much it defines the dimension), and its cos² (how well the dimensions capture it). Numeric variables get a single row; categorical variables also appear here, but their level-by-level detail is on the `_cats` sheet.",
+      "fields": [
+        {
+          "name": "n_factors",
+          "description": "The factor-count block this row belongs to."
+        },
+        {
+          "name": "variable",
+          "description": "The column name in the input data."
+        },
+        {
+          "name": "label",
+          "description": "Human-readable label from SPSS, the meta file, or the column name as a fallback."
+        },
+        {
+          "name": "is_categorical",
+          "description": "`true` if the variable is categorical (indicator-coded) or `false` if it is numeric (standardised)."
+        },
+        {
+          "name": "coord_dim1 … coord_dim<max_k>",
+          "description": "Coordinate on each dimension — where the variable sits along that axis. Values far from zero (positive or negative) mean the variable is strongly associated with that dimension. Columns widen to the largest factor count in the sheet; rows from smaller solutions leave higher-dim columns blank."
+        },
+        {
+          "name": "contrib_dim1 … contrib_dim<max_k>",
+          "description": "Contribution to each dimension, as a percentage. Sums to 100% down each dimension column within a block. A handful of high-contribution variables 'define' the dimension."
+        },
+        {
+          "name": "cos2_dim1 … cos2_dim<max_k>",
+          "description": "Quality of representation — how well each dimension captures this variable. Range 0–1; a variable with low cos² on every extracted dimension is poorly placed and its coordinates should be read with caution."
+        },
+        {
+          "name": "strongest_dim",
+          "description": "The dimension index on which this variable loads most strongly (by absolute coordinate). Useful as a secondary sort when exploring the sheet."
+        },
+        {
+          "name": "strongest_abs_coord",
+          "description": "The absolute coordinate value on that strongest dimension. Quick gauge of how prominent the variable is anywhere in the solution."
+        }
+      ]
+    },
+    {
+      "path": "<batch>_cats sheet (only when the group contains categoricals)",
+      "title": "Per-level detail for categorical variables",
+      "description": "One row per (factor-count solution, variable, level). This is where you answer 'which levels of which categoricals are pulling which dimension?'. Numeric variables do not appear on this sheet. Use this alongside `_vars` when naming the dimensions.",
+      "fields": [
+        {
+          "name": "n_factors",
+          "description": "The factor-count block this row belongs to."
+        },
+        {
+          "name": "variable",
+          "description": "The categorical variable's column name."
+        },
+        {
+          "name": "label",
+          "description": "Human-readable label for the variable."
+        },
+        {
+          "name": "level",
+          "description": "The specific level (category value) this row is about — e.g. `Male`, `High purchaser`, `Agree strongly`."
+        },
+        {
+          "name": "coord_dim1 … coord_dim<max_k>",
+          "description": "Where this specific level sits on each dimension. Levels of the same variable can sit very differently — that's the whole point of analysing them separately."
+        },
+        {
+          "name": "contrib_dim1 … contrib_dim<max_k>",
+          "description": "Contribution of this specific level to each dimension, as a percentage."
+        },
+        {
+          "name": "cos2_dim1 … cos2_dim<max_k>",
+          "description": "Quality of representation for this level. Low cos² = this level is not well captured by the extracted dimensions."
+        },
+        {
+          "name": "strongest_dim",
+          "description": "The dimension this level loads most strongly on."
+        },
+        {
+          "name": "strongest_abs_coord",
+          "description": "Absolute coordinate on that strongest dimension."
+        }
+      ]
+    }
   ]
 }

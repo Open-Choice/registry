@@ -93,7 +93,7 @@
       "name": "ridge_scale",
       "type": "number",
       "required": false,
-      "default": 0.000001,
+      "default": 1e-06,
       "description": "Ridge scale for the covariance prior. Small values (default 1e-6) keep the prior weakly informative without distorting the posterior."
     }
   ],
@@ -233,6 +233,20 @@
       "description": "Ridge scale for covariance prior. Default: 1e-6.",
       "required": false,
       "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "stan_data.json",
+      "title": "Stan data file",
+      "description": "The coded-long CSV converted to Stan JSON format, saved for reproducibility. Pass this file to the sample command to re-run sampling with different settings (seed, warmup, thinning) without repeating the data conversion step.",
+      "fields": []
+    },
+    {
+      "path": "hb_fit_chain_N.csv",
+      "title": "Raw posterior chain draws",
+      "description": "One CmdStan CSV file per chain containing all post-warmup parameter draws. These are intermediate files consumed by finalize. Retained so you can re-run finalize without repeating the computationally expensive sampling step.",
+      "fields": []
     }
   ]
 }

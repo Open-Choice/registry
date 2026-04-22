@@ -167,5 +167,36 @@
       "required": false,
       "accepted_values": []
     }
+  ],
+  "artifacts": [
+    {
+      "path": "{run_dir}/{run_name}_coded_long.csv",
+      "title": "Coded long-format estimation data",
+      "description": "The estimation-ready file. One row per respondent-task-alternative, with all design attributes converted to numeric codes (effects, dummy, or thermometer coding) and a single response variable. This is the direct input to the modelling plugins (model-mnl-lg, model-mnl-lc, model-mnl-hb-mh).",
+      "fields": [
+        {
+          "name": "resp_id",
+          "description": "Respondent identifier."
+        },
+        {
+          "name": "task",
+          "description": "Task number."
+        },
+        {
+          "name": "(coded attribute columns)",
+          "description": "One or more numeric columns per design attribute, encoded per the coding specification."
+        },
+        {
+          "name": "y",
+          "description": "Response variable — positive for the chosen alternative, 0 for all other alternatives in the same task."
+        }
+      ]
+    },
+    {
+      "path": "{run_dir}/{run_name}_cookbook.json",
+      "title": "Coding cookbook",
+      "description": "Maps every coded column name back to its original attribute and level. Required by expand-coefficients to translate model coefficients back into human-readable attribute/level form for reporting and charts.",
+      "fields": []
+    }
   ]
 }

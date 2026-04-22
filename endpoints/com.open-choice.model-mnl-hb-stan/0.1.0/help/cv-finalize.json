@@ -60,5 +60,38 @@
       "required": true,
       "accepted_values": []
     }
+  ],
+  "artifacts": [
+    {
+      "path": "{fold_name}/part_worths.csv",
+      "title": "Per-fold part-worth utilities",
+      "description": "Posterior-mean part-worth matrix for each fold's training respondents. One file per fold subdirectory.",
+      "fields": []
+    },
+    {
+      "path": "{fold_name}/diagnostics.json",
+      "title": "Per-fold convergence diagnostics",
+      "description": "Per-parameter Rhat and ESS for each fold.",
+      "fields": []
+    },
+    {
+      "path": "cv_summary.csv",
+      "title": "Cross-validation summary",
+      "description": "Per-fold log joint posterior (lp__) for model comparison. Use these values to choose between competing model configurations.",
+      "fields": [
+        {
+          "name": "fold",
+          "description": "Fold identifier."
+        },
+        {
+          "name": "lp__mean",
+          "description": "Mean log joint posterior for this fold."
+        },
+        {
+          "name": "lp__sd",
+          "description": "Standard deviation of lp__ across draws."
+        }
+      ]
+    }
   ]
 }

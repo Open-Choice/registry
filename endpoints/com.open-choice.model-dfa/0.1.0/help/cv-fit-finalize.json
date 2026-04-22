@@ -5,14 +5,62 @@
   "description": "For each subdirectory named `fold*` in `folds_dir` containing `train.csv` and `test.csv`, fits a Fisher linear discriminant, predicts on both train and test, and writes per-fold artefacts (spec/fit/coefficients/report) under `{run_dir}/ocinfo/{run_name}_dfa/{fold_id}/`. Aggregates per-fold metrics (log-likelihood, mean log-likelihood, hit rate) into `cv_summary.csv` and `cv_summary.json` at the run's store directory, with FOLD rows and MEAN / SD / POOLED summary rows. Emits a single started / finished event pair.",
   "usage": "[[\"model-dfa::cv-fit-finalize\"]]\nfolds_dir = \"<dir>\"\nrun_dir = \"<dir>\"\nrun_name = \"dfa_cv_run\"\ny_col = \"y\"\n# optional:\nx_cols = \"x1,x3,x5-x8\"",
   "arguments": [
-    { "name": "folds_dir", "type": "string", "required": true, "default": null, "description": "Directory containing fold subdirs. Each subdir must be named `fold*` and contain `train.csv` and `test.csv` with matching column layouts." },
-    { "name": "run_dir", "type": "string", "required": true, "default": null, "description": "Output directory. Artefacts land in `{run_dir}/ocinfo/{run_name}_dfa/`." },
-    { "name": "run_name", "type": "string", "required": true, "default": null, "description": "Short identifier for this run. Must not contain path separators or '..'." },
-    { "name": "y_col", "type": "string", "required": true, "default": null, "description": "Name or 1-based index of the class-label column. Labels must be exactly 1..=K." },
-    { "name": "x_cols", "type": "string", "required": false, "default": null, "description": "Comma-separated specifier picking feature columns (names, 1-based indices, or ranges like `3-7`). Default: all columns except y_col." },
-    { "name": "headers", "type": "boolean", "required": false, "default": true, "description": "Whether the fold CSVs have a header row. Default `true`." },
-    { "name": "random_seed", "type": "integer", "required": false, "default": 0, "description": "Recorded in each spec.json. Does not affect the deterministic LDA fit." },
-    { "name": "threads", "type": "integer", "required": false, "default": 1, "description": "Number of Rayon worker threads used to fit folds in parallel. Each fold is an independent LDA fit, so wall-clock time scales roughly linearly with thread count. `1` (default) runs folds serially. Results are deterministic regardless of thread count." }
+    {
+      "name": "folds_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Directory containing fold subdirs. Each subdir must be named `fold*` and contain `train.csv` and `test.csv` with matching column layouts."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Output directory. Artefacts land in `{run_dir}/ocinfo/{run_name}_dfa/`."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Short identifier for this run. Must not contain path separators or '..'."
+    },
+    {
+      "name": "y_col",
+      "type": "string",
+      "required": true,
+      "default": null,
+      "description": "Name or 1-based index of the class-label column. Labels must be exactly 1..=K."
+    },
+    {
+      "name": "x_cols",
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Comma-separated specifier picking feature columns (names, 1-based indices, or ranges like `3-7`). Default: all columns except y_col."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether the fold CSVs have a header row. Default `true`."
+    },
+    {
+      "name": "random_seed",
+      "type": "integer",
+      "required": false,
+      "default": 0,
+      "description": "Recorded in each spec.json. Does not affect the deterministic LDA fit."
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Number of Rayon worker threads used to fit folds in parallel. Each fold is an independent LDA fit, so wall-clock time scales roughly linearly with thread count. `1` (default) runs folds serially. Results are deterministic regardless of thread count."
+    }
   ],
   "details": "Folds are discovered by scanning `folds_dir` for subdirectories whose names start with `fold` (sorted lexicographically). Each fold is fit independently; a single failing fold does not abort the run — its row in `cv_summary.csv` records an error status and subsequent folds still fit. The POOLED row collapses folds by summing counts and log-likelihoods: pooled mean-llh = Σ total_llh / Σ n, pooled hit-rate is n-weighted.",
   "value": "On success, `{run_dir}/ocinfo/{run_name}_dfa/` contains:\n\n- `{fold_id}/` (one per fold) — full fit-finalize artefacts (`spec.json`, `fit.json`, `*_coefficients.csv`, `*_report.xlsx`).\n- `cv_summary.csv` — one FOLD row per fold + MEAN / SD / POOLED summary rows.\n- `cv_summary.json` — the same content in JSON.\n- `{run_name}_dfa_cv_report.xlsx` — single-sheet workbook of the same summary.\n\nThe primary CSV is copied to `{run_dir}/{run_name}_dfa_cv_summary.csv` for discoverability.",
@@ -22,20 +70,102 @@
     "A failed fold writes an error row but does not abort the run — check the `status` column of `cv_summary.csv`."
   ],
   "see_also": [
-    { "command": "model-dfa::fit-finalize", "description": "Single-shot LDA fit on one CSV." }
+    {
+      "command": "model-dfa::fit-finalize",
+      "description": "Single-shot LDA fit on one CSV."
+    }
   ],
   "examples": [
-    { "title": "Basic cross-validated fit", "body": "[[\"model-dfa::cv-fit-finalize\"]]\nfolds_dir = \"./folds\"\nrun_dir = \"./runs\"\nrun_name = \"pilot_cv\"\ny_col = \"y\"" },
-    { "title": "With an explicit feature subset", "body": "[[\"model-dfa::cv-fit-finalize\"]]\nfolds_dir = \"./folds\"\nrun_dir = \"./runs\"\nrun_name = \"subset_cv\"\ny_col = \"y\"\nx_cols = \"x1,x3,x5-x8\"" }
+    {
+      "title": "Basic cross-validated fit",
+      "body": "[[\"model-dfa::cv-fit-finalize\"]]\nfolds_dir = \"./folds\"\nrun_dir = \"./runs\"\nrun_name = \"pilot_cv\"\ny_col = \"y\""
+    },
+    {
+      "title": "With an explicit feature subset",
+      "body": "[[\"model-dfa::cv-fit-finalize\"]]\nfolds_dir = \"./folds\"\nrun_dir = \"./runs\"\nrun_name = \"subset_cv\"\ny_col = \"y\"\nx_cols = \"x1,x3,x5-x8\""
+    }
   ],
   "fields": [
-    { "name": "folds_dir", "description": "Directory containing fold* subdirs with train.csv + test.csv.", "required": true, "accepted_values": [] },
-    { "name": "run_dir", "description": "Output directory for results.", "required": true, "accepted_values": [] },
-    { "name": "run_name", "description": "Short identifier for this run.", "required": true, "accepted_values": [] },
-    { "name": "y_col", "description": "Name or 1-based index of the class-label column.", "required": true, "accepted_values": [] },
-    { "name": "x_cols", "description": "Comma-separated specifier picking feature columns.", "required": false, "accepted_values": [] },
-    { "name": "headers", "description": "Whether the fold CSVs have a header row.", "required": false, "accepted_values": [] },
-    { "name": "random_seed", "description": "Random seed (0 = non-deterministic).", "required": false, "accepted_values": [] },
-    { "name": "threads", "description": "Rayon worker threads for parallel per-fold fits. Default: 1.", "required": false, "accepted_values": [] }
+    {
+      "name": "folds_dir",
+      "description": "Directory containing fold* subdirs with train.csv + test.csv.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_dir",
+      "description": "Output directory for results.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "run_name",
+      "description": "Short identifier for this run.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "y_col",
+      "description": "Name or 1-based index of the class-label column.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "x_cols",
+      "description": "Comma-separated specifier picking feature columns.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "headers",
+      "description": "Whether the fold CSVs have a header row.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "random_seed",
+      "description": "Random seed (0 = non-deterministic).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "threads",
+      "description": "Rayon worker threads for parallel per-fold fits. Default: 1.",
+      "required": false,
+      "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{run_dir}/{run_name}_dfa_cv_summary.csv",
+      "title": "Cross-validation summary",
+      "description": "One row per fold plus MEAN, SD, and POOLED summary rows showing how well the LDA model predicts on held-out data. The pooled hit rate is your headline accuracy estimate.",
+      "fields": [
+        {
+          "name": "fold_id",
+          "description": "Fold identifier (or MEAN / SD / POOLED for summary rows)."
+        },
+        {
+          "name": "train_hit_rate",
+          "description": "Classification accuracy on the training portion."
+        },
+        {
+          "name": "test_hit_rate",
+          "description": "Classification accuracy on the held-out portion."
+        }
+      ]
+    },
+    {
+      "path": "{run_dir}/ocinfo/{run_name}_dfa/{run_name}_dfa_cv_report.xlsx",
+      "title": "Cross-validation report workbook",
+      "description": "Single-sheet workbook containing the same summary table. Convenient for sharing the CV results without the full per-fold details.",
+      "fields": []
+    },
+    {
+      "path": "{run_dir}/ocinfo/{run_name}_dfa/{fold_id}/",
+      "title": "Per-fold artefacts",
+      "description": "Full fit-finalize output for each fold: spec.json, fit.json, coefficient CSV, and report workbook. Use these to inspect how the model varies across folds.",
+      "fields": []
+    }
   ]
 }

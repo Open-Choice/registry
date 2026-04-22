@@ -29,6 +29,17 @@
     "pair_counts_nonzero reports how many of the possible item pairs appear at least once."
   ],
   "see_also": [
-    { "command": "design-maxdiff::design", "description": "Generate the MaxDiff design that assess-design scores." }
+    {
+      "command": "design-maxdiff::design",
+      "description": "Generate the MaxDiff design that assess-design scores."
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "ocinfo/{run_name}_design/summary_overview.csv",
+      "title": "Design balance overview",
+      "description": "Item-exposure balance, pair-coverage, and SSE metrics. Use these to verify design quality before fielding, or to compare against an alternative design.",
+      "fields": []
+    }
   ]
 }

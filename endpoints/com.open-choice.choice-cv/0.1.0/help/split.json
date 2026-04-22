@@ -98,9 +98,18 @@
     "The balance loop minimises row-count variance, not respondent-count variance."
   ],
   "see_also": [
-    { "command": "model-mnl-lg::cv-fit", "description": "Cross-validated multinomial logit fit consuming this split." },
-    { "command": "model-mnl-lc::cv-fit", "description": "Cross-validated latent class fit consuming this split." },
-    { "command": "model-mnl-hb-mh::cv-fit", "description": "Cross-validated hierarchical Bayes MH fit consuming this split." }
+    {
+      "command": "model-mnl-lg::cv-fit",
+      "description": "Cross-validated multinomial logit fit consuming this split."
+    },
+    {
+      "command": "model-mnl-lc::cv-fit",
+      "description": "Cross-validated latent class fit consuming this split."
+    },
+    {
+      "command": "model-mnl-hb-mh::cv-fit",
+      "description": "Cross-validated hierarchical Bayes MH fit consuming this split."
+    }
   ],
   "examples": [
     {
@@ -117,17 +126,116 @@
     }
   ],
   "fields": [
-    { "name": "input",               "description": "Path to the coded-long-format CSV file to split.",                       "required": true,  "accepted_values": [] },
-    { "name": "output_dir",          "description": "Output directory. Each fold gets a subdirectory.",                      "required": true,  "accepted_values": [] },
-    { "name": "folds",               "description": "Number of CV folds. Integer >= 2. Default: 5.",                         "required": false, "accepted_values": [] },
-    { "name": "respondent_col",      "description": "1-based column index of the respondent ID. Default: 1.",                "required": false, "accepted_values": [] },
-    { "name": "task_col",            "description": "1-based column index of the task number. Default: 2.",                  "required": false, "accepted_values": [] },
-    { "name": "random_seed",         "description": "RNG seed. 0 = internal default (123). Default: 0.",                    "required": false, "accepted_values": [] },
-    { "name": "balance_iterations",  "description": "Max iterations for fold-size balancing. Default: 1000.",                "required": false, "accepted_values": [] },
-    { "name": "balance_early_stop",  "description": "Stop early if no improvement for N iterations. Default: 20.",           "required": false, "accepted_values": [] },
-    { "name": "fold_prefix",         "description": "Prefix for fold subdirectory names. Default: 'fold'.",                  "required": false, "accepted_values": [] },
-    { "name": "train_filename",      "description": "Training CSV filename inside each fold directory. Default: 'train.csv'.", "required": false, "accepted_values": [] },
-    { "name": "test_filename",       "description": "Test CSV filename inside each fold directory. Default: 'test.csv'.",    "required": false, "accepted_values": [] },
-    { "name": "assignment_filename", "description": "Fold-assignment summary CSV filename. Default: 'fold_assignments.csv'.", "required": false, "accepted_values": [] }
+    {
+      "name": "input",
+      "description": "Path to the coded-long-format CSV file to split.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "output_dir",
+      "description": "Output directory. Each fold gets a subdirectory.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "folds",
+      "description": "Number of CV folds. Integer >= 2. Default: 5.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "respondent_col",
+      "description": "1-based column index of the respondent ID. Default: 1.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "task_col",
+      "description": "1-based column index of the task number. Default: 2.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "random_seed",
+      "description": "RNG seed. 0 = internal default (123). Default: 0.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "balance_iterations",
+      "description": "Max iterations for fold-size balancing. Default: 1000.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "balance_early_stop",
+      "description": "Stop early if no improvement for N iterations. Default: 20.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "fold_prefix",
+      "description": "Prefix for fold subdirectory names. Default: 'fold'.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "train_filename",
+      "description": "Training CSV filename inside each fold directory. Default: 'train.csv'.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "test_filename",
+      "description": "Test CSV filename inside each fold directory. Default: 'test.csv'.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "assignment_filename",
+      "description": "Fold-assignment summary CSV filename. Default: 'fold_assignments.csv'.",
+      "required": false,
+      "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{fold_prefix}_NN/train.csv",
+      "title": "Training data — fold N",
+      "description": "The respondents assigned to training in this fold. Each downstream model-fit step trains on this file. One file per fold subdirectory.",
+      "fields": [
+        {
+          "name": "(same columns as input)",
+          "description": "All columns from the coded-long input are preserved unchanged."
+        }
+      ]
+    },
+    {
+      "path": "{fold_prefix}_NN/test.csv",
+      "title": "Test data — fold N",
+      "description": "The held-out respondents for this fold. Used to evaluate model performance out-of-sample. One file per fold subdirectory.",
+      "fields": [
+        {
+          "name": "(same columns as input)",
+          "description": "All columns from the coded-long input are preserved unchanged."
+        }
+      ]
+    },
+    {
+      "path": "fold_assignments.csv",
+      "title": "Fold assignments",
+      "description": "Records which test fold each respondent was assigned to. One row per respondent.",
+      "fields": [
+        {
+          "name": "respondent_id",
+          "description": "Respondent identifier column."
+        },
+        {
+          "name": "fold",
+          "description": "The fold number where this respondent's rows appear as test data."
+        }
+      ]
+    }
   ]
 }

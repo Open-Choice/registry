@@ -181,5 +181,46 @@
       "title": "End-to-end run with separate best / worst position effects",
       "body": "[[\"choice-wrangling::pipeline-maxdiff\"]]\ndesign_csv = \"design.csv\"\nrespondent_csv = \"respondents.csv\"\nrun_dir = \"./wrangled\"\nrun_name = \"pilot3\"\nalternative_position_name = \"alternative_position\"\nadd_best_position_attribute = true\nadd_worst_position_attribute = true"
     }
+  ],
+  "artifacts": [
+    {
+      "path": "{run_dir}/{run_name}_prepared.csv",
+      "title": "Prepared respondent data",
+      "description": "Normalised respondent selections joined to the design (prepare-maxdiff stage). Intermediate file kept for auditing."
+    },
+    {
+      "path": "{run_dir}/{run_name}_choice_sets.csv",
+      "title": "Choice-set rows",
+      "description": "One row per respondent-task-alternative with best/worst choice flags (build-choice-sets stage). Intermediate file."
+    },
+    {
+      "path": "{run_dir}/{run_name}_coded_long.csv",
+      "title": "Coded long-format estimation data",
+      "description": "The final estimation-ready file. One row per respondent-task-alternative with numerically coded attributes and a response variable. This is what modelling plugins (model-mnl-lg, model-mnl-lc, model-mnl-hb-mh) consume directly.",
+      "fields": [
+        {
+          "name": "resp_id",
+          "description": "Respondent identifier."
+        },
+        {
+          "name": "task",
+          "description": "Task number."
+        },
+        {
+          "name": "(coded attribute columns)",
+          "description": "Numeric encoding of each design attribute."
+        },
+        {
+          "name": "y",
+          "description": "Response variable — positive for the chosen alternative."
+        }
+      ]
+    },
+    {
+      "path": "{run_dir}/{run_name}_cookbook.json",
+      "title": "Coding cookbook",
+      "description": "Maps coded column names back to original attribute/level labels. Required by expand-coefficients for human-readable reporting.",
+      "fields": []
+    }
   ]
 }

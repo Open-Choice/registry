@@ -81,5 +81,32 @@
       "required": false,
       "accepted_values": []
     }
+  ],
+  "artifacts": [
+    {
+      "path": "{run_dir}/exports/coefficients.csv",
+      "title": "Coefficient table",
+      "description": "Re-exported aggregate MNL coefficients with standard errors. Ready for choice-wrangling::expand-coefficients.",
+      "fields": [
+        {
+          "name": "variable",
+          "description": "Attribute level name."
+        },
+        {
+          "name": "coefficient",
+          "description": "MNL coefficient."
+        },
+        {
+          "name": "std_error",
+          "description": "Standard error."
+        }
+      ]
+    },
+    {
+      "path": "{run_dir}/exports/summary.json",
+      "title": "Fit summary",
+      "description": "Coefficients, log-likelihood, AIC, BIC, and convergence status in JSON form.",
+      "fields": []
+    }
   ]
 }

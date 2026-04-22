@@ -5,19 +5,75 @@
   "description": "The banner is the Cartesian cross of the `banner_vars` categories plus a Total column. For each variable in the input file, a table is produced: categorical variables emit one row per value with a weighted (or unweighted) percentage per banner column and a significance-letters cell indicating which other columns this column is significantly higher/lower than at the standard alpha; continuous variables emit a mean and standard error per banner column with pairwise t-test letters. Missing-coded values are excluded by default — set `include_na = true` to keep them in the base. Multi-response / checkbox variables produce one row per option; set `include_unchecked = true` to also emit the implied unchecked complement.",
   "usage": "[[\"spss-reader::create-table\"]]\ninput_path = \"./data/survey.sav\"\noutput_dir = \"./output\"\nbanner_vars = [\"Q_gender\", \"Q_age_group\"]\nweight_var = \"weight\"\ninclude_na = false",
   "arguments": [
-    { "name": "input_path",            "type": "string",  "required": true,  "description": "Input data file (.sav/.zsav, .csv/.tsv, or .xlsx)." },
-    { "name": "output_dir",            "type": "string",  "required": true,  "description": "Directory for the banner-table .xlsx; created if missing." },
-    { "name": "banner_vars",           "type": "array",   "required": false, "default": [], "description": "Variables whose categories form the table columns. Empty = Total column only." },
-    { "name": "weight_var",            "type": "string",  "required": false, "description": "Optional weight variable. When supplied, counts and tests use weighted values." },
-    { "name": "discrete_count_cutoff", "type": "integer", "required": false, "description": "Variables with fewer distinct values than this cutoff are treated as categorical, others as continuous." },
-    { "name": "include_na",            "type": "boolean", "required": false, "default": false, "description": "Keep missing-coded values in the base when true." },
-    { "name": "include_unchecked",     "type": "boolean", "required": false, "default": false, "description": "For multi-response variables, also emit unchecked-complement rows when true." },
-    { "name": "prefix",                "type": "string",  "required": false, "description": "Optional filename prefix." },
-    { "name": "suffix",                "type": "string",  "required": false, "description": "Optional filename suffix (before the extension)." }
+    {
+      "name": "input_path",
+      "type": "string",
+      "required": true,
+      "description": "Input data file (.sav/.zsav, .csv/.tsv, or .xlsx)."
+    },
+    {
+      "name": "output_dir",
+      "type": "string",
+      "required": true,
+      "description": "Directory for the banner-table .xlsx; created if missing."
+    },
+    {
+      "name": "banner_vars",
+      "type": "array",
+      "required": false,
+      "default": [],
+      "description": "Variables whose categories form the table columns. Empty = Total column only."
+    },
+    {
+      "name": "weight_var",
+      "type": "string",
+      "required": false,
+      "description": "Optional weight variable. When supplied, counts and tests use weighted values."
+    },
+    {
+      "name": "discrete_count_cutoff",
+      "type": "integer",
+      "required": false,
+      "description": "Variables with fewer distinct values than this cutoff are treated as categorical, others as continuous."
+    },
+    {
+      "name": "include_na",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Keep missing-coded values in the base when true."
+    },
+    {
+      "name": "include_unchecked",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "For multi-response variables, also emit unchecked-complement rows when true."
+    },
+    {
+      "name": "prefix",
+      "type": "string",
+      "required": false,
+      "description": "Optional filename prefix."
+    },
+    {
+      "name": "suffix",
+      "type": "string",
+      "required": false,
+      "description": "Optional filename suffix (before the extension)."
+    }
   ],
   "notes": [
     "Significance letters follow the standard banner-testing convention: a letter in a cell marks a banner column whose value this cell is significantly higher than. Direction and alpha are fixed defaults inside the plugin.",
     "Banner columns with n < the plugin's minimum-base threshold are marked low-base and excluded from pairwise tests, not omitted from the table.",
     "Weighted tests use the survey-design variance approximation appropriate for the supplied weights — results are not identical to unweighted tests on the same data."
+  ],
+  "artifacts": [
+    {
+      "path": "{output_dir}/{filename}_tables.xlsx",
+      "title": "Cross-tab banner workbook",
+      "description": "An Excel workbook with one table per variable showing weighted percentages (or means for continuous variables) broken out across banner columns. Significance-letter cells flag statistically significant differences between banner groups. This is the standard frequency-table deliverable format for quantitative market research.",
+      "fields": []
+    }
   ]
 }

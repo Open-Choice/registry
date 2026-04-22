@@ -87,7 +87,11 @@
       "type": "string",
       "required": false,
       "default": "weighted-by-probability",
-      "accepted_values": ["weighted-by-probability", "first-choice", "threshold"],
+      "accepted_values": [
+        "weighted-by-probability",
+        "first-choice",
+        "threshold"
+      ],
       "description": "Reach scoring rule. `weighted-by-probability` (default) weights each respondent's contribution by the softmax probability of picking an item from the candidate within an implied task of `number_of_alt` alternatives. `first-choice` counts a respondent as 'reached' iff their highest-utility item in the subset would be the first choice across the implied task. `threshold` uses a fixed utility cutoff."
     },
     {
@@ -109,7 +113,12 @@
       "type": "string",
       "required": false,
       "default": "auto",
-      "accepted_values": ["auto", "exhaustive", "sampled", "beam"],
+      "accepted_values": [
+        "auto",
+        "exhaustive",
+        "sampled",
+        "beam"
+      ],
       "description": "Search strategy. `auto` (default) picks based on the size of the problem: exhaustive when `C(n, k)` fits under `exhaustive_limit`, sampled or beam otherwise. `exhaustive` enumerates all candidates (only feasible for small problems). `sampled` uses screening + random sampling with replicates and is the recommended fallback for large problems. `beam` uses a deterministic beam search and is useful when reproducibility matters more than coverage."
     },
     {
@@ -173,14 +182,19 @@
       "type": "string",
       "required": false,
       "default": "hybrid",
-      "accepted_values": ["hybrid", "mean", "top-rate", "marginal"],
+      "accepted_values": [
+        "hybrid",
+        "mean",
+        "top-rate",
+        "marginal"
+      ],
       "description": "Scoring rule used during sampled-search screening rounds. `hybrid` (default) blends mean and top-rate signals. `mean` uses pure mean reach. `top-rate` uses top-alpha tail concentration. `marginal` uses marginal reach contribution."
     },
     {
       "name": "top_alpha",
       "type": "number",
       "required": false,
-      "default": 0.10,
+      "default": 0.1,
       "description": "Top-alpha tail probability for the `top-rate` and `hybrid` screening metrics. Default `0.10` (top 10%)."
     },
     {
@@ -249,10 +263,22 @@
     "`forbidden_pairs` is a hard constraint; the search will not return any subset that violates it."
   ],
   "see_also": [
-    { "command": "maxdiff-turf::search-ladder", "description": "Build the full value ladder over a range of sizes — preferred when you want a curve rather than a single size." },
-    { "command": "maxdiff-turf::curve-family", "description": "Run anchored ladders from multiple anchor sizes in parallel." },
-    { "command": "maxdiff-turf::score-scenarios", "description": "Score a fixed list of hand-built subsets — useful for benchmarking against `search-k` results." },
-    { "command": "maxdiff-turf::inspect-input", "description": "Sanity-check the utilities file before running a long search." }
+    {
+      "command": "maxdiff-turf::search-ladder",
+      "description": "Build the full value ladder over a range of sizes — preferred when you want a curve rather than a single size."
+    },
+    {
+      "command": "maxdiff-turf::curve-family",
+      "description": "Run anchored ladders from multiple anchor sizes in parallel."
+    },
+    {
+      "command": "maxdiff-turf::score-scenarios",
+      "description": "Score a fixed list of hand-built subsets — useful for benchmarking against `search-k` results."
+    },
+    {
+      "command": "maxdiff-turf::inspect-input",
+      "description": "Sanity-check the utilities file before running a long search."
+    }
   ],
   "examples": [
     {
@@ -269,38 +295,259 @@
     }
   ],
   "fields": [
-    { "name": "utilities",              "description": "Path to per-respondent utilities CSV.",                                              "required": true,  "accepted_values": [] },
-    { "name": "out_dir",                "description": "Output directory for results. Created if it does not exist.",                        "required": true,  "accepted_values": [] },
-    { "name": "k",                      "description": "Subset size to search for.",                                                          "required": true,  "accepted_values": [] },
-    { "name": "subgroups",              "description": "Optional subgroup membership CSV (one column per subgroup).",                         "required": false, "accepted_values": [] },
-    { "name": "labels",                 "description": "Optional item labels CSV (one row per item).",                                        "required": false, "accepted_values": [] },
-    { "name": "include",                "description": "Comma-separated 1-based item indices to force-include in every candidate.",          "required": false, "accepted_values": [] },
-    { "name": "exclude",                "description": "Comma-separated 1-based item indices to exclude from all candidates.",               "required": false, "accepted_values": [] },
-    { "name": "utility_cols",           "description": "Explicit utility column spec (1-based, supports ranges like '3-12').",               "required": false, "accepted_values": [] },
-    { "name": "non_utility_cols",       "description": "Comma-separated 1-based columns to ignore (e.g. id, weight columns).",               "required": false, "accepted_values": [] },
-    { "name": "forbidden_pairs",        "description": "Forbidden pairs spec, e.g. '1:2,3:4'.",                                               "required": false, "accepted_values": [] },
-    { "name": "headers",                "description": "Whether the CSV files have header rows. Default: true.",                             "required": false, "accepted_values": [] },
-    { "name": "reach_method",           "description": "Reach scoring rule.",                                                                 "required": false, "accepted_values": ["weighted-by-probability", "first-choice", "threshold"] },
-    { "name": "number_of_alt",          "description": "Implied alternatives per task for the reach calculation. Default: 5.",               "required": false, "accepted_values": [] },
-    { "name": "threshold",              "description": "Threshold value used by the threshold reach method. Default: 0.8.",                  "required": false, "accepted_values": [] },
-    { "name": "search_method",          "description": "Search strategy. 'auto' picks based on problem size.",                                "required": false, "accepted_values": ["auto", "exhaustive", "sampled", "beam"] },
-    { "name": "exhaustive_limit",       "description": "Maximum number of subsets enumerated by exhaustive search. Default: 100000.",        "required": false, "accepted_values": [] },
-    { "name": "top_n",                  "description": "Number of top scoring subsets to keep. Default: 100.",                                "required": false, "accepted_values": [] },
-    { "name": "seed",                   "description": "Random seed (omit for non-deterministic).",                                            "required": false, "accepted_values": [] },
-    { "name": "sample_n",               "description": "Sampled-search budget (overrides sample_factor when set).",                            "required": false, "accepted_values": [] },
-    { "name": "sample_factor",          "description": "Multiplier on the auto-sampled budget. Default: 20.",                                 "required": false, "accepted_values": [] },
-    { "name": "sample_replicates",      "description": "Sampled-search replicates. Default: 3.",                                              "required": false, "accepted_values": [] },
-    { "name": "drop_frac",              "description": "Fraction of items dropped each screening pass. Default: 0.25.",                       "required": false, "accepted_values": [] },
-    { "name": "min_survivors",          "description": "Minimum survivors retained during screening rounds.",                                 "required": false, "accepted_values": [] },
-    { "name": "screen_metric",          "description": "Screening metric used during sampled search.",                                        "required": false, "accepted_values": ["hybrid", "mean", "top-rate", "marginal"] },
-    { "name": "top_alpha",              "description": "Top-alpha tail probability for screening. Default: 0.10.",                            "required": false, "accepted_values": [] },
-    { "name": "beam_width",             "description": "Beam search width. Default: 1000.",                                                   "required": false, "accepted_values": [] },
-    { "name": "local_improve",          "description": "Apply a local improvement pass to candidates. Default: true.",                       "required": false, "accepted_values": [] },
-    { "name": "local_improve_max_iter", "description": "Max iterations for local improvement. Default: 25.",                                   "required": false, "accepted_values": [] },
-    { "name": "wide_format",            "description": "Emit results in wide CSV format.",                                                    "required": false, "accepted_values": [] },
-    { "name": "keep_scenarios",         "description": "Retain per-respondent scenario rows in the result file. Default: true.",             "required": false, "accepted_values": [] },
-    { "name": "keep_diagnostics",       "description": "Retain diagnostic columns. Default: true.",                                           "required": false, "accepted_values": [] },
-    { "name": "target_subgroup",        "description": "Optimize against a specific subgroup column from the subgroups file.",                "required": false, "accepted_values": [] },
-    { "name": "threads",                "description": "Rayon worker threads for parallel candidate scoring. Default: 1.",                     "required": false, "accepted_values": [] }
+    {
+      "name": "utilities",
+      "description": "Path to per-respondent utilities CSV.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "out_dir",
+      "description": "Output directory for results. Created if it does not exist.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "k",
+      "description": "Subset size to search for.",
+      "required": true,
+      "accepted_values": []
+    },
+    {
+      "name": "subgroups",
+      "description": "Optional subgroup membership CSV (one column per subgroup).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "labels",
+      "description": "Optional item labels CSV (one row per item).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "include",
+      "description": "Comma-separated 1-based item indices to force-include in every candidate.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "exclude",
+      "description": "Comma-separated 1-based item indices to exclude from all candidates.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "utility_cols",
+      "description": "Explicit utility column spec (1-based, supports ranges like '3-12').",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "non_utility_cols",
+      "description": "Comma-separated 1-based columns to ignore (e.g. id, weight columns).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "forbidden_pairs",
+      "description": "Forbidden pairs spec, e.g. '1:2,3:4'.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "headers",
+      "description": "Whether the CSV files have header rows. Default: true.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "reach_method",
+      "description": "Reach scoring rule.",
+      "required": false,
+      "accepted_values": [
+        "weighted-by-probability",
+        "first-choice",
+        "threshold"
+      ]
+    },
+    {
+      "name": "number_of_alt",
+      "description": "Implied alternatives per task for the reach calculation. Default: 5.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "threshold",
+      "description": "Threshold value used by the threshold reach method. Default: 0.8.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "search_method",
+      "description": "Search strategy. 'auto' picks based on problem size.",
+      "required": false,
+      "accepted_values": [
+        "auto",
+        "exhaustive",
+        "sampled",
+        "beam"
+      ]
+    },
+    {
+      "name": "exhaustive_limit",
+      "description": "Maximum number of subsets enumerated by exhaustive search. Default: 100000.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "top_n",
+      "description": "Number of top scoring subsets to keep. Default: 100.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "seed",
+      "description": "Random seed (omit for non-deterministic).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "sample_n",
+      "description": "Sampled-search budget (overrides sample_factor when set).",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "sample_factor",
+      "description": "Multiplier on the auto-sampled budget. Default: 20.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "sample_replicates",
+      "description": "Sampled-search replicates. Default: 3.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "drop_frac",
+      "description": "Fraction of items dropped each screening pass. Default: 0.25.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "min_survivors",
+      "description": "Minimum survivors retained during screening rounds.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "screen_metric",
+      "description": "Screening metric used during sampled search.",
+      "required": false,
+      "accepted_values": [
+        "hybrid",
+        "mean",
+        "top-rate",
+        "marginal"
+      ]
+    },
+    {
+      "name": "top_alpha",
+      "description": "Top-alpha tail probability for screening. Default: 0.10.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "beam_width",
+      "description": "Beam search width. Default: 1000.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "local_improve",
+      "description": "Apply a local improvement pass to candidates. Default: true.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "local_improve_max_iter",
+      "description": "Max iterations for local improvement. Default: 25.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "wide_format",
+      "description": "Emit results in wide CSV format.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "keep_scenarios",
+      "description": "Retain per-respondent scenario rows in the result file. Default: true.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "keep_diagnostics",
+      "description": "Retain diagnostic columns. Default: true.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "target_subgroup",
+      "description": "Optimize against a specific subgroup column from the subgroups file.",
+      "required": false,
+      "accepted_values": []
+    },
+    {
+      "name": "threads",
+      "description": "Rayon worker threads for parallel candidate scoring. Default: 1.",
+      "required": false,
+      "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{out_dir}/{run_name}_top_subsets.csv",
+      "title": "Top-N candidate subsets",
+      "description": "The best subsets of size k ranked by TURF reach, with the reach score for each. Use this to compare the top contenders and understand how much reach drops off below the best option.",
+      "fields": [
+        {
+          "name": "rank",
+          "description": "Rank by reach (1 = highest)."
+        },
+        {
+          "name": "reach",
+          "description": "Proportion of respondents reached by this subset."
+        },
+        {
+          "name": "items",
+          "description": "Comma-separated list of items in the subset."
+        }
+      ]
+    },
+    {
+      "path": "{out_dir}/{run_name}_best.csv",
+      "title": "Best-reach subset record",
+      "description": "Single-row file recording the highest-reach subset found. Convenient as a bookmark when you want to pass the winner directly into downstream analysis.",
+      "fields": [
+        {
+          "name": "reach",
+          "description": "Reach of the best subset."
+        },
+        {
+          "name": "items",
+          "description": "Items in the best subset."
+        }
+      ]
+    },
+    {
+      "path": "{out_dir}/{run_name}_input_snapshot.json",
+      "title": "Prepared-input snapshot",
+      "description": "Records the resolved utility columns, any subgroup filters applied, and search settings. Useful for reproducing the run or auditing exactly which respondents and items were included.",
+      "fields": []
+    }
   ]
 }

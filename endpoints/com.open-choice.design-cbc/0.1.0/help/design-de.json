@@ -5,9 +5,24 @@
   "description": "Encodes each profile under L-1 effects coding (the last level becomes -1 across all parameters) and accumulates the per-task information matrix G = Σ_c q_c (z_c - μ)(z_c - μ)^T, where q_c is the choice probability under softmax(z_c · β) (or 1/C when β is omitted). The objective maximises log|M_total| + α · mean_v log|M_v|, with M_total = Σ_v Σ_t G_{v,t}/V (so it is on the per-version scale) and M_v = Σ_t G_{v,t}. Bayesian priors are supported: pass `weights.beta` as either a single vector of length p (effects-coded parameter count) or an array of draws, in which case the objective averages across draws.",
   "usage": "[[\"design-cbc::design-de\"]]\nrun_dir = \"<path>\"\nrun_name = \"<id>\"\n# spec.* = the CBC structural inputs\n# optional: weights.alpha, weights.ridge, weights.beta (Single | Draws | null)",
   "arguments": [
-    { "name": "run_dir",  "type": "string",  "required": true, "description": "Workspace directory; primary output goes to {run_dir}/{run_name}_design.csv." },
-    { "name": "run_name", "type": "string",  "required": true, "description": "Run identifier; used as a filename prefix and to namespace ocinfo files." },
-    { "name": "spec",     "type": "object",  "required": true, "description": "CBC spec input. Required: versions, tasks_per_version, concepts_per_task, attributes (each with name + max_level). Optional: pairwise_restrictions, gating_rules, fixed_cells, fixed_attributes, level_weights." },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "description": "Workspace directory; primary output goes to {run_dir}/{run_name}_design.csv."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "description": "Run identifier; used as a filename prefix and to namespace ocinfo files."
+    },
+    {
+      "name": "spec",
+      "type": "object",
+      "required": true,
+      "description": "CBC spec input. Required: versions, tasks_per_version, concepts_per_task, attributes (each with name + max_level). Optional: pairwise_restrictions, gating_rules, fixed_cells, fixed_attributes, level_weights."
+    },
     {
       "name": "weights",
       "type": "object",
@@ -15,22 +30,95 @@
       "description": "Objective weighting and prior inputs. Keys: alpha, ridge, beta.",
       "subtable": {
         "parameters": [
-          { "name": "alpha", "type": "number", "required": false, "default": 0.5, "description": "Weight on the per-version mean log|M_v| relative to log|M_total|." },
-          { "name": "ridge", "type": "number", "required": false, "default": 1e-6, "description": "Diagonal ridge added to information matrices to keep them positive definite." },
-          { "name": "beta",  "type": "array",  "required": false, "description": "Optional MNL coefficients. Either a single vector of length p (effects-coded params) for a point prior, or an array of vectors for a Bayesian average across draws. Omit (or null) to use uniform 1/C choice probabilities." }
+          {
+            "name": "alpha",
+            "type": "number",
+            "required": false,
+            "default": 0.5,
+            "description": "Weight on the per-version mean log|M_v| relative to log|M_total|."
+          },
+          {
+            "name": "ridge",
+            "type": "number",
+            "required": false,
+            "default": 1e-06,
+            "description": "Diagonal ridge added to information matrices to keep them positive definite."
+          },
+          {
+            "name": "beta",
+            "type": "array",
+            "required": false,
+            "description": "Optional MNL coefficients. Either a single vector of length p (effects-coded params) for a point prior, or an array of vectors for a Bayesian average across draws. Omit (or null) to use uniform 1/C choice probabilities."
+          }
         ]
       }
     },
-    { "name": "seed",        "type": "integer", "required": false, "description": "Base seed; per-start seeds derived as base + i." },
-    { "name": "engine",      "type": "string",  "required": false, "default": "sa", "accepted_values": ["sa", "greedy"] },
-    { "name": "n_steps",     "type": "integer", "required": false, "default": 200000, "description": "SA iterations per start." },
-    { "name": "initial_temperature", "type": "number", "required": false, "default": 5.0 },
-    { "name": "cooling_rate", "type": "number", "required": false, "default": 0.9997 },
-    { "name": "keep_best",   "type": "boolean", "required": false, "default": true },
-    { "name": "n_starts",    "type": "integer", "required": false, "default": 1 },
-    { "name": "threads",     "type": "integer", "required": false, "default": 1, "description": "Worker threads for parallel restarts (only meaningful when n_starts > 1)." },
-    { "name": "report_every","type": "integer", "required": false, "default": 5000 },
-    { "name": "proposal_mix","type": "object",  "required": false, "description": "Proposal weights: p_task_att_vec (0.7), p_cell (0.3), m_try (5)." }
+    {
+      "name": "seed",
+      "type": "integer",
+      "required": false,
+      "description": "Base seed; per-start seeds derived as base + i."
+    },
+    {
+      "name": "engine",
+      "type": "string",
+      "required": false,
+      "default": "sa",
+      "accepted_values": [
+        "sa",
+        "greedy"
+      ]
+    },
+    {
+      "name": "n_steps",
+      "type": "integer",
+      "required": false,
+      "default": 200000,
+      "description": "SA iterations per start."
+    },
+    {
+      "name": "initial_temperature",
+      "type": "number",
+      "required": false,
+      "default": 5.0
+    },
+    {
+      "name": "cooling_rate",
+      "type": "number",
+      "required": false,
+      "default": 0.9997
+    },
+    {
+      "name": "keep_best",
+      "type": "boolean",
+      "required": false,
+      "default": true
+    },
+    {
+      "name": "n_starts",
+      "type": "integer",
+      "required": false,
+      "default": 1
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Worker threads for parallel restarts (only meaningful when n_starts > 1)."
+    },
+    {
+      "name": "report_every",
+      "type": "integer",
+      "required": false,
+      "default": 5000
+    },
+    {
+      "name": "proposal_mix",
+      "type": "object",
+      "required": false,
+      "description": "Proposal weights: p_task_att_vec (0.7), p_cell (0.3), m_try (5)."
+    }
   ],
   "value": "On success, `run_dir` contains:\n- `{run_name}_design.csv` — wide design (Version, Task, Concept, <attribute columns>).\n- `ocinfo/{run_name}_design/design_long.csv` — long design (one row per cell).\n- `ocinfo/{run_name}_design/summary_overview.csv` — final score, iterations, accepted, n_parameters, log|M_total|, per-version log|M_v|.\n- `ocinfo/{run_name}_design/summary_main_counts.csv` — per-attribute level counts.\n- `ocinfo/{run_name}_design/design.json`, `summary.json`, `spec.input.json` — machine-readable outputs.\n\nThe summary's `n_parameters` equals the total effects-coded parameter count (Σ_k max_level_k). For multi-draw beta the reported logdets are averaged across draws.",
   "notes": [
@@ -40,6 +128,52 @@
     "Multi-start (`n_starts` 4–8 with matched `threads`) is recommended because the D-efficient surface is multimodal under restrictions."
   ],
   "see_also": [
-    { "command": "design-cbc::design-bo", "description": "Balance / minimum-overlap variant; faster and prior-free." }
+    {
+      "command": "design-cbc::design-bo",
+      "description": "Balance / minimum-overlap variant; faster and prior-free."
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{run_name}_design.csv",
+      "title": "CBC design — wide format",
+      "description": "The primary design file for survey programming. One row per (version, task, concept) with integer attribute level codes. D-efficiency is optimised given the supplied prior utilities.",
+      "fields": [
+        {
+          "name": "Version",
+          "description": "Design version number."
+        },
+        {
+          "name": "Task",
+          "description": "Task number."
+        },
+        {
+          "name": "Concept",
+          "description": "Concept (alternative) position."
+        },
+        {
+          "name": "(attribute columns)",
+          "description": "Integer level codes for each attribute."
+        }
+      ]
+    },
+    {
+      "path": "ocinfo/{run_name}_design/design_long.csv",
+      "title": "Design — long format",
+      "description": "One row per (version, task, concept, attribute) for programmatic inspection.",
+      "fields": []
+    },
+    {
+      "path": "ocinfo/{run_name}_design/summary_overview.csv",
+      "title": "D-efficiency summary",
+      "description": "Final log|M| score, parameter count, and per-version log|M_v| values. Higher log-determinant indicates a more statistically efficient design.",
+      "fields": []
+    },
+    {
+      "path": "ocinfo/{run_name}_design/summary_main_counts.csv",
+      "title": "Attribute level frequency counts",
+      "description": "Frequency of each attribute level across the design.",
+      "fields": []
+    }
   ]
 }

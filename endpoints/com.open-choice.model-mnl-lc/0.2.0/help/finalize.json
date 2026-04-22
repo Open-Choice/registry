@@ -81,5 +81,38 @@
       "required": false,
       "accepted_values": []
     }
+  ],
+  "artifacts": [
+    {
+      "path": "{run_dir}/exports/coefficients.csv",
+      "title": "Per-class coefficient table",
+      "description": "Re-exported coefficient table for the completed LC run. One row per attribute level per class. Feed into choice-wrangling::expand-coefficients for simulation.",
+      "fields": [
+        {
+          "name": "class",
+          "description": "Latent class identifier."
+        },
+        {
+          "name": "variable",
+          "description": "Attribute level name."
+        },
+        {
+          "name": "coefficient",
+          "description": "MNL coefficient."
+        }
+      ]
+    },
+    {
+      "path": "{run_dir}/exports/summary.json",
+      "title": "Fit summary",
+      "description": "Class sizes, log-likelihood, AIC, BIC, and coefficient table in JSON form.",
+      "fields": []
+    },
+    {
+      "path": "{run_dir}/exports/IC.csv",
+      "title": "Information criteria table",
+      "description": "Per-segment information criteria.",
+      "fields": []
+    }
   ]
 }

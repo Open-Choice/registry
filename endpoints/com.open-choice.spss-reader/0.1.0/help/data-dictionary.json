@@ -5,14 +5,48 @@
   "description": "A variable is treated as categorical when its distinct-value count is less than or equal to `cutoff` (default 100). Categorical variables get a frequency table rendered on their per-variable sheet or inline on the dictionary sheet (depending on workbook size); continuous / free-text variables get descriptive summaries (min/max/mean) instead. SPSS value labels and missing-code ranges are read via readstat; CSV/Excel inputs have no metadata and use detected types only.",
   "usage": "[[\"spss-reader::data-dictionary\"]]\ninput_path = \"./data/survey.sav\"\noutput_dir = \"./output\"\ncutoff = 50",
   "arguments": [
-    { "name": "input_path", "type": "string",  "required": true,  "description": "Path to .sav/.zsav, .csv/.tsv, or .xlsx." },
-    { "name": "output_dir", "type": "string",  "required": true,  "description": "Directory for the output .xlsx; created if missing." },
-    { "name": "cutoff",     "type": "integer", "required": false, "default": 100, "description": "Max distinct values before a variable is treated as continuous (frequency table suppressed)." },
-    { "name": "prefix",     "type": "string",  "required": false, "description": "Optional filename prefix." },
-    { "name": "suffix",     "type": "string",  "required": false, "description": "Optional filename suffix (before the extension)." }
+    {
+      "name": "input_path",
+      "type": "string",
+      "required": true,
+      "description": "Path to .sav/.zsav, .csv/.tsv, or .xlsx."
+    },
+    {
+      "name": "output_dir",
+      "type": "string",
+      "required": true,
+      "description": "Directory for the output .xlsx; created if missing."
+    },
+    {
+      "name": "cutoff",
+      "type": "integer",
+      "required": false,
+      "default": 100,
+      "description": "Max distinct values before a variable is treated as continuous (frequency table suppressed)."
+    },
+    {
+      "name": "prefix",
+      "type": "string",
+      "required": false,
+      "description": "Optional filename prefix."
+    },
+    {
+      "name": "suffix",
+      "type": "string",
+      "required": false,
+      "description": "Optional filename suffix (before the extension)."
+    }
   ],
   "notes": [
     "The resulting workbook is the canonical metadata carrier for this plugin: `write-sav` can read it back via `data_dictionary_path` to hydrate labels and missing codes on a CSV-based build.",
     "`cutoff` is a pragmatic ceiling, not a statistical rule — raise it for surveys with long enumeration lists, lower it to force more variables to be treated as continuous."
+  ],
+  "artifacts": [
+    {
+      "path": "{output_dir}/{filename}_data_dictionary.xlsx",
+      "title": "Data dictionary workbook",
+      "description": "An Excel workbook cataloguing every variable in the dataset. Shows name, label, storage type, SPSS measure level, and missing-value codes. For categorical variables, includes a frequency table of observed codes with labels, counts, and percentages. Use this to check data quality and understand the variable universe before any analysis.",
+      "fields": []
+    }
   ]
 }

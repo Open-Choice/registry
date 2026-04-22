@@ -5,34 +5,224 @@
   "description": "Standardises predictors (and response for Gaussian/mgaussian) using glmnet's biased 1/n SD formula, builds λ_max = max_j|xⱼᵀy|/(n·max(α,1e-3)), log-spaces down by lambda_min_ratio, and fits every λ with warm starts and an active-set strategy (cycle active coordinates until stable, full KKT sweep, repeat). Gaussian runs direct weighted-least-squares CD; binomial/poisson/multinomial run IRLS (partial-Newton majorization) with CD as the inner solve; mgaussian uses block-CD with a group-lasso penalty across response columns; Cox uses Newton on the Breslow partial-likelihood with CD for each step. k-fold CV refits each fold at the shared master λ grid, scores held-out observations with the requested measure, and aggregates by weighted mean/SE across folds. Outputs: CV curve CSV (λ, cvm, cvsd, cvup, cvlo, nzero, is_min, is_1se), one coefficient-matrix CSV per response class (rows = predictors with an intercept row; columns = λ), and an XLSX workbook with summary + CV sheet + coef sheets.",
   "usage": "[[\"model-glmnet::fit\"]]\ninput = \"./data.csv\"\nrun_dir = \"./runs\"\nrun_name = \"g1\"\nfamily = \"gaussian\"\ny = \"y\"\nalpha = 0.5\nnlambda = 100\nnfolds = 10",
   "arguments": [
-    { "name": "input",     "type": "string",  "required": true,  "description": "Numeric CSV of predictors plus response column(s). One row per observation." },
-    { "name": "run_dir",   "type": "string",  "required": true,  "description": "Base directory. Outputs land in `<run_dir>/ocinfo/<run_name>_model_glmnet/`." },
-    { "name": "run_name",  "type": "string",  "required": true,  "description": "Short identifier for this run; no '..', '/' or '\\\\'." },
-    { "name": "family",    "type": "string",  "required": false, "default": "gaussian", "description": "One of gaussian|binomial|poisson|multinomial|mgaussian|cox." },
-    { "name": "y",         "type": "string",  "required": false, "description": "Response column name, or comma list for mgaussian. Required unless family=cox." },
-    { "name": "time",      "type": "string",  "required": false, "description": "Cox only: event/observation time column." },
-    { "name": "status",    "type": "string",  "required": false, "description": "Cox only: 0/1 event-status column." },
-    { "name": "vars",      "type": "array",   "required": false, "default": [], "description": "Predictor column subset. Empty = every non-response/non-survival column." },
-    { "name": "alpha",     "type": "number",  "required": false, "default": 1.0, "description": "Elastic-net mixing (1 = lasso, 0 = ridge)." },
-    { "name": "nlambda",   "type": "integer", "required": false, "default": 100, "description": "Number of λ values on the path." },
-    { "name": "lambda_min_ratio", "type": "number", "required": false, "description": "λ_min/λ_max. Default 0.01 when n≥p else 1e-4." },
-    { "name": "lambda",    "type": "array",   "required": false, "default": [], "description": "Optional user-specified λ sequence (descending)." },
-    { "name": "nfolds",    "type": "integer", "required": false, "default": 10, "description": "Number of CV folds." },
-    { "name": "foldid",    "type": "string",  "required": false, "description": "Optional CSV containing a single integer column of fold assignments (1..nfolds)." },
-    { "name": "type_measure", "type": "string", "required": false, "default": "default", "description": "CV loss: default|mse|mae|deviance|class|auc|c. Compatibility: gaussian↦mse/mae/deviance; binomial↦deviance/mse/mae/class/auc; poisson↦deviance/mse/mae; multinomial↦deviance/class/mse/mae; mgaussian↦mse/mae/deviance; cox↦deviance/c." },
-    { "name": "standardize", "type": "boolean", "required": false, "default": true, "description": "Standardise predictors to unit biased SD before fitting." },
-    { "name": "intercept",   "type": "boolean", "required": false, "default": true, "description": "Include an intercept (Cox ignores this). " },
-    { "name": "thresh",      "type": "number",  "required": false, "default": 1.0e-7, "description": "Coordinate-descent convergence threshold." },
-    { "name": "maxit",       "type": "integer", "required": false, "default": 100000, "description": "Maximum CD iterations per λ." },
-    { "name": "seed",        "type": "integer", "required": false, "default": 1, "description": "RNG seed for fold assignment. Ignored if `foldid` is provided." },
-    { "name": "headers",     "type": "boolean", "required": false, "default": true, "description": "Whether CSV inputs have a header row." },
-    { "name": "threads",     "type": "integer", "required": false, "default": 1, "description": "Number of worker threads for per-fold CV. `1` (default) runs folds serially. Each fold fits an independent coordinate-descent path on a disjoint training subset, so parallel fan-out scales near-linearly up to `nfolds`." },
-    { "name": "output_format", "type": "string", "required": false, "description": "Override stdout format: human, protocol, or quiet." }
+    {
+      "name": "input",
+      "type": "string",
+      "required": true,
+      "description": "Numeric CSV of predictors plus response column(s). One row per observation."
+    },
+    {
+      "name": "run_dir",
+      "type": "string",
+      "required": true,
+      "description": "Base directory. Outputs land in `<run_dir>/ocinfo/<run_name>_model_glmnet/`."
+    },
+    {
+      "name": "run_name",
+      "type": "string",
+      "required": true,
+      "description": "Short identifier for this run; no '..', '/' or '\\\\'."
+    },
+    {
+      "name": "family",
+      "type": "string",
+      "required": false,
+      "default": "gaussian",
+      "description": "One of gaussian|binomial|poisson|multinomial|mgaussian|cox."
+    },
+    {
+      "name": "y",
+      "type": "string",
+      "required": false,
+      "description": "Response column name, or comma list for mgaussian. Required unless family=cox."
+    },
+    {
+      "name": "time",
+      "type": "string",
+      "required": false,
+      "description": "Cox only: event/observation time column."
+    },
+    {
+      "name": "status",
+      "type": "string",
+      "required": false,
+      "description": "Cox only: 0/1 event-status column."
+    },
+    {
+      "name": "vars",
+      "type": "array",
+      "required": false,
+      "default": [],
+      "description": "Predictor column subset. Empty = every non-response/non-survival column."
+    },
+    {
+      "name": "alpha",
+      "type": "number",
+      "required": false,
+      "default": 1.0,
+      "description": "Elastic-net mixing (1 = lasso, 0 = ridge)."
+    },
+    {
+      "name": "nlambda",
+      "type": "integer",
+      "required": false,
+      "default": 100,
+      "description": "Number of λ values on the path."
+    },
+    {
+      "name": "lambda_min_ratio",
+      "type": "number",
+      "required": false,
+      "description": "λ_min/λ_max. Default 0.01 when n≥p else 1e-4."
+    },
+    {
+      "name": "lambda",
+      "type": "array",
+      "required": false,
+      "default": [],
+      "description": "Optional user-specified λ sequence (descending)."
+    },
+    {
+      "name": "nfolds",
+      "type": "integer",
+      "required": false,
+      "default": 10,
+      "description": "Number of CV folds."
+    },
+    {
+      "name": "foldid",
+      "type": "string",
+      "required": false,
+      "description": "Optional CSV containing a single integer column of fold assignments (1..nfolds)."
+    },
+    {
+      "name": "type_measure",
+      "type": "string",
+      "required": false,
+      "default": "default",
+      "description": "CV loss: default|mse|mae|deviance|class|auc|c. Compatibility: gaussian↦mse/mae/deviance; binomial↦deviance/mse/mae/class/auc; poisson↦deviance/mse/mae; multinomial↦deviance/class/mse/mae; mgaussian↦mse/mae/deviance; cox↦deviance/c."
+    },
+    {
+      "name": "standardize",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Standardise predictors to unit biased SD before fitting."
+    },
+    {
+      "name": "intercept",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Include an intercept (Cox ignores this). "
+    },
+    {
+      "name": "thresh",
+      "type": "number",
+      "required": false,
+      "default": 1e-07,
+      "description": "Coordinate-descent convergence threshold."
+    },
+    {
+      "name": "maxit",
+      "type": "integer",
+      "required": false,
+      "default": 100000,
+      "description": "Maximum CD iterations per λ."
+    },
+    {
+      "name": "seed",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "RNG seed for fold assignment. Ignored if `foldid` is provided."
+    },
+    {
+      "name": "headers",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Whether CSV inputs have a header row."
+    },
+    {
+      "name": "threads",
+      "type": "integer",
+      "required": false,
+      "default": 1,
+      "description": "Number of worker threads for per-fold CV. `1` (default) runs folds serially. Each fold fits an independent coordinate-descent path on a disjoint training subset, so parallel fan-out scales near-linearly up to `nfolds`."
+    },
+    {
+      "name": "output_format",
+      "type": "string",
+      "required": false,
+      "description": "Override stdout format: human, protocol, or quiet."
+    }
   ],
   "notes": [
     "Outputs always report both lambda.min (best CV score) and lambda.1se (largest λ whose cvm is within 1 SE of the best). Downstream consumers pick whichever they want.",
     "Multinomial uses the `ungrouped` symmetric softmax parametrisation (matches glmnet `type.multinomial=\"ungrouped\"`, the default).",
     "Cox has no intercept — it is absorbed into the non-parametric baseline hazard and not identifiable.",
     "Fold assignment is deterministic: either user-supplied via `foldid` CSV or synthesised from `seed` using a seeded Fisher–Yates shuffle that is stable across platforms."
+  ],
+  "artifacts": [
+    {
+      "path": "{run_dir}/ocinfo/{run_name}_model_glmnet/cv_results.csv",
+      "title": "Cross-validated lambda path",
+      "description": "One row per lambda value on the regularisation path, with the cross-validated loss mean and standard error. Use this to see how model complexity trades off against predictive accuracy and to understand why lambda.min and lambda.1se were chosen.",
+      "fields": [
+        {
+          "name": "lambda",
+          "description": "Regularisation strength at this point on the path."
+        },
+        {
+          "name": "cvm",
+          "description": "Mean cross-validated loss."
+        },
+        {
+          "name": "cvsd",
+          "description": "Standard error of the cross-validated loss."
+        },
+        {
+          "name": "nzero",
+          "description": "Number of non-zero coefficients at this lambda."
+        }
+      ]
+    },
+    {
+      "path": "{run_dir}/ocinfo/{run_name}_model_glmnet/coefficients_lambda_min.csv",
+      "title": "Coefficients at lambda.min",
+      "description": "The model coefficients at the lambda that minimises cross-validated loss. This is the most predictive model on the path.",
+      "fields": [
+        {
+          "name": "variable",
+          "description": "Predictor name."
+        },
+        {
+          "name": "coefficient",
+          "description": "Regularised coefficient value (zero for variables shrunk out of the model)."
+        }
+      ]
+    },
+    {
+      "path": "{run_dir}/ocinfo/{run_name}_model_glmnet/coefficients_lambda_1se.csv",
+      "title": "Coefficients at lambda.1se",
+      "description": "The model coefficients at the largest lambda within one standard error of the best CV loss — a sparser, more conservative model. Often preferred when interpretability or variable selection matters more than raw predictive accuracy.",
+      "fields": [
+        {
+          "name": "variable",
+          "description": "Predictor name."
+        },
+        {
+          "name": "coefficient",
+          "description": "Regularised coefficient value."
+        }
+      ]
+    },
+    {
+      "path": "{run_dir}/ocinfo/{run_name}_model_glmnet/summary.json",
+      "title": "Model summary",
+      "description": "JSON record of lambda.min, lambda.1se, the selected CV measure, family, and fit metadata. Use this to programmatically retrieve the key model parameters.",
+      "fields": []
+    }
   ]
 }

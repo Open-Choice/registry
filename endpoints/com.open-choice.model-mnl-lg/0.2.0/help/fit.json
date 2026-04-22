@@ -51,14 +51,14 @@
       "name": "convergence_threshold",
       "type": "number",
       "required": false,
-      "default": 1e-8,
+      "default": 1e-08,
       "description": "Stop when the change in log-likelihood per iteration falls below this. Default `1e-8`. The optimizer stops when *either* this or `gradient_threshold` is met."
     },
     {
       "name": "gradient_threshold",
       "type": "number",
       "required": false,
-      "default": 1e-8,
+      "default": 1e-08,
       "description": "Stop when the gradient norm falls below this. Default `1e-8`. The optimizer stops when *either* this or `convergence_threshold` is met. Both being satisfied is the strongest convergence signal."
     },
     {
@@ -219,6 +219,33 @@
       "description": "Number of threads. Default: 1.",
       "required": false,
       "accepted_values": []
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "{run_dir}/exports/coefficients.csv",
+      "title": "Coefficient table",
+      "description": "The key modelling output: aggregate MNL coefficients with standard errors, one row per attribute level. Feed into choice-wrangling::expand-coefficients to produce part-worth utilities for simulation.",
+      "fields": [
+        {
+          "name": "variable",
+          "description": "Attribute level name."
+        },
+        {
+          "name": "coefficient",
+          "description": "MNL coefficient."
+        },
+        {
+          "name": "std_error",
+          "description": "Standard error of the coefficient."
+        }
+      ]
+    },
+    {
+      "path": "{run_dir}/exports/summary.json",
+      "title": "Fit summary",
+      "description": "JSON record of the coefficients, log-likelihood, AIC, BIC, and convergence diagnostics.",
+      "fields": []
     }
   ]
 }

@@ -98,5 +98,41 @@
       "required": false,
       "accepted_values": []
     }
+  ],
+  "artifacts": [
+    {
+      "path": "exports/summary.json",
+      "title": "Model summary",
+      "description": "Population-level segment means, mixture probabilities, and model fit statistics. Use this to review the high-level preference picture and confirm the run looks well-converged before using the partworths in downstream analysis.",
+      "fields": [
+        {
+          "name": "segment_means",
+          "description": "Mean partworth vector for each population segment."
+        },
+        {
+          "name": "mixture_probabilities",
+          "description": "Estimated share of respondents in each segment."
+        },
+        {
+          "name": "fit_statistics",
+          "description": "Overall model fit metrics."
+        }
+      ]
+    },
+    {
+      "path": "exports/{run_id}_point_estimates.csv",
+      "title": "Per-respondent partworths",
+      "description": "One row per respondent, one column per partworth. The primary deliverable from HB — use these individual-level preference scores to drive market simulations, build respondent segments, or compute willingness-to-pay.",
+      "fields": [
+        {
+          "name": "resp_id",
+          "description": "Respondent identifier."
+        },
+        {
+          "name": "<attribute_level_columns>",
+          "description": "Estimated partworth for each attribute level."
+        }
+      ]
+    }
   ]
 }
