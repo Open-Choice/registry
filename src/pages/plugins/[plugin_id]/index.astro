@@ -99,14 +99,30 @@ function renderNotes(md?: string): string {
     const links = [];
     if (v.release_url)  links.push({ href: v.release_url,  text: 'GitHub Release →' });
     if (v.download_url) links.push({ href: v.download_url, text: 'Download .ocplugin' });
+    const vCommands = listEndpoints(plugin_id, v.version);
     return (
-      <div class="version-block">
+      <div class="version-block" id={`v${v.version}`}>
         <h3>
-          v{v.version}
+          <a class="version-anchor" href={`/plugins/${plugin.plugin_id}/${v.version}/`}>v{v.version}</a>
           {isLatest && <span class="latest-tag">latest</span>}
           <span class="date">{formatDate(v.released_at)}</span>
         </h3>
         {v.release_notes && <div class="notes" set:html={renderNotes(v.release_notes)} />}
+        {vCommands.length > 0 && (
+          <div class="version-endpoints">
+            <span class="version-endpoints-label">Endpoints:</span>
+            {vCommands.map((cmd) => (
+              <a
+                class="version-endpoint-link"
+                href={isLatest
+                  ? `/plugins/${plugin.plugin_id}/${cmd}/`
+                  : `/plugins/${plugin.plugin_id}/${v.version}/${cmd}/`}
+              >
+                <code>{cmd}</code>
+              </a>
+            ))}
+          </div>
+        )}
         {links.length > 0 && (
           <div class="links">
             {links.map((l) => <a href={l.href}>{l.text}</a>)}
@@ -166,8 +182,30 @@ function renderNotes(md?: string): string {
     align-items: baseline;
     gap: 0.75rem;
   }
+  .version-anchor {
+    color: inherit;
+    text-decoration: none;
+  }
+  .version-anchor:hover { text-decoration: underline; }
   .version-block .date { color: var(--oc-ink-soft); font-size: 0.85rem; font-weight: normal; }
   .version-block .notes { margin: 0.5rem 0 0.75rem; }
+  .version-endpoints {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0.5rem 0 0.75rem;
+    font-size: 0.85rem;
+  }
+  .version-endpoints-label { color: var(--oc-ink-soft); margin-right: 0.1rem; }
+  .version-endpoint-link {
+    color: var(--oc-accent);
+    text-decoration: none;
+    padding: 0.1rem 0.45rem;
+    border: 1px solid var(--oc-hairline);
+    border-radius: var(--oc-radius-sm);
+  }
+  .version-endpoint-link:hover { border-color: var(--oc-accent); background: var(--oc-brand-soft); }
   .version-block .links { display: flex; gap: 1rem; font-size: 0.85rem; }
   .latest-tag {
     background: var(--oc-success-bg);

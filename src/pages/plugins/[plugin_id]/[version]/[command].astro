@@ -1,0 +1,79 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import EndpointHelp from '@open-choice/web-ui/components/EndpointHelp.astro';
+import {
+  loadManifest,
+  loadEndpointHelp,
+  loadEndpointTemplates,
+  listEndpoints,
+} from '../../../../lib/loadData';
+
+export async function getStaticPaths() {
+  const { plugins } = loadManifest();
+  const paths: Array<{ params: { plugin_id: string; version: string; command: string } }> = [];
+  for (const p of plugins) {
+    for (const v of p.versions ?? []) {
+      for (const command of listEndpoints(p.plugin_id, v.version)) {
+        paths.push({ params: { plugin_id: p.plugin_id, version: v.version, command } });
+      }
+    }
+  }
+  return paths;
+}
+
+const { plugin_id, version, command } = Astro.params as {
+  plugin_id: string;
+  version: string;
+  command: string;
+};
+const { plugins } = loadManifest();
+const plugin = plugins.find((p) => p.plugin_id === plugin_id);
+
+if (!plugin) {
+  throw new Error(`Plugin not found in manifest: ${plugin_id}`);
+}
+
+const help = loadEndpointHelp(plugin_id, version, command);
+if (!help) {
+  throw new Error(`Endpoint help not found: ${plugin_id}/${version}/${command}`);
+}
+const templates = loadEndpointTemplates(plugin_id, version, command);
+
+const isLatest = version === plugin.latest_version;
+---
+
+<BaseLayout title={`${help.title ?? command} — ${plugin.display_name} v${version}`}>
+  <a slot="breadcrumb" href="/">Open Choice Registry</a>
+  <span slot="breadcrumb" class="sep">/</span>
+  <a slot="breadcrumb" href={`/plugins/${plugin.plugin_id}/`}>{plugin.display_name}</a>
+  <span slot="breadcrumb" class="sep">/</span>
+  <span slot="breadcrumb">v{version}</span>
+  <span slot="breadcrumb" class="sep">/</span>
+  <span slot="breadcrumb"><code>{command}</code></span>
+
+  {!isLatest && (
+    <div class="version-notice">
+      You are viewing docs for <strong>v{version}</strong>.{' '}
+      <a href={`/plugins/${plugin.plugin_id}/${command}/`}>View latest (v{plugin.latest_version})</a>
+    </div>
+  )}
+
+  <EndpointHelp
+    help={help}
+    templates={templates}
+    plugin={{ display_name: plugin.display_name, plugin_id: plugin.plugin_id, version }}
+    endpointId={command}
+  />
+</BaseLayout>
+
+<style>
+  .version-notice {
+    background: var(--oc-warn-bg, #fff8e1);
+    color: var(--oc-warn-fg, #5a4400);
+    border: 1px solid var(--oc-warn-border, #ffe082);
+    border-radius: var(--oc-radius);
+    padding: 0.6rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+</style>

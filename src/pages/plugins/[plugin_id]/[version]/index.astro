@@ -1,0 +1,175 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import {
+  loadManifest,
+  loadEndpointHelp,
+  listEndpoints,
+  formatDate,
+} from '../../../../lib/loadData';
+
+export async function getStaticPaths() {
+  const { plugins } = loadManifest();
+  const paths: Array<{ params: { plugin_id: string; version: string } }> = [];
+  for (const p of plugins) {
+    for (const v of p.versions ?? []) {
+      paths.push({ params: { plugin_id: p.plugin_id, version: v.version } });
+    }
+  }
+  return paths;
+}
+
+const { plugin_id, version } = Astro.params as { plugin_id: string; version: string };
+const { plugins } = loadManifest();
+const plugin = plugins.find((p) => p.plugin_id === plugin_id);
+
+if (!plugin) {
+  throw new Error(`Plugin not found in manifest: ${plugin_id}`);
+}
+
+const versionEntry = (plugin.versions ?? []).find((v) => v.version === version);
+if (!versionEntry) {
+  throw new Error(`Version not found: ${plugin_id}@${version}`);
+}
+
+const isLatest = version === plugin.latest_version;
+
+const commands = listEndpoints(plugin_id, version);
+const endpointSections = commands.map((command) => ({
+  command,
+  help: loadEndpointHelp(plugin_id, version, command),
+}));
+
+function renderNotes(md?: string): string {
+  if (!md) return '';
+  const esc = (s: string) => s
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const lines = md.split('\n');
+  let out = '';
+  let inList = false;
+  const inline = (s: string) => esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  for (const raw of lines) {
+    const t = raw.trimEnd();
+    if (t.startsWith('## ')) {
+      if (inList) { out += '</ul>'; inList = false; }
+      out += `<h4>${inline(t.slice(3))}</h4>`;
+    } else if (t.startsWith('- ') || t.startsWith('* ')) {
+      if (!inList) { out += '<ul>'; inList = true; }
+      out += `<li>${inline(t.slice(2))}</li>`;
+    } else if (t === '') {
+      if (inList) { out += '</ul>'; inList = false; }
+    } else {
+      if (inList) { out += '</ul>'; inList = false; }
+      out += `<p>${inline(t)}</p>`;
+    }
+  }
+  if (inList) out += '</ul>';
+  return out;
+}
+---
+
+<BaseLayout title={`${plugin.display_name} v${version}`}>
+  <a slot="breadcrumb" href="/">Open Choice Registry</a>
+  <span slot="breadcrumb" class="sep">/</span>
+  <a slot="breadcrumb" href={`/plugins/${plugin.plugin_id}/`}>{plugin.display_name}</a>
+  <span slot="breadcrumb" class="sep">/</span>
+  <span slot="breadcrumb">v{version}</span>
+
+  {!isLatest && (
+    <div class="version-notice">
+      You are viewing a snapshot of <strong>{plugin.display_name}</strong> as of <strong>v{version}</strong>.{' '}
+      <a href={`/plugins/${plugin.plugin_id}/`}>View latest (v{plugin.latest_version})</a>
+    </div>
+  )}
+
+  <h1>{plugin.display_name} <span class="version-badge">v{version}</span></h1>
+  <p class="meta">
+    {plugin.publisher} &mdash; Released {formatDate(versionEntry.released_at)}<br />
+    <span class="plugin-id">{plugin.plugin_id}</span>
+  </p>
+  <p>{plugin.description}</p>
+  <div class="cat-row">
+    {(plugin.categories ?? []).map((c) => <span class="badge">{c}</span>)}
+  </div>
+
+  {versionEntry.release_notes && (
+    <>
+      <h2>Release Notes</h2>
+      <div class="release-notes" set:html={renderNotes(versionEntry.release_notes)} />
+    </>
+  )}
+
+  {endpointSections.length > 0 && (
+    <>
+      <h2>Endpoints</h2>
+      <div class="endpoint-list">
+        {endpointSections.map(({ command, help }) => (
+          help ? (
+            <a class="endpoint-card" href={`/plugins/${plugin.plugin_id}/${version}/${command}/`}>
+              <h3>
+                <code>{command}</code>
+                {help.title && <span class="endpoint-title"> &mdash; {help.title}</span>}
+              </h3>
+              {help.summary && <p class="endpoint-summary">{help.summary}</p>}
+            </a>
+          ) : null
+        ))}
+      </div>
+    </>
+  )}
+
+  <div class="version-links">
+    {versionEntry.release_url && <a href={versionEntry.release_url}>GitHub Release →</a>}
+    {versionEntry.download_url && <a href={versionEntry.download_url}>Download .ocplugin</a>}
+  </div>
+</BaseLayout>
+
+<style>
+  .version-badge {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--oc-ink-soft);
+    font-family: var(--oc-font-mono);
+  }
+  .version-notice {
+    background: var(--oc-warn-bg, #fff8e1);
+    color: var(--oc-warn-fg, #5a4400);
+    border: 1px solid var(--oc-warn-border, #ffe082);
+    border-radius: var(--oc-radius);
+    padding: 0.6rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+  .meta { color: var(--oc-ink-soft); font-size: 0.9rem; margin-bottom: 1rem; }
+  .plugin-id { font-size: 0.85rem; font-family: var(--oc-font-mono); }
+  .cat-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .badge {
+    background: var(--oc-brand-soft);
+    color: var(--oc-brand-ink);
+    border-radius: var(--oc-radius-sm);
+    padding: 0.1rem 0.5rem;
+    font-size: 0.8rem;
+  }
+  .release-notes { margin-bottom: 1.5rem; }
+  .endpoint-card {
+    display: block;
+    background: var(--oc-surface);
+    border: 1px solid var(--oc-hairline);
+    border-radius: var(--oc-radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .endpoint-card:hover { border-color: var(--oc-accent); }
+  .endpoint-card > h3 {
+    font-size: 1.05rem;
+    margin: 0 0 0.3rem;
+    border: none;
+    padding: 0;
+  }
+  .endpoint-card > h3 code { color: var(--oc-accent); }
+  .endpoint-title { color: var(--oc-ink-soft); font-weight: 400; font-size: 0.95rem; }
+  .endpoint-summary { color: var(--oc-ink-soft); margin: 0; font-size: 0.95rem; }
+  .version-links { display: flex; gap: 1rem; font-size: 0.9rem; margin-top: 1.5rem; }
+</style>
