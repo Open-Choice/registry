@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-04-21T23:48:37.087Z",
-  "signature": "s59+bkUrvsX1qKhu/EU9q9HMDEb4No4FlMPK9EwTubdtYnwio8/Cgj7cdxcF1/QrapATE7pxD/pvpaTu8wzqBA==",
+  "generated_at": "2026-04-22T19:04:36.529Z",
+  "signature": "70v9BQv3ZynbYISQp9ZzSqsLQEvOwlgC3M5KkpeNyMzIj7ImwELdD5GHKGT6oNXoCa/lBWnnilqIJ0H+UklICg==",
   "signer_key_id": "oc-registry-2026",
   "plugins": [
     {
@@ -183,39 +183,9 @@
         "psychometrics",
         "correlation"
       ],
-      "latest_version": "0.5.0",
+      "latest_version": "0.1.0",
       "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.factor-analysis/",
       "versions": [
-        {
-          "version": "0.5.0",
-          "download_url": "https://github.com/Open-Choice/registry/releases/download/factor-analysis-v0.5.0/factor-analysis-0.5.0-windows-x86_64.ocplugin",
-          "artifact_sha256": "49592fba78fd16df6e35bca18db350a7a845a3cbe2f30174cb09749171bc3bb4",
-          "signer_key_id": "open-choice-2026",
-          "min_app_version": "0.1.0",
-          "released_at": "2026-04-21T22:00:00Z",
-          "release_notes": "Documentation rewritten for marketing researchers, new R-style layout.\n\n- **R-doc layout.** Each command's help page now follows the structure R users expect: Title, Description, Usage, Arguments, Details, Artifacts, See Also, Examples. The old `Value` section is renamed `Artifacts` and lists every file the command writes with per-sheet / per-column interpretation guidance.\n- **Per-field artifact tables.** For every output file (xlsx sheet or CSV), the help now spells out what each column or cell means in plain language — not format notes, but how to read the number. E.g. for `fa`: what `communality`, `uniqueness`, and `strongest_factor` actually tell you; for `famd`: what `coord_dim<k>`, `contrib_dim<k>`, and `cos2_dim<k>` say about a variable or level.\n- **Marketing-researcher voice.** Descriptions and details sections are written for a researcher reading the output, not a software developer configuring the tool. Method jargon is defined on first use; common gotchas (listwise dropping, single-level categoricals, low-cosÂ² variables) are called out inline.\n- **Cross-references.** Each command's `See Also` entry links to related commands in the same plugin (fa â†” famd â†” correlation), so users discover the right tool for their data.\n- **Registry + app render parity.** The same help JSONs power both the in-app help panel and the registry website, so the layout a user sees before installing matches what they see after.",
-          "release_url": "https://github.com/Open-Choice/registry/releases/tag/factor-analysis-v0.5.0"
-        },
-        {
-          "version": "0.4.0",
-          "download_url": "https://github.com/Open-Choice/registry/releases/download/factor-analysis-v0.4.0/factor-analysis-0.4.0-windows-x86_64.ocplugin",
-          "artifact_sha256": "a1fa0711f6e3207a26929acc7f2f90395c444efb721bd70b25a542658d9eaa14",
-          "signer_key_id": "open-choice-2026",
-          "min_app_version": "0.1.0",
-          "released_at": "2026-04-21T15:44:21Z",
-          "release_notes": "Output restructuring, clearer errors, rewritten help.\n\n- **One sheet per batch, k stacked inside.** The xlsx layout no longer fans out to one pair of sheets per `(batch, n_factors)`. Each `fa` batch now emits exactly `<batch>_sum` and `<batch>_load`; each `famd` batch emits `<batch>_sum`, `<batch>_vars`, and (when categoricals exist) `<batch>_cats`. Every result row carries its own `n_factors` column so Excel filters / pivots work directly. Loading and coord/contrib/cosÂ² columns widen to the batch's largest k; rows with smaller k leave the higher-index columns blank.\n- **Real failure reasons in error messages.** `fa` and `famd` now collect per-job errors and surface the first three in the top-level error when zero batches succeed, instead of returning the generic `min_count`/`max_count` hint. Typical case: `cor = \"tetrachoric\"` with meta that leaves `type` unset now returns a clear per-pair type-mismatch error rather than the misleading \"batch sizes\" message.\n- **Help pages rewritten.** Argument descriptions no longer cram full enum lists into the description column. The valid values (and implementation status) for `cor`, `fm`, `rotate`, and `method` are called out in dedicated Notes entries. Each command's help now lists the exact sheets and columns it produces, under `Examples` entries titled `Output: ...`.",
-          "release_url": "https://github.com/Open-Choice/registry/releases/tag/factor-analysis-v0.4.0"
-        },
-        {
-          "version": "0.3.0",
-          "download_url": "https://github.com/Open-Choice/registry/releases/download/factor-analysis-v0.3.0/factor-analysis-0.3.0-windows-x86_64.ocplugin",
-          "artifact_sha256": "896c24952f8df67e3d4501b64a13c21369ac2aee6017a12f41a8cedb7fc6b8f6",
-          "signer_key_id": "open-choice-2026",
-          "min_app_version": "0.1.0",
-          "released_at": "2026-04-21T15:20:04Z",
-          "release_notes": "Input flexibility: SPSS `.sav` support and inline meta with regex patterns.\n\n- **SPSS `.sav` / `.zsav` input.** `fa` and `famd` now dispatch on the input extension: `.csv`/`.tsv` use the existing CSV reader, `.sav`/`.zsav` go through the bundled `spss-io` library (readstat + polars). SPSS user-defined missing values are coerced to NA on read. When meta leaves fields blank, SPSS variable labels fill in `label` and SPSS value-label presence infers `type` (numeric-with-labels â†’ ordinal, plain numeric â†’ numeric, string â†’ categorical).\n- **Inline meta.** `meta` may now be an inline TOML array instead of a path to a CSV. Two entry shapes: row entries (`variable = \"...\"`) and regex pattern entries (`match = \"...\"`). Type/batch/label defaults cascade down from pattern entries to all matching columns. Empty-list / zero-match inline metas error up front.\n- **Regex variable selection.** Pattern entries use the Rust `regex` crate (no backrefs/lookaround). All matches apply: a column hit by multiple entries is added once per entry, so one column can belong to multiple batches. Unmatched columns are silently dropped.\n- **Label templates.** Pattern entries accept a `label_template` with placeholders: `${name}` (full column name), `${0}` (whole regex match), `${1}`, `${2}`, â€¦ (positional captures). Omitting `label_template` falls back to the SPSS variable label (for `.sav`) or the column name (for CSV).\n- Existing path-based meta CSVs continue to work without change; the workflow is purely additive.",
-          "release_url": "https://github.com/Open-Choice/registry/releases/tag/factor-analysis-v0.3.0"
-        },
         {
           "version": "0.1.0",
           "download_url": "https://github.com/Open-Choice/registry/releases/download/factor-analysis-v0.1.0/factor-analysis-0.1.0-windows-x86_64.ocplugin",
@@ -333,18 +303,18 @@
         "estimation",
         "hierarchical-bayes"
       ],
-      "latest_version": "0.2.0",
+      "latest_version": "0.1.0",
       "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.model-mnl-hb-mh/",
       "versions": [
         {
-          "version": "0.2.0",
-          "download_url": "https://github.com/Open-Choice/registry/releases/download/model-mnl-hb-mh-v0.2.0/model-mnl-hb-mh-0.2.0-windows-x86_64.ocplugin",
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/model-mnl-hb-mh-v0.1.0/model-mnl-hb-mh-0.1.0-windows-x86_64.ocplugin",
           "artifact_sha256": "380adeefe51dfc13368869d268948d3f2e8adc2cfb88f49a618f4f41db4d5a8a",
           "signer_key_id": "open-choice-2026",
           "min_app_version": "0.1.0",
           "released_at": "2026-04-21T13:28:53Z",
           "release_notes": "Initial release.",
-          "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-mnl-hb-mh-v0.2.0"
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-mnl-hb-mh-v0.1.0"
         }
       ]
     },
@@ -381,18 +351,18 @@
         "estimation",
         "latent-class"
       ],
-      "latest_version": "0.2.0",
+      "latest_version": "0.1.0",
       "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.model-mnl-lc/",
       "versions": [
         {
-          "version": "0.2.0",
-          "download_url": "https://github.com/Open-Choice/registry/releases/download/model-mnl-lc-v0.2.0/model-mnl-lc-0.2.0-windows-x86_64.ocplugin",
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/model-mnl-lc-v0.1.0/model-mnl-lc-0.1.0-windows-x86_64.ocplugin",
           "artifact_sha256": "38e70fa9fa26e0bd11707d30796a3f4a0c150465e42ec49328159edb173f6fc4",
           "signer_key_id": "open-choice-2026",
           "min_app_version": "0.1.0",
           "released_at": "2026-04-21T13:28:59Z",
           "release_notes": "Initial release.",
-          "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-mnl-lc-v0.2.0"
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-mnl-lc-v0.1.0"
         }
       ]
     },
@@ -405,18 +375,18 @@
         "estimation",
         "logit"
       ],
-      "latest_version": "0.2.0",
+      "latest_version": "0.1.0",
       "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.model-mnl-lg/",
       "versions": [
         {
-          "version": "0.2.0",
-          "download_url": "https://github.com/Open-Choice/registry/releases/download/model-mnl-lg-v0.2.0/model-mnl-lg-0.2.0-windows-x86_64.ocplugin",
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/model-mnl-lg-v0.1.0/model-mnl-lg-0.1.0-windows-x86_64.ocplugin",
           "artifact_sha256": "5e2a66500a302ca0bc1569fdf1606173fc08bb23ba4bf8e6b5e47bec3a39b578",
           "signer_key_id": "open-choice-2026",
           "min_app_version": "0.1.0",
           "released_at": "2026-04-21T13:29:02Z",
           "release_notes": "Initial release.",
-          "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-mnl-lg-v0.2.0"
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-mnl-lg-v0.1.0"
         }
       ]
     },
@@ -547,18 +517,18 @@
       "categories": [
         "demo"
       ],
-      "latest_version": "0.1.1",
+      "latest_version": "0.1.0",
       "pages_url": "https://registry.openchoice.app/plugins/com.open-choice.toy-calculator/",
       "versions": [
         {
-          "version": "0.1.1",
-          "download_url": "https://github.com/Open-Choice/registry/releases/download/toy-calculator-v0.1.1/toy-calculator-0.1.1-windows-x86_64.ocplugin",
+          "version": "0.1.0",
+          "download_url": "https://github.com/Open-Choice/registry/releases/download/toy-calculator-v0.1.0/toy-calculator-0.1.0-windows-x86_64.ocplugin",
           "artifact_sha256": "c0a958e079f33469e92e7538aa6da742432bb54628242b82f5a35f684994b183",
           "signer_key_id": "open-choice-2026",
           "min_app_version": "0.1.0",
           "released_at": "2026-04-21T13:29:16Z",
           "release_notes": "First public release via the Open Choice plugin registry.",
-          "release_url": "https://github.com/Open-Choice/registry/releases/tag/toy-calculator-v0.1.1"
+          "release_url": "https://github.com/Open-Choice/registry/releases/tag/toy-calculator-v0.1.0"
         }
       ]
     }

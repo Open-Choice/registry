@@ -7,12 +7,12 @@
     "estimation",
     "logit"
   ],
-  "version": "0.2.0",
-  "download_url": "https://github.com/Open-Choice/registry/releases/download/model-mnl-lg-v0.2.0/model-mnl-lg-0.2.0-windows-x86_64.ocplugin",
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/model-mnl-lg-v0.1.0/model-mnl-lg-0.1.0-windows-x86_64.ocplugin",
   "artifact_sha256": "5e2a66500a302ca0bc1569fdf1606173fc08bb23ba4bf8e6b5e47bec3a39b578",
   "signer_key_id": "open-choice-2026",
   "min_app_version": "0.1.0",
   "released_at": "2026-04-21T13:29:02Z",
   "release_notes": "Initial release.",
-  "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-mnl-lg-v0.2.0"
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-mnl-lg-v0.1.0"
 }

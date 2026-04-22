@@ -7,12 +7,12 @@
     "estimation",
     "hierarchical-bayes"
   ],
-  "version": "0.2.0",
-  "download_url": "https://github.com/Open-Choice/registry/releases/download/model-mnl-hb-mh-v0.2.0/model-mnl-hb-mh-0.2.0-windows-x86_64.ocplugin",
+  "version": "0.1.0",
+  "download_url": "https://github.com/Open-Choice/registry/releases/download/model-mnl-hb-mh-v0.1.0/model-mnl-hb-mh-0.1.0-windows-x86_64.ocplugin",
   "artifact_sha256": "380adeefe51dfc13368869d268948d3f2e8adc2cfb88f49a618f4f41db4d5a8a",
   "signer_key_id": "open-choice-2026",
   "min_app_version": "0.1.0",
   "released_at": "2026-04-21T13:28:53Z",
   "release_notes": "Initial release.",
-  "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-mnl-hb-mh-v0.2.0"
+  "release_url": "https://github.com/Open-Choice/registry/releases/tag/model-mnl-hb-mh-v0.1.0"
 }
