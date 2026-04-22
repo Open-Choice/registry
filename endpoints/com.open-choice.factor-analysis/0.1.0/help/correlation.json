@@ -32,9 +32,9 @@
     },
     {
       "name": "meta",
-      "type": "string",
+      "type": "string|array",
       "required": false,
-      "description": "Optional variable metadata CSV. Required for `mixed`/biserial/polyserial to determine per-column types."
+      "description": "Optional variable metadata. Required when `method` is `mixed`, `biserial`, or `polyserial` because the plugin needs to know each column's type (numeric vs categorical). Either a path to a meta CSV (columns `variable`, `label`, `batch`, `type`) or an inline array of row entries `{ variable = \"col_name\", type = \"...\" }` or pattern entries `{ match = \"<regex>\", type = \"...\" }`. For pure Pearson/polychoric/tetrachoric runs with no type dispatch, `meta` can be omitted entirely."
     },
     {
       "name": "vars",
@@ -79,6 +79,9 @@
     }
   ],
   "notes": [
+    "Inline meta — all-matches-apply: entries are evaluated in order and every matching entry fires. A column hit by multiple pattern entries appears once per matching entry, so one column can belong to multiple batches. Unmatched `variable` entries are silently dropped; unmatched `match` patterns emit a warning.",
+    "Label templates (pattern entries): `label_template = \"Satisfaction: ${1}\"` expands `${name}` (full column name), `${0}` (whole regex match), and `${1}`, `${2}`, ... (positional capture groups). Omitting the template falls back to the SPSS variable label (`.sav`) or the column name (CSV).",
+    "SPSS inputs: user-defined missing values coerce to NA on read. Empty meta fields fill from SPSS metadata — label from the variable label; type inferred as ordinal when value labels are present, numeric otherwise.",
     "The `covariance` method produces the unnormalised sample covariance (divisor n-1), not a correlation.",
     "Pairwise sample sizes are written to the `n_obs` sheet so downstream consumers can weight the matrix appropriately."
   ],

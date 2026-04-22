@@ -3,7 +3,7 @@
   "title": "Exploratory factor analysis on numeric data",
   "summary": "Rust port of psych::fa: iterative principal-axis / minimum-residual factor extraction with Kaiser-normalized analytic Varimax rotation. Iterates over meta batches and a range of n_factors values, emitting one xlsx workbook with per-combination summary + loadings sheets.",
   "description": "For each batch and each n_factors in [min_count, min(max_count, n_vars-1)]: builds the correlation matrix, extracts factors (MinRes/PA both route to iterative principal-axis with SMC communality initialisation), rotates loadings, and writes eigenvalues (all dims: value, diff, prop, cumulative), per-variable loadings MR1..MRk, communality h², uniqueness u², Hoffman complexity (Σl²)²/Σl⁴, and dominant factor index. Rows are sorted within each sheet by dominant factor ascending then |loading| descending — matching psych's `fa.sort`. Sheet names follow `<batch>_k<n>_sum` and `<batch>_k<n>_load`, truncated to Excel's 31-char limit.",
-  "usage": "[[\"factor-analysis::fa\"]]\ninput = \"./data.csv\"\nmeta = \"./meta.csv\"\nrun_dir = \"./runs\"\nrun_name = \"fa1\"\nmin_count = 2\nmax_count = 5\ncor = \"pearson\"\nfm = \"minres\"\nrotate = \"varimax\"",
+  "usage": "[[\"factor-analysis::fa\"]]\ninput = \"./data.sav\"\nrun_dir = \"./runs\"\nrun_name = \"fa1\"\nmin_count = 2\nmax_count = 5\ncor = \"pearson\"\nfm = \"minres\"\nrotate = \"varimax\"\n\nmeta = [\n  { match = \"^att_\", batch = \"attitudes\", type = \"ordinal\" },\n  { match = \"^sat_(.+)\", batch = \"satisfaction\", label_template = \"Satisfaction: ${1}\" },\n  { variable = \"nps\", batch = \"outcomes\", label = \"Net Promoter Score\" },\n]",
   "arguments": [
     {
       "name": "input",
@@ -13,9 +13,9 @@
     },
     {
       "name": "meta",
-      "type": "string",
+      "type": "string|array",
       "required": true,
-      "description": "Variable metadata CSV with columns variable/label/batch/type. Missing label defaults to variable; missing type defaults to numeric."
+      "description": "Tells the plugin which columns to analyse and how to group them into batches. Either a path to a meta CSV, or an inline array of entries. CSV form: columns `variable` (required), `label`, `batch`, `type`. Inline form: each entry is either a row entry `{ variable = \"col_name\", batch = \"...\", label = \"...\", type = \"...\" }` matching one column by exact name, or a pattern entry `{ match = \"<regex>\", batch = \"...\", label_template = \"...\", type = \"...\" }` matching all columns whose name satisfies the regex. The `batch` key groups items that belong together — one batch per analysis run. Valid types: `numeric` (default), `ordinal`, `dichotomous`, `categorical`."
     },
     {
       "name": "run_dir",
@@ -107,6 +107,9 @@
     }
   ],
   "notes": [
+    "Inline meta — all-matches-apply: entries are evaluated in order and every matching entry fires. A column hit by multiple pattern entries appears once per matching entry, so one column can belong to multiple batches. Unmatched `variable` entries are silently dropped; unmatched `match` patterns emit a warning.",
+    "Label templates (pattern entries): `label_template = \"Satisfaction: ${1}\"` expands `${name}` (full column name), `${0}` (whole regex match), and `${1}`, `${2}`, ... (positional capture groups). Omitting the template falls back to the SPSS variable label (`.sav`) or the column name (CSV).",
+    "SPSS inputs: user-defined missing values coerce to NA on read. Empty meta fields fill from SPSS metadata — label from the variable label; type inferred as ordinal when value labels are present, numeric otherwise.",
     "Current delivery: full correlation family (Phase 2), MinRes/PA extraction, Varimax rotation. Remaining fm/rotate values are accepted by the validator but return a NotImplemented runtime error until Phase 3.",
     "Sample size for each batch is the minimum non-zero n_obs across all correlation cells — a conservative choice matching psych::fa's default pairwise behaviour.",
     "The `com` column is Hoffman's complexity: 1.0 means a variable loads on one factor; values approach n_factors as loadings are spread evenly."

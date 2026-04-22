@@ -3,7 +3,7 @@
   "title": "Factor analysis of mixed (numeric + categorical) data",
   "summary": "FAMD in the FactoMineR tradition: standardise numerics, disjunctively code categoricals with the (I_k - p_k)/sqrt(p_k) transform, and run SVD on the concatenated matrix. Emits per-batch dimension summaries plus per-variable and per-level coordinate/contribution/cos² tables.",
   "description": "For each batch and each n_factors in [min_count, max_count]: complete-case filter, split into numeric and qualitative columns, drop any variable with zero variance or a single-level factor, standardise numerics with n-1 SD, disjunctive code categoricals as (indicator - proportion)/sqrt(proportion), horizontally concatenate, and compute thin SVD of X/sqrt(n). Dimension coordinates are σ·V, contributions are V²·100 (%), cos² is coord²/total per item. Per-variable rows aggregate per-level contributions (categorical) or take the single quantitative row directly. Sheet names follow `<batch>_k<n>_sum`, `<batch>_k<n>_vars`, `<batch>_k<n>_cats` (only emitted when categorical levels exist), truncated to Excel's 31-char limit.",
-  "usage": "[[\"factor-analysis::famd\"]]\ninput = \"./data.csv\"\nmeta = \"./meta.csv\"\nrun_dir = \"./runs\"\nrun_name = \"famd1\"\nmin_count = 2\nmax_count = 5",
+  "usage": "[[\"factor-analysis::famd\"]]\ninput = \"./data.sav\"\nrun_dir = \"./runs\"\nrun_name = \"famd1\"\nmin_count = 2\nmax_count = 5\n\nmeta = [\n  { match = \"^q\\\\d+$\", batch = \"attitudes\", type = \"ordinal\" },\n  { variable = \"gender\", batch = \"demographics\", type = \"categorical\" },\n]",
   "arguments": [
     {
       "name": "input",
@@ -13,9 +13,9 @@
     },
     {
       "name": "meta",
-      "type": "string",
+      "type": "string|array",
       "required": true,
-      "description": "Variable metadata CSV. Column `type` drives encoding: numeric is standardised, dichotomous/ordinal/categorical are disjunctively coded."
+      "description": "Tells the plugin which columns to analyse, how to group them into batches, and what type each column is. Either a path to a meta CSV, or an inline array of entries. CSV form: columns `variable` (required), `label`, `batch`, `type`. Inline form: row entries `{ variable = \"col_name\", batch, label, type }` or pattern entries `{ match = \"<regex>\", batch, label_template, type }`. The `type` field drives encoding: `numeric` is standardised; `ordinal`, `dichotomous`, and `categorical` are disjunctively coded. Mixed batches (numeric + categorical) are the main use case for FAMD."
     },
     {
       "name": "run_dir",
@@ -79,6 +79,9 @@
     }
   ],
   "notes": [
+    "Inline meta — all-matches-apply: entries are evaluated in order and every matching entry fires. A column hit by multiple pattern entries appears once per matching entry, so one column can belong to multiple batches. Unmatched `variable` entries are silently dropped; unmatched `match` patterns emit a warning.",
+    "Label templates (pattern entries): `label_template = \"Satisfaction: ${1}\"` expands `${name}` (full column name), `${0}` (whole regex match), and `${1}`, `${2}`, ... (positional capture groups). Omitting the template falls back to the SPSS variable label (`.sav`) or the column name (CSV).",
+    "SPSS inputs: user-defined missing values coerce to NA on read. Empty meta fields fill from SPSS metadata — label from the variable label; type inferred as ordinal when value labels are present, numeric otherwise.",
     "Variables with zero variance (numeric) or a single level (categorical) are dropped from a batch with a warning.",
     "`strongest_dim` / `strongest_abs_coord` identify the axis on which each variable or level loads most heavily."
   ],
